@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 
+// Vite expone al frontend únicamente las variables cuyo nombre empieza con VITE_.
+const apiUrl = import.meta.env.VITE_API_URL
+
 function App() {
   const [estadoConexion, setEstadoConexion] = useState(
     'Comprobando conexión con el servidor...',
@@ -12,7 +15,7 @@ function App() {
   useEffect(() => {
     const comprobarBackend = async () => {
       try {
-        const respuesta = await fetch('http://localhost:3000/api/health')
+        const respuesta = await fetch(`${apiUrl}/api/health`)
 
         if (!respuesta.ok) {
           throw new Error(`El servidor respondió con HTTP ${respuesta.status}`)
