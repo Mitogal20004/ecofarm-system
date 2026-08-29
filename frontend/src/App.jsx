@@ -1,45 +1,122 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-
-// Vite expone al frontend únicamente las variables cuyo nombre empieza con VITE_.
-const apiUrl = import.meta.env.VITE_API_URL
+import Login from './pages/Login'
+import {
+  cerrarSesion,
+  observarCambiosAutenticacion,
+  obtenerSesion,
+} from './services/auth'
 
 function App() {
-  const [estadoConexion, setEstadoConexion] = useState(
-    'Comprobando conexión con el servidor...',
-  )
-  const [mensajeApi, setMensajeApi] = useState('')
+  const [sesion, setSesion] = useState(null)
+  const [comprobandoSesion, setComprobandoSesion] = useState(true)
+  const [cerrandoSesion, setCerrandoSesion] = useState(false)
+  const [errorSesion, setErrorSesion] = useState('')
 
-  // La comprobación se ejecuta al cargar la aplicación porque solo necesitamos
-  // verificar una vez que React puede comunicarse con la API de desarrollo.
   useEffect(() => {
-    const comprobarBackend = async () => {
+    let componenteActivo = true
+
+    // La suscripción mantiene la interfaz sincronizada con los cambios que
+    // Supabase Auth realice sobre la sesión, sin administrar tokens manualmente.
+    const dejarDeObservar = observarCambiosAutenticacion((_evento, nuevaSesion) => {
+      if (!componenteActivo) return
+
+      setSesion(nuevaSesion)
+      setComprobandoSesion(false)
+      setErrorSesion('')
+    })
+
+    const comprobarSesionInicial = async () => {
       try {
-        const respuesta = await fetch(`${apiUrl}/api/health`)
+        const sesionActual = await obtenerSesion()
 
-        if (!respuesta.ok) {
-          throw new Error(`El servidor respondió con HTTP ${respuesta.status}`)
+        if (componenteActivo) {
+          setSesion(sesionActual)
         }
-
-        const datos = await respuesta.json()
-
-        setEstadoConexion('Backend conectado correctamente')
-        setMensajeApi(datos.message)
-      } catch (error) {
-        console.error('Error al comprobar la conexión con el backend:', error)
-        setEstadoConexion('No fue posible conectar con el backend')
-        setMensajeApi('')
+      } catch {
+        if (componenteActivo) {
+          setErrorSesion(
+            'No fue posible comprobar la sesión. Intenta recargar la página.',
+          )
+        }
+      } finally {
+        if (componenteActivo) {
+          setComprobandoSesion(false)
+        }
       }
     }
 
-    comprobarBackend()
+    comprobarSesionInicial()
+
+    return () => {
+      componenteActivo = false
+      dejarDeObservar()
+    }
   }, [])
 
+  const manejarInicioSesion = (nuevaSesion) => {
+    setSesion(nuevaSesion)
+    setErrorSesion('')
+  }
+
+  const manejarCierreSesion = async () => {
+    if (cerrandoSesion) return
+
+    setCerrandoSesion(true)
+    setErrorSesion('')
+
+    try {
+      await cerrarSesion()
+      setSesion(null)
+    } catch {
+      setErrorSesion('No fue posible cerrar la sesión. Intenta nuevamente.')
+    } finally {
+      setCerrandoSesion(false)
+    }
+  }
+
+  if (comprobandoSesion) {
+    return (
+      <main className="estado-sesion" aria-live="polite">
+        <span className="indicador-carga" aria-hidden="true" />
+        <p>Comprobando sesión...</p>
+      </main>
+    )
+  }
+
+  if (!sesion) {
+    return <Login alIniciarSesion={manejarInicioSesion} />
+  }
+
   return (
-    <main id="center">
-      <h1>Prueba de conexión</h1>
-      <p>{estadoConexion}</p>
-      {mensajeApi && <p>{mensajeApi}</p>}
+    <main className="sesion-autenticada">
+      <section className="tarjeta-sesion" aria-labelledby="titulo-sesion">
+        <div className="marca-compacta" aria-hidden="true">
+          E
+        </div>
+        <p className="etiqueta-estado">Acceso autenticado</p>
+        <h1 id="titulo-sesion">Sesión iniciada correctamente</h1>
+        {sesion.user?.email && (
+          <p className="correo-usuario">{sesion.user.email}</p>
+        )}
+        <p className="aviso-autorizacion">
+          La autorización de roles y permisos se incorporará en una etapa
+          posterior.
+        </p>
+        {errorSesion && (
+          <p className="mensaje-error-sesion" role="alert">
+            {errorSesion}
+          </p>
+        )}
+        <button
+          className="boton-cerrar-sesion"
+          type="button"
+          onClick={manejarCierreSesion}
+          disabled={cerrandoSesion}
+        >
+          {cerrandoSesion ? 'Cerrando sesión...' : 'Cerrar sesión'}
+        </button>
+      </section>
     </main>
   )
 }
