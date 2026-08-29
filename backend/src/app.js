@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import authRoutes from './routes/auth.routes.js'
 
 const app = express()
 
@@ -26,5 +27,9 @@ app.get('/api/health', (_req, res) => {
     message: 'API de ECOFARM funcionando',
   })
 })
+
+// Las rutas de autenticación validan identidad. La autorización mediante roles
+// y permisos se incorporará posteriormente en una capa separada.
+app.use('/api/auth', authRoutes)
 
 export default app
