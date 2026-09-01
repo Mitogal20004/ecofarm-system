@@ -70,7 +70,7 @@ function Login({ alIniciarSesion }) {
             <span className="simbolo-ecofarm" aria-hidden="true">
               E
             </span>
-            <span id="marca-ecofarm">ECOFARM S.A.</span>
+            <span id="marca-ecofarm">E-farm</span>
           </div>
 
           <div className="mensaje-identidad">
@@ -78,7 +78,7 @@ function Login({ alIniciarSesion }) {
             <h1>Cultivamos orden para hacer crecer cada operación.</h1>
             <p>
               Un espacio seguro para administrar los procesos internos de
-              ECOFARM.
+              E-farm.
             </p>
           </div>
 
@@ -96,7 +96,7 @@ function Login({ alIniciarSesion }) {
           <p className="etiqueta-bienvenida">Acceso interno</p>
           <h2>Bienvenido</h2>
           <p className="instruccion-login">
-            Ingresa tus credenciales para continuar en ECOFARM.
+            Ingresa tus credenciales para continuar en E-farm.
           </p>
 
           <form className="formulario-login" onSubmit={manejarEnvio} noValidate>
