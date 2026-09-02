@@ -39,6 +39,7 @@ export async function autenticarUsuario(req, res, next) {
     // Este usuario proviene del JWT verificado; no se acepta un identificador
     // enviado por body, query u otro encabezado controlado por el cliente.
     req.usuario = user
+    req.autenticacion = Object.freeze({ token })
     return next()
   } catch {
     return responderTokenInvalido(res)
