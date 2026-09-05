@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
+import rolesRoutes from './routes/roles.routes.js'
+import usuariosRoutes from './routes/usuarios.routes.js'
 
 const app = express()
 
@@ -28,8 +30,8 @@ app.get('/api/health', (_req, res) => {
   })
 })
 
-// Las rutas de autenticación validan identidad. La autorización mediante roles
-// y permisos se incorporará posteriormente en una capa separada.
 app.use('/api/auth', authRoutes)
+app.use('/api/usuarios', usuariosRoutes)
+app.use('/api/roles', rolesRoutes)
 
 export default app
