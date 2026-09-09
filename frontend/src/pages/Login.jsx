@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './Login.css'
-import logoEfarm from '../assets/logo-efarm-brand.png'
+import PanelIdentidad from '../components/PanelIdentidad'
 import { iniciarSesion } from '../services/auth'
 
 function Login({ alIniciarSesion }) {
@@ -71,27 +71,7 @@ function Login({ alIniciarSesion }) {
 
   return (
     <main className="pagina-login">
-      <section className="panel-identidad" aria-labelledby="marca-efarm">
-        <div className="contenido-identidad">
-          <div className="marca-ecofarm">
-            <img
-              id="marca-efarm"
-              className="logo-login"
-              src={logoEfarm}
-              alt="E-farm"
-            />
-          </div>
-
-          <div className="mensaje-identidad">
-            <p className="sobrelinea">Sistema administrativo</p>
-            <h1>Gestión clara para cada operación.</h1>
-            <p>
-              Administra los procesos internos de E-farm desde un entorno
-              seguro y centralizado.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PanelIdentidad />
 
       <section className="panel-acceso">
         <div className="contenedor-formulario">
@@ -185,6 +165,13 @@ function Login({ alIniciarSesion }) {
                   {erroresCampos.password}
                 </p>
               )}
+
+              <a
+                className="enlace-recuperacion"
+                href="/recuperar-password"
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
             </div>
 
             {errorAutenticacion && (

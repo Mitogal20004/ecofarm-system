@@ -94,6 +94,27 @@ export async function obtenerUsuarioActual() {
   return data.user
 }
 
+export async function solicitarRecuperacionPassword(correo) {
+  const redirectTo = `${window.location.origin}/restablecer-password`
+  const { error } = await supabase.auth.resetPasswordForEmail(correo, {
+    redirectTo,
+  })
+
+  if (error) {
+    throw error
+  }
+}
+
+export async function actualizarPassword(nuevaPassword) {
+  const { error } = await supabase.auth.updateUser({
+    password: nuevaPassword,
+  })
+
+  if (error) {
+    throw error
+  }
+}
+
 export function observarCambiosAutenticacion(callback) {
   const {
     data: { subscription },

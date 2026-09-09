@@ -2,25 +2,60 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import logoEfarm from './assets/logo-efarm-brand.png'
 import Login from './pages/Login'
+import RecuperarPassword from './pages/RecuperarPassword'
+import RestablecerPassword from './pages/RestablecerPassword'
 import {
   cerrarSesion,
   observarCambiosAutenticacion,
   obtenerSesion,
 } from './services/auth'
 
+const RUTA_RECUPERAR_PASSWORD = '/recuperar-password'
+const RUTA_RESTABLECER_PASSWORD = '/restablecer-password'
+
+function normalizarRuta(pathname) {
+  const ruta = pathname.replace(/\/+$/, '')
+  return ruta || '/'
+}
+
+function hayCredencialesRecuperacionEnUrl() {
+  const parametrosHash = new URLSearchParams(window.location.hash.slice(1))
+  const parametrosBusqueda = new URLSearchParams(window.location.search)
+
+  return (
+    parametrosHash.get('type') === 'recovery' ||
+    parametrosBusqueda.has('code')
+  )
+}
+
 function App() {
   const [sesion, setSesion] = useState(null)
   const [comprobandoSesion, setComprobandoSesion] = useState(true)
   const [cerrandoSesion, setCerrandoSesion] = useState(false)
   const [errorSesion, setErrorSesion] = useState('')
+  const [rutaActual, setRutaActual] = useState(() =>
+    normalizarRuta(window.location.pathname),
+  )
+  const [sesionRecuperacionValida, setSesionRecuperacionValida] =
+    useState(false)
+  const [comprobandoRecuperacion, setComprobandoRecuperacion] = useState(
+    () =>
+      rutaActual === RUTA_RESTABLECER_PASSWORD &&
+      hayCredencialesRecuperacionEnUrl(),
+  )
 
   useEffect(() => {
     let componenteActivo = true
 
     // La suscripción mantiene la interfaz sincronizada con los cambios que
     // Supabase Auth realice sobre la sesión, sin administrar tokens manualmente.
-    const dejarDeObservar = observarCambiosAutenticacion((_evento, nuevaSesion) => {
+    const dejarDeObservar = observarCambiosAutenticacion((evento, nuevaSesion) => {
       if (!componenteActivo) return
+
+      if (evento === 'PASSWORD_RECOVERY') {
+        setSesionRecuperacionValida(Boolean(nuevaSesion))
+        setComprobandoRecuperacion(false)
+      }
 
       setSesion(nuevaSesion)
       setComprobandoSesion(false)
@@ -55,9 +90,47 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const manejarCambioRuta = () => {
+      setRutaActual(normalizarRuta(window.location.pathname))
+    }
+
+    window.addEventListener('popstate', manejarCambioRuta)
+
+    return () => window.removeEventListener('popstate', manejarCambioRuta)
+  }, [])
+
+  useEffect(() => {
+    if (!comprobandoRecuperacion) return undefined
+
+    const temporizador = window.setTimeout(() => {
+      setComprobandoRecuperacion(false)
+    }, 4000)
+
+    return () => window.clearTimeout(temporizador)
+  }, [comprobandoRecuperacion])
+
   const manejarInicioSesion = (nuevaSesion) => {
     setSesion(nuevaSesion)
     setErrorSesion('')
+  }
+
+  const reemplazarRuta = (ruta) => {
+    window.history.replaceState(null, '', ruta)
+    setRutaActual(normalizarRuta(ruta))
+  }
+
+  const manejarNuevoEnlace = () => {
+    setSesionRecuperacionValida(false)
+    setComprobandoRecuperacion(false)
+    reemplazarRuta(RUTA_RECUPERAR_PASSWORD)
+  }
+
+  const manejarFinRestablecimiento = async () => {
+    await cerrarSesion()
+    setSesion(null)
+    setSesionRecuperacionValida(false)
+    reemplazarRuta('/')
   }
 
   const manejarCierreSesion = async () => {
@@ -85,8 +158,25 @@ function App() {
     )
   }
 
+  if (rutaActual === RUTA_RESTABLECER_PASSWORD) {
+    return (
+      <RestablecerPassword
+        recuperacionValida={sesionRecuperacionValida}
+        comprobandoRecuperacion={comprobandoRecuperacion}
+        alSolicitarNuevoEnlace={manejarNuevoEnlace}
+        alVolverLogin={manejarFinRestablecimiento}
+      />
+    )
+  }
+
+  if (rutaActual === RUTA_RECUPERAR_PASSWORD) {
+    return <RecuperarPassword alVolverLogin={() => reemplazarRuta('/')} />
+  }
+
   if (!sesion) {
-    return <Login alIniciarSesion={manejarInicioSesion} />
+    return (
+      <Login alIniciarSesion={manejarInicioSesion} />
+    )
   }
 
   return (

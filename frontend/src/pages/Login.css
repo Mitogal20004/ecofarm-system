@@ -189,6 +189,32 @@
   line-height: 1.45;
 }
 
+.enlace-recuperacion {
+  justify-self: end;
+  padding: 2px 0;
+  border: 0;
+  border-radius: 3px;
+  color: var(--color-verde-principal);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.enlace-recuperacion:hover:not(:disabled) {
+  color: var(--color-verde-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.enlace-recuperacion:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.enlace-recuperacion:disabled {
+  color: var(--color-texto-secundario);
+}
+
 .boton-iniciar {
   min-height: 46px;
   display: inline-flex;
