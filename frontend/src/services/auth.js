@@ -1,14 +1,59 @@
-import { supabase } from '../lib/supabase'
+﻿import { supabase } from '../lib/supabase'
 
-// Supabase Auth administra la identidad, las contraseñas y las sesiones. Este
-// servicio centraliza esas operaciones sin guardar credenciales en el frontend.
-// Los permisos de ECOFARM se resolverán después mediante perfiles, roles y
-// permisos; no deben aceptarse roles enviados manualmente por el cliente.
+const apiUrl = import.meta.env.VITE_API_URL
 
-export async function iniciarSesion(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+if (!apiUrl) {
+  throw new Error('Falta VITE_API_URL en el entorno del frontend.')
+}
+
+// El inicio de sesión por nombre de usuario se valida en el backend.
+// El frontend nunca necesita conocer el correo asociado internamente.
+export async function iniciarSesion(nombreUsuario, password) {
+  const respuesta = await fetch(`${apiUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      nombre_usuario: nombreUsuario,
+      password,
+    }),
+  })
+
+  let resultado
+
+  try {
+    resultado = await respuesta.json()
+  } catch {
+    throw new Error('El servidor devolvió una respuesta inválida.')
+  }
+
+  if (!respuesta.ok) {
+    const error = new Error(
+      resultado?.message || 'No fue posible iniciar sesión.',
+    )
+
+    error.status = respuesta.status
+
+    if (respuesta.status === 401) {
+      error.code = 'invalid_credentials'
+    }
+
+    throw error
+  }
+
+  const accessToken = resultado?.sesion?.access_token
+  const refreshToken = resultado?.sesion?.refresh_token
+
+  if (!accessToken || !refreshToken) {
+    throw new Error('El servidor devolvió una sesión inválida.')
+  }
+
+  // Registra la sesión devuelta por el backend en el cliente Supabase del
+  // navegador para conservar refresh automático, logout y eventos de sesión.
+  const { data, error } = await supabase.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken,
   })
 
   if (error) {
@@ -56,7 +101,5 @@ export function observarCambiosAutenticacion(callback) {
     callback(evento, sesion)
   })
 
-  // React podrá utilizar esta función como limpieza de un efecto para evitar
-  // mantener suscripciones cuando el componente deje de estar activo.
   return () => subscription.unsubscribe()
 }

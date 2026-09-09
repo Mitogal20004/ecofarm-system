@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import logoEfarm from './assets/logo-efarm-brand.png'
 import Login from './pages/Login'
 import {
   cerrarSesion,
@@ -93,7 +94,7 @@ function App() {
       <aside className="barra-lateral">
         <div className="marca-panel">
           <span className="simbolo-panel" aria-hidden="true">
-            E
+            <img src={logoEfarm} alt="" />
           </span>
           <span className="nombre-marca-panel">
             <strong>E-farm</strong>

@@ -1,4 +1,4 @@
-.estado-sesion {
+﻿.estado-sesion {
   min-height: 100vh;
   min-height: 100svh;
   display: grid;
@@ -54,13 +54,15 @@
   width: 40px;
   height: 40px;
   flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  border-radius: 7px;
-  color: var(--color-verde-oscuro);
-  background: #fff;
-  font-size: 20px;
-  font-weight: 700;
+  overflow: hidden;
+}
+
+.simbolo-panel img {
+  display: block;
+  width: auto;
+  max-width: none;
+  height: 40px;
+  transform: translateX(1px);
 }
 
 .nombre-marca-panel {

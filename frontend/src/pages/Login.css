@@ -1,9 +1,9 @@
-.pagina-login {
+﻿.pagina-login {
   width: 100%;
   min-height: 100vh;
   min-height: 100svh;
   display: grid;
-  grid-template-columns: minmax(360px, 42%) 1fr;
+  grid-template-columns: minmax(420px, 46%) 1fr;
   background: var(--color-fondo);
 }
 
@@ -19,34 +19,27 @@
   min-height: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
   padding: clamp(32px, 5vw, 64px);
+  text-align: center;
 }
 
 .marca-ecofarm {
+  width: min(100%, 330px);
   display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.025em;
+  justify-content: center;
 }
 
-.simbolo-ecofarm {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #fff;
-  border-radius: 8px;
-  color: var(--color-verde-oscuro);
-  background: #fff;
-  font-size: 21px;
+.logo-login {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .mensaje-identidad {
-  width: min(100%, 560px);
+  width: min(100%, 520px);
   margin: auto 0;
-  padding: 72px 0;
+  padding: 56px 0 72px;
 }
 
 .sobrelinea {
@@ -61,22 +54,19 @@
 .mensaje-identidad h1 {
   margin: 0;
   color: #fff;
-  font-size: clamp(34px, 4vw, 50px);
+  font-size: clamp(34px, 4vw, 48px);
   font-weight: 700;
   line-height: 1.13;
   letter-spacing: -0.025em;
 }
 
 .mensaje-identidad > p:last-child {
-  max-width: 490px;
+  max-width: 470px;
   margin: 24px 0 0;
+  margin-inline: auto;
   color: #dbe8df;
   font-size: 16px;
   line-height: 1.65;
-}
-
-.paisaje-abstracto {
-  display: none;
 }
 
 .panel-acceso {
@@ -176,6 +166,11 @@
   background: #eef2ef;
 }
 
+.grupo-campo input::placeholder {
+  color: #7a887f;
+  opacity: 1;
+}
+
 .error-campo {
   margin: 0;
   color: var(--color-error);
@@ -260,7 +255,7 @@
 
   .panel-identidad,
   .contenido-identidad {
-    min-height: 260px;
+    min-height: 360px;
   }
 
   .contenido-identidad {
@@ -268,8 +263,8 @@
   }
 
   .mensaje-identidad {
-    margin: 42px 0 0;
-    padding: 0 0 32px;
+    margin: 38px 0 0;
+    padding: 0 0 36px;
   }
 
   .mensaje-identidad h1 {
@@ -290,34 +285,29 @@
 @media (max-width: 520px) {
   .panel-identidad,
   .contenido-identidad {
-    min-height: 210px;
+    min-height: 310px;
   }
 
   .contenido-identidad {
     padding: 24px;
   }
 
-  .simbolo-ecofarm {
-    width: 38px;
-    height: 38px;
-    font-size: 19px;
-  }
-
   .marca-ecofarm {
-    font-size: 16px;
+    width: min(100%, 220px);
   }
 
   .mensaje-identidad {
-    margin-top: 30px;
+    margin-top: 28px;
     padding-bottom: 24px;
   }
 
   .mensaje-identidad h1 {
-    font-size: 27px;
+    font-size: 28px;
   }
 
   .mensaje-identidad > p:last-child {
-    display: none;
+    margin-top: 16px;
+    font-size: 14px;
   }
 
   .panel-acceso {
@@ -327,4 +317,53 @@
   .contenedor-formulario {
     padding: 30px 24px;
   }
+}
+
+.campo-password {
+  position: relative;
+}
+
+.campo-password input {
+  padding-right: 48px;
+}
+
+.boton-visibilidad-password {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-texto-secundario);
+  background: transparent;
+  transform: translateY(-50%);
+}
+
+.boton-visibilidad-password:hover:not(:disabled) {
+  color: var(--color-verde-principal);
+  background: #f0f5f2;
+}
+
+.boton-visibilidad-password:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.boton-visibilidad-password:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.boton-visibilidad-password svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
