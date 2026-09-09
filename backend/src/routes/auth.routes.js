@@ -1,4 +1,5 @@
-import { Router } from 'express'
+﻿import { Router } from 'express'
+import { iniciarSesion } from '../controllers/auth.controller.js'
 import { autenticarUsuario } from '../middlewares/autenticacion.js'
 import {
   cargarAutorizacion,
@@ -6,6 +7,8 @@ import {
 } from '../middlewares/autorizacion.js'
 
 const router = Router()
+
+router.post('/login', iniciarSesion)
 
 router.get(
   '/me',
