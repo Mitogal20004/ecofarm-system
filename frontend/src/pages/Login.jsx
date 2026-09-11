@@ -1,7 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './Login.css'
 import PanelIdentidad from '../components/PanelIdentidad'
-import { iniciarSesion } from '../services/auth'
+import { iniciarSesion, iniciarSesionConGoogle } from '../services/auth'
+
+const MENSAJE_ERROR_GOOGLE = 'No fue posible iniciar sesión con Google.'
+
+function hayErrorOAuthEnUrl() {
+  const parametrosBusqueda = new URLSearchParams(window.location.search)
+  const parametrosHash = new URLSearchParams(window.location.hash.slice(1))
+
+  return parametrosBusqueda.has('error') || parametrosHash.has('error')
+}
 
 function Login({ alIniciarSesion }) {
   const [usuario, setUsuario] = useState('')
@@ -9,7 +18,17 @@ function Login({ alIniciarSesion }) {
   const [mostrarPassword, setMostrarPassword] = useState(false)
   const [erroresCampos, setErroresCampos] = useState({})
   const [errorAutenticacion, setErrorAutenticacion] = useState('')
+  const [errorGoogle, setErrorGoogle] = useState(() =>
+    hayErrorOAuthEnUrl() ? MENSAJE_ERROR_GOOGLE : '',
+  )
   const [enviando, setEnviando] = useState(false)
+  const [conectandoGoogle, setConectandoGoogle] = useState(false)
+
+  useEffect(() => {
+    if (!hayErrorOAuthEnUrl()) return
+
+    window.history.replaceState(null, '', window.location.pathname)
+  }, [])
 
   const validarFormulario = () => {
     const nuevosErrores = {}
@@ -29,10 +48,11 @@ function Login({ alIniciarSesion }) {
   const manejarEnvio = async (evento) => {
     evento.preventDefault()
 
-    if (enviando || !validarFormulario()) return
+    if (enviando || conectandoGoogle || !validarFormulario()) return
 
     setEnviando(true)
     setErrorAutenticacion('')
+    setErrorGoogle('')
 
     try {
       const { sesion } = await iniciarSesion(
@@ -67,6 +87,21 @@ function Login({ alIniciarSesion }) {
     setPassword(evento.target.value)
     setErroresCampos((errores) => ({ ...errores, password: '' }))
     setErrorAutenticacion('')
+  }
+
+  const manejarInicioGoogle = async () => {
+    if (enviando || conectandoGoogle) return
+
+    setConectandoGoogle(true)
+    setErrorAutenticacion('')
+    setErrorGoogle('')
+
+    try {
+      await iniciarSesionConGoogle()
+    } catch {
+      setErrorGoogle(MENSAJE_ERROR_GOOGLE)
+      setConectandoGoogle(false)
+    }
   }
 
   return (
@@ -180,12 +215,64 @@ function Login({ alIniciarSesion }) {
               </p>
             )}
 
-            <button className="boton-iniciar" type="submit" disabled={enviando}>
+            <button
+              className="boton-iniciar"
+              type="submit"
+              disabled={enviando || conectandoGoogle}
+            >
               {enviando && (
                 <span className="spinner-boton" aria-hidden="true" />
               )}
               {enviando ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </button>
+
+            <div className="separador-oauth" aria-hidden="true">
+              <span>o continuar con</span>
+            </div>
+
+            <button
+              className="boton-google"
+              type="button"
+              onClick={manejarInicioGoogle}
+              disabled={enviando || conectandoGoogle}
+            >
+              {conectandoGoogle ? (
+                <span className="spinner-google" aria-hidden="true" />
+              ) : (
+                <svg
+                  className="icono-google"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    fill="#4285f4"
+                    d="M21.6 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.4a4.6 4.6 0 0 1-2 3v2.6h3.3c1.9-1.8 2.9-4.4 2.9-7.5Z"
+                  />
+                  <path
+                    fill="#34a853"
+                    d="M12 22c2.7 0 5-.9 6.7-2.3l-3.3-2.6c-.9.6-2.1 1-3.4 1a5.9 5.9 0 0 1-5.5-4.1H3.1v2.7A10.1 10.1 0 0 0 12 22Z"
+                  />
+                  <path
+                    fill="#fbbc05"
+                    d="M6.5 14a6 6 0 0 1 0-3.9V7.4H3.1a10 10 0 0 0 0 9.2L6.5 14Z"
+                  />
+                  <path
+                    fill="#ea4335"
+                    d="M12 6a5.5 5.5 0 0 1 3.9 1.5l2.9-2.8A9.7 9.7 0 0 0 12 2a10.1 10.1 0 0 0-8.9 5.4l3.4 2.7A5.9 5.9 0 0 1 12 6Z"
+                  />
+                </svg>
+              )}
+              {conectandoGoogle
+                ? 'Conectando con Google...'
+                : 'Continuar con Google'}
+            </button>
+
+            {errorGoogle && (
+              <p className="error-autenticacion" role="alert">
+                {errorGoogle}
+              </p>
+            )}
           </form>
 
           <p className="nota-seguridad">

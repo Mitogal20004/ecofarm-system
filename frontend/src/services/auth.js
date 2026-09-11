@@ -66,6 +66,19 @@ export async function iniciarSesion(nombreUsuario, password) {
   }
 }
 
+export async function iniciarSesionConGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+    },
+  })
+
+  if (error) {
+    throw error
+  }
+}
+
 export async function cerrarSesion() {
   const { error } = await supabase.auth.signOut()
 
