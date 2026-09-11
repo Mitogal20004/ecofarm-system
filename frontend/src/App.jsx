@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import iconoCerrarSesion from './assets/icono-cerrar-sesion.svg'
 import logoEfarm from './assets/logo-efarm-brand.png'
 import Login from './pages/Login'
 import RecuperarPassword from './pages/RecuperarPassword'
@@ -222,8 +223,14 @@ function App() {
             type="button"
             onClick={manejarCierreSesion}
             disabled={cerrandoSesion}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
           >
-            {cerrandoSesion ? 'Cerrando sesión...' : 'Cerrar sesión'}
+            {cerrandoSesion ? (
+              <span className="spinner-cerrar-sesion" aria-hidden="true" />
+            ) : (
+              <img src={iconoCerrarSesion} alt="" aria-hidden="true" />
+            )}
           </button>
         </header>
 
