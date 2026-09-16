@@ -5,6 +5,7 @@ import logoEfarm from './assets/logo-efarm-brand.png'
 import Login from './pages/Login'
 import RecuperarPassword from './pages/RecuperarPassword'
 import RestablecerPassword from './pages/RestablecerPassword'
+import Usuarios from './pages/Usuarios'
 import {
   cerrarSesion,
   observarCambiosAutenticacion,
@@ -13,6 +14,8 @@ import {
 
 const RUTA_RECUPERAR_PASSWORD = '/recuperar-password'
 const RUTA_RESTABLECER_PASSWORD = '/restablecer-password'
+const VISTA_INICIO = 'inicio'
+const VISTA_USUARIOS = 'usuarios'
 
 function normalizarRuta(pathname) {
   const ruta = pathname.replace(/\/+$/, '')
@@ -34,6 +37,7 @@ function App() {
   const [comprobandoSesion, setComprobandoSesion] = useState(true)
   const [cerrandoSesion, setCerrandoSesion] = useState(false)
   const [errorSesion, setErrorSesion] = useState('')
+  const [vistaActual, setVistaActual] = useState(VISTA_INICIO)
   const [rutaActual, setRutaActual] = useState(() =>
     normalizarRuta(window.location.pathname),
   )
@@ -195,16 +199,51 @@ function App() {
 
         <nav className="navegacion-principal" aria-label="Navegación principal">
           <p className="titulo-navegacion">Menú principal</p>
-          <ul>
-            <li className="opcion-navegacion opcion-navegacion-activa">
-              <span aria-current="page">Inicio</span>
+          <ul className="lista-navegacion-principal">
+            <li>
+              <button
+                className={`opcion-navegacion boton-navegacion${
+                  vistaActual === VISTA_INICIO
+                    ? ' opcion-navegacion-activa'
+                    : ''
+                }`}
+                type="button"
+                onClick={() => setVistaActual(VISTA_INICIO)}
+                aria-current={
+                  vistaActual === VISTA_INICIO ? 'page' : undefined
+                }
+              >
+                Inicio
+              </button>
             </li>
             <li className="opcion-navegacion">Ventas</li>
             <li className="opcion-navegacion">Inventario</li>
             <li className="opcion-navegacion">Clientes</li>
             <li className="opcion-navegacion">Cotizaciones</li>
             <li className="opcion-navegacion">Reportes</li>
-            <li className="opcion-navegacion">Administración</li>
+            <li className="grupo-navegacion">
+              <span className="opcion-navegacion opcion-navegacion-grupo">
+                Administración
+              </span>
+              <ul className="subnavegacion">
+                <li>
+                  <button
+                    className={`opcion-navegacion opcion-subnavegacion boton-navegacion${
+                      vistaActual === VISTA_USUARIOS
+                        ? ' opcion-navegacion-activa'
+                        : ''
+                    }`}
+                    type="button"
+                    onClick={() => setVistaActual(VISTA_USUARIOS)}
+                    aria-current={
+                      vistaActual === VISTA_USUARIOS ? 'page' : undefined
+                    }
+                  >
+                    Usuarios
+                  </button>
+                </li>
+              </ul>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -236,35 +275,41 @@ function App() {
 
         <main className="area-principal">
           <div className="contenido-panel">
-            <section
-              className="encabezado-panel"
-              aria-labelledby="titulo-panel"
-            >
-              <p className="etiqueta-seccion">Panel administrativo</p>
-              <h1 id="titulo-panel">Bienvenido a E-farm</h1>
-              <p className="descripcion-panel">
-                Espacio de trabajo para las operaciones internas de E-farm.
-              </p>
-            </section>
+            {vistaActual === VISTA_USUARIOS ? (
+              <Usuarios />
+            ) : (
+              <>
+                <section
+                  className="encabezado-panel"
+                  aria-labelledby="titulo-panel"
+                >
+                  <p className="etiqueta-seccion">Panel administrativo</p>
+                  <h1 id="titulo-panel">Bienvenido a E-farm</h1>
+                  <p className="descripcion-panel">
+                    Espacio de trabajo para las operaciones internas de E-farm.
+                  </p>
+                </section>
 
-            {errorSesion && (
-              <p className="mensaje-error-sesion" role="alert">
-                {errorSesion}
-              </p>
+                {errorSesion && (
+                  <p className="mensaje-error-sesion" role="alert">
+                    {errorSesion}
+                  </p>
+                )}
+
+                <section
+                  className="tarjeta-sesion"
+                  aria-labelledby="titulo-sesion"
+                >
+                  <div>
+                    <p className="etiqueta-estado">Sesión activa</p>
+                    <h2 id="titulo-sesion">Acceso al sistema</h2>
+                  </div>
+                  <p className="descripcion-sesion">
+                    Tu sesión se encuentra activa.
+                  </p>
+                </section>
+              </>
             )}
-
-            <section
-              className="tarjeta-sesion"
-              aria-labelledby="titulo-sesion"
-            >
-              <div>
-                <p className="etiqueta-estado">Sesión activa</p>
-                <h2 id="titulo-sesion">Acceso al sistema</h2>
-              </div>
-              <p className="descripcion-sesion">
-                Tu sesión se encuentra activa.
-              </p>
-            </section>
           </div>
         </main>
       </div>
