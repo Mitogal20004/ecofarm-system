@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   actualizarPerfilUsuario,
+  crearUsuario,
   listarUsuarios,
   obtenerDetalleUsuario,
   reemplazarRolesUsuario,
@@ -14,6 +15,14 @@ import {
 const router = Router()
 const requerirConsultaUsuarios = requerirPermiso('usuario.ver')
 const requerirAdministracionUsuarios = requerirPermiso('usuario.administrar')
+
+router.post(
+  '/',
+  autenticarUsuario,
+  cargarAutorizacion,
+  requerirAdministracionUsuarios,
+  crearUsuario,
+)
 
 router.get(
   '/',

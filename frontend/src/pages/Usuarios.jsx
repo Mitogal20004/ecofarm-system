@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './Usuarios.css'
+import NuevoUsuarioDialog from '../components/NuevoUsuarioDialog'
 import { listarUsuarios } from '../services/usuarios'
 
 const LIMITE_USUARIOS = 10
@@ -32,6 +33,9 @@ function Usuarios() {
   const [filtroActivo, setFiltroActivo] = useState('todos')
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
+  const [dialogoAbierto, setDialogoAbierto] = useState(false)
+  const [mensajeExito, setMensajeExito] = useState('')
+  const [actualizacionListado, setActualizacionListado] = useState(0)
 
   useEffect(() => {
     let vistaActiva = true
@@ -73,7 +77,7 @@ function Usuarios() {
     return () => {
       vistaActiva = false
     }
-  }, [busquedaAplicada, filtroActivo, pagina])
+  }, [actualizacionListado, busquedaAplicada, filtroActivo, pagina])
 
   const manejarBusqueda = (evento) => {
     evento.preventDefault()
@@ -86,6 +90,18 @@ function Usuarios() {
     setPagina(1)
   }
 
+  const abrirDialogo = () => {
+    setMensajeExito('')
+    setDialogoAbierto(true)
+  }
+
+  const manejarUsuarioCreado = () => {
+    setDialogoAbierto(false)
+    setMensajeExito('Usuario creado correctamente.')
+    setPagina(1)
+    setActualizacionListado((actual) => actual + 1)
+  }
+
   const puedeRetroceder = pagina > 1 && !cargando
   const puedeAvanzar =
     paginacion.total_paginas > 0 &&
@@ -95,10 +111,25 @@ function Usuarios() {
   return (
     <section className="pagina-usuarios" aria-labelledby="titulo-usuarios">
       <header className="encabezado-usuarios">
-        <p className="etiqueta-seccion">Administración</p>
-        <h1 id="titulo-usuarios">Usuarios</h1>
-        <p>Consulta y administra el personal con acceso a E-farm.</p>
+        <div>
+          <p className="etiqueta-seccion">Administración</p>
+          <h1 id="titulo-usuarios">Usuarios</h1>
+          <p>Consulta y administra el personal con acceso a E-farm.</p>
+        </div>
+        <button
+          className="boton-nuevo-usuario"
+          type="button"
+          onClick={abrirDialogo}
+        >
+          + Nuevo usuario
+        </button>
       </header>
+
+      {mensajeExito && (
+        <p className="mensaje-exito-usuario" role="status">
+          {mensajeExito}
+        </p>
+      )}
 
       <form className="filtros-usuarios" onSubmit={manejarBusqueda}>
         <div className="control-busqueda">
@@ -224,6 +255,12 @@ function Usuarios() {
           </nav>
         )}
       </div>
+
+      <NuevoUsuarioDialog
+        abierto={dialogoAbierto}
+        alCerrar={() => setDialogoAbierto(false)}
+        alCrear={manejarUsuarioCreado}
+      />
     </section>
   )
 }

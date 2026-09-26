@@ -1,6 +1,7 @@
 import {
   ErrorServicioUsuarios,
   actualizarPerfilUsuario as actualizarPerfilUsuarioServicio,
+  crearUsuario as crearUsuarioServicio,
   listarUsuarios as listarUsuariosServicio,
   obtenerDetalleUsuario as obtenerDetalleUsuarioServicio,
   reemplazarRolesUsuario as reemplazarRolesUsuarioServicio,
@@ -9,6 +10,24 @@ import {
 const MENSAJE_SOLICITUD_INVALIDA = 'La solicitud contiene datos inválidos'
 const PATRON_UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const PATRON_NOMBRE_USUARIO =
+  /^[a-z0-9][a-z0-9._-]*[a-z0-9]$/
+const PATRON_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const CAMPOS_CREACION_USUARIO = new Set([
+  'nombre_completo',
+  'nombre_usuario',
+  'email',
+  'telefono',
+  'password',
+  'rol_id',
+])
+const CAMPOS_OBLIGATORIOS_CREACION = [
+  'nombre_completo',
+  'nombre_usuario',
+  'email',
+  'password',
+  'rol_id',
+]
 
 class ErrorSolicitudInvalida extends Error {}
 
@@ -57,6 +76,14 @@ const respuestasPorCodigo = {
   23514: {
     estado: 409,
     mensaje: 'La operación solicitada no puede realizarse',
+  },
+  23505: {
+    estado: 409,
+    mensaje: 'El correo o nombre de usuario ya está registrado.',
+  },
+  conflicto_usuario: {
+    estado: 409,
+    mensaje: 'El correo o nombre de usuario ya está registrado.',
   },
 }
 
@@ -118,6 +145,88 @@ const crearOpcionesListado = (query) => {
   }
 
   return opciones
+}
+
+const validarPassword = (password) =>
+  password.length >= 8 &&
+  password.length <= 1024 &&
+  /[A-Z]/.test(password) &&
+  /[a-z]/.test(password) &&
+  /[0-9]/.test(password) &&
+  /[^A-Za-z0-9\s]/.test(password)
+
+const crearDatosUsuario = (body) => {
+  if (!esObjeto(body)) {
+    throw new ErrorSolicitudInvalida()
+  }
+
+  const campos = Object.keys(body)
+
+  if (
+    campos.some((campo) => !CAMPOS_CREACION_USUARIO.has(campo)) ||
+    CAMPOS_OBLIGATORIOS_CREACION.some(
+      (campo) => !Object.prototype.hasOwnProperty.call(body, campo),
+    )
+  ) {
+    throw new ErrorSolicitudInvalida()
+  }
+
+  if (
+    typeof body.nombre_completo !== 'string' ||
+    typeof body.nombre_usuario !== 'string' ||
+    typeof body.email !== 'string' ||
+    typeof body.password !== 'string' ||
+    typeof body.rol_id !== 'string' ||
+    (body.telefono !== undefined &&
+      body.telefono !== null &&
+      typeof body.telefono !== 'string')
+  ) {
+    throw new ErrorSolicitudInvalida()
+  }
+
+  const nombreCompleto = body.nombre_completo.trim()
+  const nombreUsuario = body.nombre_usuario.trim().toLowerCase()
+  const email = body.email.trim().toLowerCase()
+  const telefono = body.telefono?.trim() || null
+  const rolId = body.rol_id.trim()
+
+  if (
+    nombreCompleto.length < 1 ||
+    nombreCompleto.length > 150 ||
+    nombreUsuario.length < 3 ||
+    nombreUsuario.length > 50 ||
+    !PATRON_NOMBRE_USUARIO.test(nombreUsuario) ||
+    email.length > 254 ||
+    !PATRON_EMAIL.test(email) ||
+    (telefono !== null && telefono.length > 30) ||
+    !validarPassword(body.password) ||
+    !PATRON_UUID.test(rolId)
+  ) {
+    throw new ErrorSolicitudInvalida()
+  }
+
+  return {
+    nombre_completo: nombreCompleto,
+    nombre_usuario: nombreUsuario,
+    email,
+    telefono,
+    password: body.password,
+    rol_id: rolId,
+  }
+}
+
+export async function crearUsuario(req, res) {
+  try {
+    const datos = crearDatosUsuario(req.body)
+    const resultado = await crearUsuarioServicio(
+      req.autenticacion?.token,
+      datos,
+    )
+
+    return res.status(201).json(resultado)
+  } catch (error) {
+    return responderError(res, error)
+  }
 }
 
 export async function listarUsuarios(req, res) {
