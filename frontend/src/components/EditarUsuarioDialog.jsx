@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { actualizarPerfilUsuario } from '../services/usuarios'
+import { listarRolesActivos } from '../services/roles'
+import {
+  actualizarPerfilUsuario,
+  reemplazarRolesUsuario,
+} from '../services/usuarios'
 
-const obtenerMensajeError = (error) => {
+const obtenerMensajePerfil = (error) => {
   if (error?.status === 400) {
     return 'Revisa los datos ingresados e intenta nuevamente.'
   }
@@ -22,24 +26,131 @@ const obtenerMensajeError = (error) => {
     return 'La cuenta no puede desactivarse porque debe permanecer al menos un Administrador activo.'
   }
 
-  return 'No fue posible actualizar el usuario.'
+  return 'No fue posible actualizar el perfil.'
 }
 
-function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
+const obtenerMensajeRoles = (error) => {
+  if (error?.status === 400) {
+    return 'Selecciona solamente roles activos y válidos.'
+  }
+
+  if (error?.status === 401) {
+    return 'Tu sesión ya no es válida. Vuelve a iniciar sesión.'
+  }
+
+  if (error?.status === 403) {
+    return 'No tienes permiso para asignar los roles seleccionados.'
+  }
+
+  if (error?.status === 404) {
+    return 'El usuario solicitado ya no existe.'
+  }
+
+  if (error?.status === 409) {
+    return 'El cambio no puede dejar al sistema sin un Administrador activo.'
+  }
+
+  return 'No fue posible actualizar los roles.'
+}
+
+const obtenerMensajeConsultaRoles = (error) => {
+  if (error?.status === 401) {
+    return 'Tu sesión ya no es válida. Vuelve a iniciar sesión.'
+  }
+
+  if (error?.status === 403) {
+    return 'No tienes permiso para consultar los roles disponibles.'
+  }
+
+  return 'No fue posible cargar los roles disponibles.'
+}
+
+const ordenarIds = (ids) => [...ids].sort()
+
+const conjuntosIguales = (primeros, segundos) => {
+  const listaPrimera = ordenarIds(primeros)
+  const listaSegunda = ordenarIds(segundos)
+
+  return (
+    listaPrimera.length === listaSegunda.length &&
+    listaPrimera.every((id, indice) => id === listaSegunda[indice])
+  )
+}
+
+function EditarUsuarioDialog({
+  usuario,
+  puedeAdministrarRoles,
+  alCerrar,
+  alActualizar,
+}) {
+  const [perfilBase, setPerfilBase] = useState(usuario)
   const [nombreCompleto, setNombreCompleto] = useState(
     usuario.nombre_completo ?? '',
   )
   const [telefono, setTelefono] = useState(usuario.telefono ?? '')
   const [activo, setActivo] = useState(usuario.activo === true)
-  const [errores, setErrores] = useState({})
-  const [errorActualizacion, setErrorActualizacion] = useState('')
-  const [enviando, setEnviando] = useState(false)
+  const [rolesActuales, setRolesActuales] = useState(usuario.roles ?? [])
+  const [rolesDisponibles, setRolesDisponibles] = useState([])
+  const [rolesSeleccionados, setRolesSeleccionados] = useState(
+    () =>
+      new Set(
+        (usuario.roles ?? [])
+          .filter((rol) => rol.activo)
+          .map((rol) => rol.id),
+      ),
+  )
+  const [erroresPerfil, setErroresPerfil] = useState({})
+  const [errorPerfil, setErrorPerfil] = useState('')
+  const [mensajePerfil, setMensajePerfil] = useState('')
+  const [errorRoles, setErrorRoles] = useState('')
+  const [mensajeRoles, setMensajeRoles] = useState('')
+  const [cargandoRoles, setCargandoRoles] = useState(true)
+  const [errorConsultaRoles, setErrorConsultaRoles] = useState('')
+  const [enviandoPerfil, setEnviandoPerfil] = useState(false)
+  const [enviandoRoles, setEnviandoRoles] = useState(false)
   const nombreRef = useRef(null)
-  const envioEnCursoRef = useRef(false)
+  const envioPerfilRef = useRef(false)
+  const envioRolesRef = useRef(false)
+  const enviando = enviandoPerfil || enviandoRoles
 
   useEffect(() => {
     nombreRef.current?.focus()
   }, [])
+
+  useEffect(() => {
+    let dialogoActivo = true
+
+    const consultarRoles = async () => {
+      setCargandoRoles(true)
+      setErrorConsultaRoles('')
+
+      try {
+        const roles = await listarRolesActivos()
+        const rolesPermitidos = puedeAdministrarRoles
+          ? roles
+          : roles.filter((rol) => rol.nombre !== 'Administrador')
+
+        if (dialogoActivo) {
+          setRolesDisponibles(rolesPermitidos)
+        }
+      } catch (error) {
+        if (dialogoActivo) {
+          setRolesDisponibles([])
+          setErrorConsultaRoles(obtenerMensajeConsultaRoles(error))
+        }
+      } finally {
+        if (dialogoActivo) {
+          setCargandoRoles(false)
+        }
+      }
+    }
+
+    consultarRoles()
+
+    return () => {
+      dialogoActivo = false
+    }
+  }, [puedeAdministrarRoles])
 
   useEffect(() => {
     const overflowAnterior = document.body.style.overflow
@@ -69,10 +180,10 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
     }
   }
 
-  const manejarEnvio = async (evento) => {
+  const manejarEnvioPerfil = async (evento) => {
     evento.preventDefault()
 
-    if (envioEnCursoRef.current) return
+    if (envioPerfilRef.current || envioRolesRef.current) return
 
     const nombreNormalizado = nombreCompleto.trim()
     const telefonoNormalizado = telefono.trim()
@@ -86,15 +197,27 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
       nuevosErrores.telefono = 'El teléfono no puede exceder 30 caracteres.'
     }
 
-    setErrores(nuevosErrores)
-    setErrorActualizacion('')
+    setErroresPerfil(nuevosErrores)
+    setErrorPerfil('')
+    setMensajePerfil('')
 
     if (Object.keys(nuevosErrores).length > 0) return
 
-    const cambios = {}
-    const telefonoOriginal = usuario.telefono ?? ''
+    if (
+      perfilBase.activo === false &&
+      activo === true &&
+      !rolesActuales.some((rol) => rol.activo)
+    ) {
+      setErrorPerfil(
+        'Asigna al menos un rol activo antes de activar esta cuenta.',
+      )
+      return
+    }
 
-    if (nombreNormalizado !== usuario.nombre_completo) {
+    const cambios = {}
+    const telefonoOriginal = perfilBase.telefono ?? ''
+
+    if (nombreNormalizado !== perfilBase.nombre_completo) {
       cambios.nombre_completo = nombreNormalizado
     }
 
@@ -102,38 +225,108 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
       cambios.telefono = telefonoNormalizado || null
     }
 
-    if (activo !== usuario.activo) {
+    if (activo !== perfilBase.activo) {
       cambios.activo = activo
     }
 
     if (Object.keys(cambios).length === 0) {
-      setErrorActualizacion('No hay cambios por guardar.')
+      setErrorPerfil('No hay cambios de perfil por guardar.')
       return
     }
 
     if (
-      usuario.activo === true &&
+      perfilBase.activo === true &&
       activo === false &&
       !window.confirm(
-        `¿Confirmas que deseas desactivar la cuenta de ${usuario.nombre_completo}?`,
+        `¿Confirmas que deseas desactivar la cuenta de ${perfilBase.nombre_completo}?`,
       )
     ) {
       return
     }
 
-    envioEnCursoRef.current = true
-    setEnviando(true)
+    envioPerfilRef.current = true
+    setEnviandoPerfil(true)
 
     try {
-      const resultado = await actualizarPerfilUsuario(usuario.id, cambios)
-      alGuardar(resultado.perfil)
+      const resultado = await actualizarPerfilUsuario(perfilBase.id, cambios)
+
+      setPerfilBase((actual) => ({ ...actual, ...resultado.perfil }))
+      setMensajePerfil('Perfil actualizado correctamente.')
+      alActualizar()
     } catch (error) {
-      setErrorActualizacion(obtenerMensajeError(error))
+      setErrorPerfil(obtenerMensajePerfil(error))
     } finally {
-      envioEnCursoRef.current = false
-      setEnviando(false)
+      envioPerfilRef.current = false
+      setEnviandoPerfil(false)
     }
   }
+
+  const alternarRol = (rolId) => {
+    setRolesSeleccionados((actuales) => {
+      const siguientes = new Set(actuales)
+
+      if (siguientes.has(rolId)) {
+        siguientes.delete(rolId)
+      } else {
+        siguientes.add(rolId)
+      }
+
+      return siguientes
+    })
+    setErrorRoles('')
+    setMensajeRoles('')
+  }
+
+  const manejarEnvioRoles = async (evento) => {
+    evento.preventDefault()
+
+    if (envioRolesRef.current || envioPerfilRef.current) return
+
+    setErrorRoles('')
+    setMensajeRoles('')
+
+    const rolesIds = rolesDisponibles
+      .filter((rol) => rolesSeleccionados.has(rol.id))
+      .map((rol) => rol.id)
+    const rolesActualesIds = rolesActuales.map((rol) => rol.id)
+
+    if (perfilBase.activo && rolesIds.length === 0) {
+      setErrorRoles('Un usuario activo debe conservar al menos un rol.')
+      return
+    }
+
+    if (conjuntosIguales(rolesIds, rolesActualesIds)) {
+      setErrorRoles('No hay cambios de roles por guardar.')
+      return
+    }
+
+    if (
+      !window.confirm(
+        `¿Confirmas que deseas reemplazar los roles de ${perfilBase.nombre_completo}?`,
+      )
+    ) {
+      return
+    }
+
+    envioRolesRef.current = true
+    setEnviandoRoles(true)
+
+    try {
+      const resultado = await reemplazarRolesUsuario(perfilBase.id, rolesIds)
+
+      setRolesActuales(resultado.roles)
+      setRolesSeleccionados(new Set(resultado.roles.map((rol) => rol.id)))
+      setMensajeRoles('Roles actualizados correctamente.')
+      alActualizar()
+    } catch (error) {
+      setErrorRoles(obtenerMensajeRoles(error))
+    } finally {
+      envioRolesRef.current = false
+      setEnviandoRoles(false)
+    }
+  }
+
+  const hayRolesInactivos = rolesActuales.some((rol) => !rol.activo)
 
   return (
     <div className="fondo-dialogo-usuario" onMouseDown={cerrarDesdeFondo}>
@@ -149,7 +342,7 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
             <p className="etiqueta-dialogo-usuario">Administración</p>
             <h2 id="titulo-editar-usuario">Editar usuario</h2>
             <p id="descripcion-editar-usuario" className="descripcion-dialogo-usuario">
-              Actualiza los datos del perfil y el estado de acceso.
+              El perfil y los roles se guardan por separado.
             </p>
           </div>
           <button
@@ -164,7 +357,16 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
           </button>
         </header>
 
-        <form className="formulario-nuevo-usuario" onSubmit={manejarEnvio} noValidate>
+        <form
+          className="formulario-nuevo-usuario formulario-editar-perfil"
+          onSubmit={manejarEnvioPerfil}
+          noValidate
+        >
+          <div className="titulo-bloque-edicion">
+            <h3>Datos del perfil</h3>
+            <p>Nombre, teléfono y estado de acceso.</p>
+          </div>
+
           <div className="campo-formulario-usuario">
             <label htmlFor="editar-nombre-completo">Nombre completo</label>
             <input
@@ -174,22 +376,25 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
               value={nombreCompleto}
               onChange={(evento) => {
                 setNombreCompleto(evento.target.value)
-                setErrores((actuales) => ({
+                setErroresPerfil((actuales) => ({
                   ...actuales,
                   nombre_completo: '',
                 }))
-                setErrorActualizacion('')
+                setErrorPerfil('')
+                setMensajePerfil('')
               }}
               maxLength={150}
               disabled={enviando}
-              aria-invalid={Boolean(errores.nombre_completo)}
+              aria-invalid={Boolean(erroresPerfil.nombre_completo)}
               aria-describedby={
-                errores.nombre_completo ? 'error-editar-nombre' : undefined
+                erroresPerfil.nombre_completo
+                  ? 'error-editar-nombre'
+                  : undefined
               }
             />
-            {errores.nombre_completo && (
+            {erroresPerfil.nombre_completo && (
               <p id="error-editar-nombre" className="error-campo-usuario">
-                {errores.nombre_completo}
+                {erroresPerfil.nombre_completo}
               </p>
             )}
           </div>
@@ -202,19 +407,23 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
               value={telefono}
               onChange={(evento) => {
                 setTelefono(evento.target.value)
-                setErrores((actuales) => ({ ...actuales, telefono: '' }))
-                setErrorActualizacion('')
+                setErroresPerfil((actuales) => ({
+                  ...actuales,
+                  telefono: '',
+                }))
+                setErrorPerfil('')
+                setMensajePerfil('')
               }}
               maxLength={30}
               disabled={enviando}
-              aria-invalid={Boolean(errores.telefono)}
+              aria-invalid={Boolean(erroresPerfil.telefono)}
               aria-describedby={
-                errores.telefono ? 'error-editar-telefono' : undefined
+                erroresPerfil.telefono ? 'error-editar-telefono' : undefined
               }
             />
-            {errores.telefono && (
+            {erroresPerfil.telefono && (
               <p id="error-editar-telefono" className="error-campo-usuario">
-                {errores.telefono}
+                {erroresPerfil.telefono}
               </p>
             )}
           </div>
@@ -224,33 +433,14 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
             <input
               id="editar-email"
               type="email"
-              value={usuario.email ?? ''}
+              value={perfilBase.email ?? ''}
               readOnly
               aria-readonly="true"
             />
-            <p className="ayuda-campo-usuario">El correo no se modifica en esta operación.</p>
+            <p className="ayuda-campo-usuario">
+              El correo no se modifica en esta operación.
+            </p>
           </div>
-
-          <fieldset className="resumen-roles-edicion">
-            <legend>Roles actuales</legend>
-            <div className="roles-usuario">
-              {Array.isArray(usuario.roles) && usuario.roles.length > 0 ? (
-                usuario.roles.map((rol) => (
-                  <span
-                    className={`etiqueta-rol${
-                      rol.activo ? '' : ' etiqueta-rol-inactivo'
-                    }`}
-                    key={rol.id}
-                  >
-                    {rol.nombre}
-                  </span>
-                ))
-              ) : (
-                <span className="dato-no-disponible">Sin roles asignados</span>
-              )}
-            </div>
-            <p className="ayuda-campo-usuario">Los roles son solo de consulta en esta tarea.</p>
-          </fieldset>
 
           <div className="control-estado-edicion">
             <div>
@@ -268,7 +458,8 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
                 checked={activo}
                 onChange={(evento) => {
                   setActivo(evento.target.checked)
-                  setErrorActualizacion('')
+                  setErrorPerfil('')
+                  setMensajePerfil('')
                 }}
                 disabled={enviando}
               />
@@ -276,36 +467,141 @@ function EditarUsuarioDialog({ usuario, alCerrar, alGuardar }) {
             </label>
           </div>
 
-          {usuario.activo && !activo && (
+          {perfilBase.activo && !activo && (
             <p className="aviso-desactivacion-usuario">
               Se solicitará confirmación antes de desactivar esta cuenta.
             </p>
           )}
 
-          {errorActualizacion && (
+          {mensajePerfil && (
+            <p className="mensaje-exito-operacion" role="status">
+              {mensajePerfil}
+            </p>
+          )}
+
+          {errorPerfil && (
             <p className="error-creacion-usuario" role="alert">
-              {errorActualizacion}
+              {errorPerfil}
             </p>
           )}
 
           <div className="acciones-dialogo-usuario">
             <button
-              className="boton-secundario-usuario"
-              type="button"
-              onClick={cerrarDialogo}
-              disabled={enviando}
-            >
-              Cancelar
-            </button>
-            <button
               className="boton-primario-usuario"
               type="submit"
               disabled={enviando}
             >
-              {enviando ? 'Guardando cambios...' : 'Guardar cambios'}
+              {enviandoPerfil ? 'Guardando perfil...' : 'Guardar perfil'}
             </button>
           </div>
         </form>
+
+        <section className="seccion-roles-edicion" aria-labelledby="titulo-roles-edicion">
+          <div className="titulo-bloque-edicion">
+            <h3 id="titulo-roles-edicion">Roles del usuario</h3>
+            <p>Esta operación reemplaza el conjunto completo de roles.</p>
+          </div>
+
+          <div className="roles-actuales-edicion">
+            <strong>Asignación actual</strong>
+            <div className="roles-usuario">
+              {rolesActuales.length > 0 ? (
+                rolesActuales.map((rol) => (
+                  <span
+                    className={`etiqueta-rol${
+                      rol.activo ? '' : ' etiqueta-rol-inactivo'
+                    }`}
+                    key={rol.id}
+                    title={rol.activo ? undefined : 'Rol inactivo'}
+                  >
+                    {rol.nombre}
+                  </span>
+                ))
+              ) : (
+                <span className="dato-no-disponible">Sin roles asignados</span>
+              )}
+            </div>
+          </div>
+
+          {hayRolesInactivos && (
+            <p className="aviso-desactivacion-usuario">
+              Los roles inactivos no pueden seleccionarse y se eliminarán al guardar una nueva asignación.
+            </p>
+          )}
+
+          <form className="formulario-roles-edicion" onSubmit={manejarEnvioRoles}>
+            <fieldset disabled={enviando || cargandoRoles || Boolean(errorConsultaRoles)}>
+              <legend>Roles disponibles</legend>
+
+              {cargandoRoles ? (
+                <p className="estado-consulta-roles" aria-live="polite">
+                  Consultando roles...
+                </p>
+              ) : errorConsultaRoles ? (
+                <p className="error-creacion-usuario" role="alert">
+                  {errorConsultaRoles}
+                </p>
+              ) : (
+                <div className="opciones-roles-edicion">
+                  {rolesDisponibles.map((rol) => (
+                    <label className="opcion-rol-edicion" key={rol.id}>
+                      <input
+                        type="checkbox"
+                        checked={rolesSeleccionados.has(rol.id)}
+                        onChange={() => alternarRol(rol.id)}
+                      />
+                      <span>
+                        <strong>{rol.nombre}</strong>
+                        {rol.descripcion && <small>{rol.descripcion}</small>}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </fieldset>
+
+            {!puedeAdministrarRoles && !cargandoRoles && !errorConsultaRoles && (
+              <p className="ayuda-campo-usuario">
+                Solo se muestran los roles operativos que tienes permitido asignar.
+              </p>
+            )}
+
+            {mensajeRoles && (
+              <p className="mensaje-exito-operacion" role="status">
+                {mensajeRoles}
+              </p>
+            )}
+
+            {errorRoles && (
+              <p className="error-creacion-usuario" role="alert">
+                {errorRoles}
+              </p>
+            )}
+
+            <div className="acciones-dialogo-usuario">
+              <button
+                className="boton-primario-usuario"
+                type="submit"
+                disabled={
+                  enviando || cargandoRoles || Boolean(errorConsultaRoles)
+                }
+              >
+                {enviandoRoles ? 'Guardando roles...' : 'Guardar roles'}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <footer className="pie-dialogo-edicion">
+          <button
+            className="boton-secundario-usuario"
+            type="button"
+            onClick={cerrarDialogo}
+            disabled={enviando}
+          >
+            Cerrar
+          </button>
+        </footer>
       </section>
     </div>
   )

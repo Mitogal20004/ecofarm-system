@@ -30,6 +30,14 @@ export class ErrorActualizacionUsuario extends Error {
   }
 }
 
+export class ErrorActualizacionRolesUsuario extends Error {
+  constructor(status = null) {
+    super('No fue posible actualizar los roles del usuario.')
+    this.name = 'ErrorActualizacionRolesUsuario'
+    this.status = status
+  }
+}
+
 const agregarParametro = (parametros, nombre, valor) => {
   if (valor !== undefined && valor !== null && valor !== '') {
     parametros.set(nombre, String(valor))
@@ -103,6 +111,61 @@ export async function listarUsuarios(opciones = {}) {
     usuarios: resultado.usuarios,
     paginacion: resultado.paginacion,
   }
+}
+
+export async function obtenerDetalleUsuario(usuarioId) {
+  let sesion
+
+  try {
+    sesion = await obtenerSesion()
+  } catch {
+    throw new ErrorConsultaUsuarios()
+  }
+
+  const accessToken = sesion?.access_token
+
+  if (!accessToken) {
+    throw new ErrorConsultaUsuarios(401)
+  }
+
+  let respuesta
+
+  try {
+    respuesta = await fetch(
+      `${apiUrl}/api/usuarios/${encodeURIComponent(usuarioId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    )
+  } catch {
+    throw new ErrorConsultaUsuarios()
+  }
+
+  if (!respuesta.ok) {
+    throw new ErrorConsultaUsuarios(
+      [401, 403, 404].includes(respuesta.status) ? respuesta.status : null,
+    )
+  }
+
+  let resultado
+
+  try {
+    resultado = await respuesta.json()
+  } catch {
+    throw new ErrorConsultaUsuarios()
+  }
+
+  if (
+    !resultado?.usuario ||
+    typeof resultado.usuario.id !== 'string' ||
+    !Array.isArray(resultado.roles)
+  ) {
+    throw new ErrorConsultaUsuarios()
+  }
+
+  return resultado
 }
 
 export async function crearUsuario(datos) {
@@ -225,6 +288,65 @@ export async function actualizarPerfilUsuario(usuarioId, cambios) {
     typeof resultado.perfil.activo !== 'boolean'
   ) {
     throw new ErrorActualizacionUsuario()
+  }
+
+  return resultado
+}
+
+export async function reemplazarRolesUsuario(usuarioId, rolesIds) {
+  let sesion
+
+  try {
+    sesion = await obtenerSesion()
+  } catch {
+    throw new ErrorActualizacionRolesUsuario()
+  }
+
+  const accessToken = sesion?.access_token
+
+  if (!accessToken) {
+    throw new ErrorActualizacionRolesUsuario(401)
+  }
+
+  let respuesta
+
+  try {
+    respuesta = await fetch(
+      `${apiUrl}/api/usuarios/${encodeURIComponent(usuarioId)}/roles`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ roles_ids: rolesIds }),
+      },
+    )
+  } catch {
+    throw new ErrorActualizacionRolesUsuario()
+  }
+
+  if (!respuesta.ok) {
+    throw new ErrorActualizacionRolesUsuario(
+      [400, 401, 403, 404, 409].includes(respuesta.status)
+        ? respuesta.status
+        : null,
+    )
+  }
+
+  let resultado
+
+  try {
+    resultado = await respuesta.json()
+  } catch {
+    throw new ErrorActualizacionRolesUsuario()
+  }
+
+  if (
+    typeof resultado?.usuario_id !== 'string' ||
+    !Array.isArray(resultado.roles)
+  ) {
+    throw new ErrorActualizacionRolesUsuario()
   }
 
   return resultado

@@ -6,6 +6,14 @@ if (!apiUrl) {
   throw new Error('Falta VITE_API_URL en el entorno del frontend.')
 }
 
+export class ErrorConsultaAutorizacionActual extends Error {
+  constructor(status = null) {
+    super('No fue posible consultar la autorización actual.')
+    this.name = 'ErrorConsultaAutorizacionActual'
+    this.status = status
+  }
+}
+
 // El inicio de sesión por nombre de usuario se valida en el backend.
 // El frontend nunca necesita conocer el correo asociado internamente.
 export async function iniciarSesion(nombreUsuario, password) {
@@ -95,6 +103,58 @@ export async function obtenerSesion() {
   }
 
   return data.session
+}
+
+export async function obtenerAutorizacionActual() {
+  let sesion
+
+  try {
+    sesion = await obtenerSesion()
+  } catch {
+    throw new ErrorConsultaAutorizacionActual()
+  }
+
+  const accessToken = sesion?.access_token
+
+  if (!accessToken) {
+    throw new ErrorConsultaAutorizacionActual(401)
+  }
+
+  let respuesta
+
+  try {
+    respuesta = await fetch(`${apiUrl}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+  } catch {
+    throw new ErrorConsultaAutorizacionActual()
+  }
+
+  if (!respuesta.ok) {
+    throw new ErrorConsultaAutorizacionActual(
+      [401, 403, 503].includes(respuesta.status) ? respuesta.status : null,
+    )
+  }
+
+  let resultado
+
+  try {
+    resultado = await respuesta.json()
+  } catch {
+    throw new ErrorConsultaAutorizacionActual()
+  }
+
+  if (
+    !resultado?.autorizacion?.perfil ||
+    !Array.isArray(resultado.autorizacion.roles) ||
+    !Array.isArray(resultado.autorizacion.permisos)
+  ) {
+    throw new ErrorConsultaAutorizacionActual()
+  }
+
+  return resultado.autorizacion
 }
 
 export async function obtenerUsuarioActual() {

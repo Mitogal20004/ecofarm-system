@@ -72,7 +72,12 @@ const obtenerMensajeRoles = (error) => {
   return 'No fue posible cargar los roles.'
 }
 
-function NuevoUsuarioDialog({ abierto, alCerrar, alCrear }) {
+function NuevoUsuarioDialog({
+  abierto,
+  alCerrar,
+  alCrear,
+  puedeAdministrarRoles,
+}) {
   const [formulario, setFormulario] = useState(FORMULARIO_INICIAL)
   const [errores, setErrores] = useState({})
   const [roles, setRoles] = useState([])
@@ -95,9 +100,18 @@ function NuevoUsuarioDialog({ abierto, alCerrar, alCrear }) {
 
       try {
         const rolesActivos = await listarRolesActivos()
+        const rolesPermitidos = puedeAdministrarRoles
+          ? rolesActivos
+          : rolesActivos.filter((rol) => rol.nombre !== 'Administrador')
 
         if (dialogoActivo) {
-          setRoles(rolesActivos)
+          setRoles(rolesPermitidos)
+          setFormulario((actual) =>
+            actual.rol_id &&
+            !rolesPermitidos.some((rol) => rol.id === actual.rol_id)
+              ? { ...actual, rol_id: '' }
+              : actual,
+          )
         }
       } catch (error) {
         if (dialogoActivo) {
@@ -117,7 +131,7 @@ function NuevoUsuarioDialog({ abierto, alCerrar, alCrear }) {
     return () => {
       dialogoActivo = false
     }
-  }, [abierto])
+  }, [abierto, puedeAdministrarRoles])
 
   useEffect(() => {
     if (!abierto) return undefined

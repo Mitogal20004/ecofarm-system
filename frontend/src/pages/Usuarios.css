@@ -78,6 +78,17 @@
   font-weight: 650;
 }
 
+.mensaje-error-usuarios {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-error-borde);
+  border-radius: 6px;
+  color: var(--color-error);
+  background: var(--color-error-fondo);
+  font-size: 14px;
+  font-weight: 650;
+}
+
 .filtros-usuarios {
   display: grid;
   grid-template-columns: minmax(280px, 1fr) minmax(170px, 220px);
@@ -291,9 +302,14 @@
   font-weight: 700;
 }
 
-.boton-editar-usuario:hover {
+.boton-editar-usuario:hover:not(:disabled) {
   border-color: var(--color-verde-principal);
   background: var(--color-verde-suave);
+}
+
+.boton-editar-usuario:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .dato-no-disponible {
@@ -352,6 +368,10 @@
   border-radius: 10px;
   background: var(--color-superficie);
   box-shadow: 0 12px 30px rgb(15 35 26 / 18%);
+}
+
+.dialogo-editar-usuario {
+  width: min(100%, 820px);
 }
 
 .encabezado-dialogo-usuario {
@@ -476,28 +496,23 @@
 .campo-rol-usuario,
 .acciones-dialogo-usuario,
 .error-creacion-usuario,
+.mensaje-exito-operacion,
+.titulo-bloque-edicion,
 .control-estado-edicion,
 .aviso-desactivacion-usuario {
   grid-column: 1 / -1;
 }
 
-.resumen-roles-edicion {
-  min-width: 0;
+.titulo-bloque-edicion h3 {
   margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.resumen-roles-edicion legend {
-  margin-bottom: 9px;
-  padding: 0;
   color: var(--color-texto);
-  font-size: 13px;
-  font-weight: 650;
+  font-size: 17px;
 }
 
-.resumen-roles-edicion .ayuda-campo-usuario {
-  margin-top: 7px;
+.titulo-bloque-edicion p {
+  margin: 4px 0 0;
+  color: var(--color-texto-secundario);
+  font-size: 12px;
 }
 
 .control-estado-edicion {
@@ -574,6 +589,131 @@
   color: #6d5314;
   background: #fff9e8;
   font-size: 12px;
+}
+
+.mensaje-exito-operacion {
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid #b9dac6;
+  border-radius: 6px;
+  color: #17633e;
+  background: var(--color-verde-suave);
+  font-size: 13px;
+}
+
+.formulario-editar-perfil {
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.seccion-roles-edicion {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.roles-actuales-edicion {
+  display: grid;
+  gap: 8px;
+}
+
+.roles-actuales-edicion > strong {
+  color: var(--color-texto);
+  font-size: 13px;
+}
+
+.formulario-roles-edicion {
+  display: grid;
+  gap: 14px;
+}
+
+.formulario-roles-edicion fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.formulario-roles-edicion legend {
+  margin-bottom: 10px;
+  padding: 0;
+  color: var(--color-texto);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.opciones-roles-edicion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.opcion-rol-edicion {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  background: var(--color-superficie);
+  cursor: pointer;
+}
+
+.opcion-rol-edicion:hover {
+  border-color: var(--color-borde-fuerte);
+  background: var(--color-superficie-secundaria);
+}
+
+.opcion-rol-edicion input {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  margin: 2px 0 0;
+  accent-color: var(--color-verde-principal);
+}
+
+.opcion-rol-edicion input:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.opcion-rol-edicion > span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.opcion-rol-edicion strong {
+  color: var(--color-texto);
+  font-size: 13px;
+}
+
+.opcion-rol-edicion small,
+.estado-consulta-roles {
+  color: var(--color-texto-secundario);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.estado-consulta-roles {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  text-align: center;
+}
+
+.formulario-roles-edicion fieldset:disabled .opcion-rol-edicion {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.pie-dialogo-edicion {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  background: var(--color-superficie-secundaria);
 }
 
 .entrada-password-usuario {
@@ -710,6 +850,8 @@
   .campo-rol-usuario,
   .acciones-dialogo-usuario,
   .error-creacion-usuario,
+  .mensaje-exito-operacion,
+  .titulo-bloque-edicion,
   .control-estado-edicion,
   .aviso-desactivacion-usuario {
     grid-column: auto;
@@ -718,6 +860,10 @@
   .control-estado-edicion {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .opciones-roles-edicion {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -738,8 +884,13 @@
   }
 
   .encabezado-dialogo-usuario,
-  .formulario-nuevo-usuario {
+  .formulario-nuevo-usuario,
+  .seccion-roles-edicion {
     padding: 20px 16px;
+  }
+
+  .pie-dialogo-edicion {
+    padding: 14px 16px;
   }
 
   .campo-busqueda-usuarios {

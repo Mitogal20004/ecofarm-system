@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import './Usuarios.css'
 import EditarUsuarioDialog from '../components/EditarUsuarioDialog'
 import NuevoUsuarioDialog from '../components/NuevoUsuarioDialog'
-import { listarUsuarios } from '../services/usuarios'
+import { obtenerAutorizacionActual } from '../services/auth'
+import {
+  listarUsuarios,
+  obtenerDetalleUsuario,
+} from '../services/usuarios'
 
 const LIMITE_USUARIOS = 10
 
@@ -36,6 +40,9 @@ function Usuarios() {
   const [error, setError] = useState('')
   const [dialogoAbierto, setDialogoAbierto] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState(null)
+  const [permisos, setPermisos] = useState([])
+  const [cargandoDetalleId, setCargandoDetalleId] = useState(null)
+  const [errorAccion, setErrorAccion] = useState('')
   const [mensajeExito, setMensajeExito] = useState('')
   const [actualizacionListado, setActualizacionListado] = useState(0)
 
@@ -47,25 +54,46 @@ function Usuarios() {
       setError('')
 
       try {
-        const resultado = await listarUsuarios({
-          pagina,
-          limite: LIMITE_USUARIOS,
-          busqueda: busquedaAplicada || undefined,
-          activo:
-            filtroActivo === 'todos'
-              ? undefined
-              : filtroActivo === 'activos',
-        })
+        const [resultado, autorizacion] = await Promise.all([
+          listarUsuarios({
+            pagina,
+            limite: LIMITE_USUARIOS,
+            busqueda: busquedaAplicada || undefined,
+            activo:
+              filtroActivo === 'todos'
+                ? undefined
+                : filtroActivo === 'activos',
+          }),
+          obtenerAutorizacionActual(),
+        ])
 
         if (!vistaActiva) return
 
+        const codigosPermisos = autorizacion.permisos
+          .map((permiso) => permiso?.codigo)
+          .filter((codigo) => typeof codigo === 'string')
+
         setUsuarios(resultado.usuarios)
         setPaginacion(resultado.paginacion)
+        setPermisos(codigosPermisos)
+        setDialogoAbierto((actual) =>
+          codigosPermisos.includes('usuario.administrar') ? actual : false,
+        )
+        setUsuarioEditando((actual) =>
+          !codigosPermisos.includes('usuario.administrar') ||
+          (actual?.roles?.some((rol) => rol.nombre === 'Administrador') &&
+            !codigosPermisos.includes('rol.administrar'))
+            ? null
+            : actual,
+        )
       } catch (errorConsulta) {
         if (!vistaActiva) return
 
         setUsuarios([])
         setPaginacion(PAGINACION_INICIAL)
+        setPermisos([])
+        setDialogoAbierto(false)
+        setUsuarioEditando(null)
         setError(obtenerMensajeError(errorConsulta))
       } finally {
         if (vistaActiva) {
@@ -104,17 +132,51 @@ function Usuarios() {
     setActualizacionListado((actual) => actual + 1)
   }
 
-  const abrirEdicion = (usuario) => {
+  const abrirEdicion = async (usuario) => {
     setMensajeExito('')
-    setUsuarioEditando(usuario)
+    setErrorAccion('')
+    setCargandoDetalleId(usuario.id)
+
+    try {
+      const detalle = await obtenerDetalleUsuario(usuario.id)
+      const usuarioDetallado = {
+        ...detalle.usuario,
+        roles: detalle.roles,
+      }
+      const esAdministrador = detalle.roles.some(
+        (rol) => rol.nombre === 'Administrador',
+      )
+
+      if (esAdministrador && !permisos.includes('rol.administrar')) {
+        setErrorAccion('No tienes permiso para modificar un Administrador.')
+        return
+      }
+
+      setUsuarioEditando(usuarioDetallado)
+    } catch (errorDetalle) {
+      if (errorDetalle?.status === 401) {
+        setErrorAccion('Tu sesión ya no es válida. Vuelve a iniciar sesión.')
+      } else if (errorDetalle?.status === 403) {
+        setErrorAccion('No tienes permiso para consultar este usuario.')
+      } else if (errorDetalle?.status === 404) {
+        setErrorAccion('El usuario solicitado ya no existe.')
+      } else {
+        setErrorAccion('No fue posible consultar el usuario.')
+      }
+    } finally {
+      setCargandoDetalleId(null)
+    }
   }
 
   const manejarUsuarioActualizado = () => {
-    setUsuarioEditando(null)
-    setMensajeExito('Usuario actualizado correctamente.')
-    setPagina(1)
     setActualizacionListado((actual) => actual + 1)
   }
+
+  const puedeAdministrarUsuarios = permisos.includes('usuario.administrar')
+  const puedeAdministrarRoles = permisos.includes('rol.administrar')
+  const usuarioEsAdministrador = (usuario) =>
+    Array.isArray(usuario.roles) &&
+    usuario.roles.some((rol) => rol.nombre === 'Administrador')
 
   const puedeRetroceder = pagina > 1 && !cargando
   const puedeAvanzar =
@@ -130,18 +192,26 @@ function Usuarios() {
           <h1 id="titulo-usuarios">Usuarios</h1>
           <p>Consulta y administra el personal con acceso a E-farm.</p>
         </div>
-        <button
-          className="boton-nuevo-usuario"
-          type="button"
-          onClick={abrirDialogo}
-        >
-          + Nuevo usuario
-        </button>
+        {puedeAdministrarUsuarios && (
+          <button
+            className="boton-nuevo-usuario"
+            type="button"
+            onClick={abrirDialogo}
+          >
+            + Nuevo usuario
+          </button>
+        )}
       </header>
 
       {mensajeExito && (
         <p className="mensaje-exito-usuario" role="status">
           {mensajeExito}
+        </p>
+      )}
+
+      {errorAccion && (
+        <p className="mensaje-error-usuarios" role="alert">
+          {errorAccion}
         </p>
       )}
 
@@ -199,9 +269,11 @@ function Usuarios() {
                   <th scope="col">Teléfono</th>
                   <th scope="col">Roles</th>
                   <th scope="col">Estado</th>
-                  <th scope="col" className="columna-acciones-usuarios">
-                    Acciones
-                  </th>
+                  {puedeAdministrarUsuarios && (
+                    <th scope="col" className="columna-acciones-usuarios">
+                      Acciones
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -243,16 +315,28 @@ function Usuarios() {
                         {usuario.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
-                    <td className="celda-acciones-usuarios">
-                      <button
-                        className="boton-editar-usuario"
-                        type="button"
-                        onClick={() => abrirEdicion(usuario)}
-                        aria-label={`Editar a ${usuario.nombre_completo}`}
-                      >
-                        Editar
-                      </button>
-                    </td>
+                    {puedeAdministrarUsuarios && (
+                      <td className="celda-acciones-usuarios">
+                        {puedeAdministrarRoles ||
+                        !usuarioEsAdministrador(usuario) ? (
+                          <button
+                            className="boton-editar-usuario"
+                            type="button"
+                            onClick={() => abrirEdicion(usuario)}
+                            disabled={cargandoDetalleId !== null}
+                            aria-label={`Editar a ${usuario.nombre_completo}`}
+                          >
+                            {cargandoDetalleId === usuario.id
+                              ? 'Consultando...'
+                              : 'Editar'}
+                          </button>
+                        ) : (
+                          <span className="dato-no-disponible" aria-label="Sin acciones disponibles">
+                            —
+                          </span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -287,14 +371,16 @@ function Usuarios() {
         abierto={dialogoAbierto}
         alCerrar={() => setDialogoAbierto(false)}
         alCrear={manejarUsuarioCreado}
+        puedeAdministrarRoles={puedeAdministrarRoles}
       />
 
       {usuarioEditando && (
         <EditarUsuarioDialog
           key={usuarioEditando.id}
           usuario={usuarioEditando}
+          puedeAdministrarRoles={puedeAdministrarRoles}
           alCerrar={() => setUsuarioEditando(null)}
-          alGuardar={manejarUsuarioActualizado}
+          alActualizar={manejarUsuarioActualizado}
         />
       )}
     </section>
