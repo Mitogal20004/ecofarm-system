@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './Usuarios.css'
+import EditarUsuarioDialog from '../components/EditarUsuarioDialog'
 import NuevoUsuarioDialog from '../components/NuevoUsuarioDialog'
 import { listarUsuarios } from '../services/usuarios'
 
@@ -34,6 +35,7 @@ function Usuarios() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [dialogoAbierto, setDialogoAbierto] = useState(false)
+  const [usuarioEditando, setUsuarioEditando] = useState(null)
   const [mensajeExito, setMensajeExito] = useState('')
   const [actualizacionListado, setActualizacionListado] = useState(0)
 
@@ -98,6 +100,18 @@ function Usuarios() {
   const manejarUsuarioCreado = () => {
     setDialogoAbierto(false)
     setMensajeExito('Usuario creado correctamente.')
+    setPagina(1)
+    setActualizacionListado((actual) => actual + 1)
+  }
+
+  const abrirEdicion = (usuario) => {
+    setMensajeExito('')
+    setUsuarioEditando(usuario)
+  }
+
+  const manejarUsuarioActualizado = () => {
+    setUsuarioEditando(null)
+    setMensajeExito('Usuario actualizado correctamente.')
     setPagina(1)
     setActualizacionListado((actual) => actual + 1)
   }
@@ -185,6 +199,9 @@ function Usuarios() {
                   <th scope="col">Teléfono</th>
                   <th scope="col">Roles</th>
                   <th scope="col">Estado</th>
+                  <th scope="col" className="columna-acciones-usuarios">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -226,6 +243,16 @@ function Usuarios() {
                         {usuario.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
+                    <td className="celda-acciones-usuarios">
+                      <button
+                        className="boton-editar-usuario"
+                        type="button"
+                        onClick={() => abrirEdicion(usuario)}
+                        aria-label={`Editar a ${usuario.nombre_completo}`}
+                      >
+                        Editar
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -261,6 +288,15 @@ function Usuarios() {
         alCerrar={() => setDialogoAbierto(false)}
         alCrear={manejarUsuarioCreado}
       />
+
+      {usuarioEditando && (
+        <EditarUsuarioDialog
+          key={usuarioEditando.id}
+          usuario={usuarioEditando}
+          alCerrar={() => setUsuarioEditando(null)}
+          alGuardar={manejarUsuarioActualizado}
+        />
+      )}
     </section>
   )
 }

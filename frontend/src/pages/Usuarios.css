@@ -55,7 +55,9 @@
 .boton-primario-usuario:focus-visible,
 .boton-secundario-usuario:focus-visible,
 .boton-cerrar-dialogo:focus-visible,
-.entrada-password-usuario button:focus-visible {
+.entrada-password-usuario button:focus-visible,
+.boton-editar-usuario:focus-visible,
+.interruptor-estado-usuario input:focus-visible + span {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
@@ -184,7 +186,7 @@
 
 .tabla-usuarios {
   width: 100%;
-  min-width: 780px;
+  min-width: 880px;
   border-collapse: collapse;
   color: var(--color-texto);
   font-size: 14px;
@@ -271,6 +273,29 @@
   background: #fcedeb;
 }
 
+.columna-acciones-usuarios,
+.celda-acciones-usuarios {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.boton-editar-usuario {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+  color: var(--color-verde-principal);
+  background: var(--color-superficie);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.boton-editar-usuario:hover {
+  border-color: var(--color-verde-principal);
+  background: var(--color-verde-suave);
+}
+
 .dato-no-disponible {
   color: var(--color-texto-secundario);
 }
@@ -354,6 +379,12 @@
   line-height: 1.3;
 }
 
+.descripcion-dialogo-usuario {
+  margin: 5px 0 0;
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+}
+
 .boton-cerrar-dialogo {
   width: 38px;
   height: 38px;
@@ -430,10 +461,119 @@
   background: #eef2ef;
 }
 
+.campo-formulario-usuario input:read-only {
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie-secundaria);
+}
+
+.ayuda-campo-usuario {
+  margin: 0;
+  color: var(--color-texto-secundario);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .campo-rol-usuario,
 .acciones-dialogo-usuario,
-.error-creacion-usuario {
+.error-creacion-usuario,
+.control-estado-edicion,
+.aviso-desactivacion-usuario {
   grid-column: 1 / -1;
+}
+
+.resumen-roles-edicion {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.resumen-roles-edicion legend {
+  margin-bottom: 9px;
+  padding: 0;
+  color: var(--color-texto);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.resumen-roles-edicion .ayuda-campo-usuario {
+  margin-top: 7px;
+}
+
+.control-estado-edicion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  background: var(--color-superficie-secundaria);
+}
+
+.control-estado-edicion > div {
+  display: grid;
+  gap: 3px;
+}
+
+.control-estado-edicion strong {
+  color: var(--color-texto);
+  font-size: 14px;
+}
+
+.control-estado-edicion > div span {
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+}
+
+.interruptor-estado-usuario {
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+.interruptor-estado-usuario input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.interruptor-estado-usuario span {
+  min-width: 78px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border: 1px solid #c9a5a1;
+  border-radius: 999px;
+  color: #8f2922;
+  background: #fcedeb;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.interruptor-estado-usuario input:checked + span {
+  border-color: #9fcbb0;
+  color: #17633e;
+  background: var(--color-verde-suave);
+}
+
+.interruptor-estado-usuario input:disabled + span {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.aviso-desactivacion-usuario {
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid #e6c675;
+  border-radius: 6px;
+  color: #6d5314;
+  background: #fff9e8;
+  font-size: 12px;
 }
 
 .entrada-password-usuario {
@@ -542,7 +682,8 @@
   .campo-busqueda-usuarios button,
   .paginacion-usuarios button,
   .boton-nuevo-usuario,
-  .boton-primario-usuario {
+  .boton-primario-usuario,
+  .boton-editar-usuario {
     transition: none;
   }
 }
@@ -568,8 +709,15 @@
 
   .campo-rol-usuario,
   .acciones-dialogo-usuario,
-  .error-creacion-usuario {
+  .error-creacion-usuario,
+  .control-estado-edicion,
+  .aviso-desactivacion-usuario {
     grid-column: auto;
+  }
+
+  .control-estado-edicion {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

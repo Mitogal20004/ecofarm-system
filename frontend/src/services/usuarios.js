@@ -22,6 +22,14 @@ export class ErrorCreacionUsuario extends Error {
   }
 }
 
+export class ErrorActualizacionUsuario extends Error {
+  constructor(status = null) {
+    super('No fue posible actualizar el usuario.')
+    this.name = 'ErrorActualizacionUsuario'
+    this.status = status
+  }
+}
+
 const agregarParametro = (parametros, nombre, valor) => {
   if (valor !== undefined && valor !== null && valor !== '') {
     parametros.set(nombre, String(valor))
@@ -156,6 +164,67 @@ export async function crearUsuario(datos) {
     !Array.isArray(resultado.usuario.roles)
   ) {
     throw new ErrorCreacionUsuario()
+  }
+
+  return resultado
+}
+
+export async function actualizarPerfilUsuario(usuarioId, cambios) {
+  let sesion
+
+  try {
+    sesion = await obtenerSesion()
+  } catch {
+    throw new ErrorActualizacionUsuario()
+  }
+
+  const accessToken = sesion?.access_token
+
+  if (!accessToken) {
+    throw new ErrorActualizacionUsuario(401)
+  }
+
+  let respuesta
+
+  try {
+    respuesta = await fetch(
+      `${apiUrl}/api/usuarios/${encodeURIComponent(usuarioId)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cambios),
+      },
+    )
+  } catch {
+    throw new ErrorActualizacionUsuario()
+  }
+
+  if (!respuesta.ok) {
+    const estadosControlados = new Set([400, 401, 403, 404, 409])
+
+    throw new ErrorActualizacionUsuario(
+      estadosControlados.has(respuesta.status) ? respuesta.status : null,
+    )
+  }
+
+  let resultado
+
+  try {
+    resultado = await respuesta.json()
+  } catch {
+    throw new ErrorActualizacionUsuario()
+  }
+
+  if (
+    !resultado?.perfil ||
+    typeof resultado.perfil.id !== 'string' ||
+    typeof resultado.perfil.nombre_completo !== 'string' ||
+    typeof resultado.perfil.activo !== 'boolean'
+  ) {
+    throw new ErrorActualizacionUsuario()
   }
 
   return resultado
