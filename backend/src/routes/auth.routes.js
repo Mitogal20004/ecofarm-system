@@ -1,10 +1,7 @@
 ﻿import { Router } from 'express'
 import { iniciarSesion } from '../controllers/auth.controller.js'
 import { autenticarUsuario } from '../middlewares/autenticacion.js'
-import {
-  cargarAutorizacion,
-  requerirPermiso,
-} from '../middlewares/autorizacion.js'
+import { cargarAutorizacion } from '../middlewares/autorizacion.js'
 
 const router = Router()
 
@@ -14,7 +11,6 @@ router.get(
   '/me',
   autenticarUsuario,
   cargarAutorizacion,
-  requerirPermiso('usuario.ver'),
   (req, res) => {
     res.status(200).json({
       ok: true,

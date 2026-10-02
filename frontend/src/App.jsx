@@ -5,6 +5,7 @@ import logoEfarm from './assets/logo-efarm-brand.png'
 import Login from './pages/Login'
 import RecuperarPassword from './pages/RecuperarPassword'
 import RestablecerPassword from './pages/RestablecerPassword'
+import Clientes from './pages/Clientes'
 import Usuarios from './pages/Usuarios'
 import {
   cerrarSesion,
@@ -15,6 +16,7 @@ import {
 const RUTA_RECUPERAR_PASSWORD = '/recuperar-password'
 const RUTA_RESTABLECER_PASSWORD = '/restablecer-password'
 const VISTA_INICIO = 'inicio'
+const VISTA_CLIENTES = 'clientes'
 const VISTA_USUARIOS = 'usuarios'
 
 function normalizarRuta(pathname) {
@@ -218,7 +220,22 @@ function App() {
             </li>
             <li className="opcion-navegacion">Ventas</li>
             <li className="opcion-navegacion">Inventario</li>
-            <li className="opcion-navegacion">Clientes</li>
+            <li>
+              <button
+                className={`opcion-navegacion boton-navegacion${
+                  vistaActual === VISTA_CLIENTES
+                    ? ' opcion-navegacion-activa'
+                    : ''
+                }`}
+                type="button"
+                onClick={() => setVistaActual(VISTA_CLIENTES)}
+                aria-current={
+                  vistaActual === VISTA_CLIENTES ? 'page' : undefined
+                }
+              >
+                Clientes
+              </button>
+            </li>
             <li className="opcion-navegacion">Cotizaciones</li>
             <li className="opcion-navegacion">Reportes</li>
             <li className="grupo-navegacion">
@@ -275,7 +292,9 @@ function App() {
 
         <main className="area-principal">
           <div className="contenido-panel">
-            {vistaActual === VISTA_USUARIOS ? (
+            {vistaActual === VISTA_CLIENTES ? (
+              <Clientes />
+            ) : vistaActual === VISTA_USUARIOS ? (
               <Usuarios />
             ) : (
               <>

@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
+import clientesRoutes from './routes/clientes.routes.js'
 import rolesRoutes from './routes/roles.routes.js'
 import usuariosRoutes from './routes/usuarios.routes.js'
 
@@ -31,6 +32,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/clientes', clientesRoutes)
 app.use('/api/usuarios', usuariosRoutes)
 app.use('/api/roles', rolesRoutes)
 
