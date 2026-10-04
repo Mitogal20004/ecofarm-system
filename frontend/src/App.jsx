@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import iconoCerrarSesion from './assets/icono-cerrar-sesion.svg'
 import logoEfarm from './assets/logo-efarm-brand.png'
@@ -10,6 +10,7 @@ import Usuarios from './pages/Usuarios'
 import {
   cerrarSesion,
   observarCambiosAutenticacion,
+  obtenerAutorizacionActual,
   obtenerSesion,
 } from './services/auth'
 
@@ -18,6 +19,11 @@ const RUTA_RESTABLECER_PASSWORD = '/restablecer-password'
 const VISTA_INICIO = 'inicio'
 const VISTA_CLIENTES = 'clientes'
 const VISTA_USUARIOS = 'usuarios'
+
+const PERMISO_POR_VISTA = {
+  [VISTA_CLIENTES]: 'cliente.ver',
+  [VISTA_USUARIOS]: 'usuario.ver',
+}
 
 function normalizarRuta(pathname) {
   const ruta = pathname.replace(/\/+$/, '')
@@ -36,9 +42,12 @@ function hayCredencialesRecuperacionEnUrl() {
 
 function App() {
   const [sesion, setSesion] = useState(null)
+  const [autorizacion, setAutorizacion] = useState(null)
   const [comprobandoSesion, setComprobandoSesion] = useState(true)
+  const [comprobandoAutorizacion, setComprobandoAutorizacion] = useState(false)
   const [cerrandoSesion, setCerrandoSesion] = useState(false)
   const [errorSesion, setErrorSesion] = useState('')
+  const [errorAutorizacion, setErrorAutorizacion] = useState('')
   const [vistaActual, setVistaActual] = useState(VISTA_INICIO)
   const [rutaActual, setRutaActual] = useState(() =>
     normalizarRuta(window.location.pathname),
@@ -50,6 +59,80 @@ function App() {
       rutaActual === RUTA_RESTABLECER_PASSWORD &&
       hayCredencialesRecuperacionEnUrl(),
   )
+  const solicitudAutorizacionRef = useRef(0)
+
+  const permisos = Array.isArray(autorizacion?.permisos)
+    ? autorizacion.permisos
+        .map((permiso) => permiso?.codigo)
+        .filter((codigo) => typeof codigo === 'string')
+    : []
+  const tienePermiso = (codigo) => permisos.includes(codigo)
+
+  const refrescarAutorizacion = useCallback(async () => {
+    const solicitudId = solicitudAutorizacionRef.current + 1
+    solicitudAutorizacionRef.current = solicitudId
+
+    if (!sesion?.access_token) {
+      setAutorizacion(null)
+      setComprobandoAutorizacion(false)
+      return null
+    }
+
+    setComprobandoAutorizacion(true)
+
+    try {
+      const autorizacionActual = await obtenerAutorizacionActual()
+
+      if (solicitudAutorizacionRef.current !== solicitudId) return null
+
+      const codigos = autorizacionActual.permisos
+        .map((permiso) => permiso?.codigo)
+        .filter((codigo) => typeof codigo === 'string')
+
+      setAutorizacion(autorizacionActual)
+      setErrorAutorizacion('')
+      setVistaActual((vista) => {
+        const permisoRequerido = PERMISO_POR_VISTA[vista]
+
+        return permisoRequerido && !codigos.includes(permisoRequerido)
+          ? VISTA_INICIO
+          : vista
+      })
+
+      return autorizacionActual
+    } catch (error) {
+      if (solicitudAutorizacionRef.current !== solicitudId) return null
+
+      setAutorizacion(null)
+      setVistaActual(VISTA_INICIO)
+
+      if (error?.status === 401) {
+        setErrorAutorizacion('Tu sesión ya no es válida.')
+
+        try {
+          await cerrarSesion()
+        } catch {
+          // La sesión local se descarta igualmente al recibir un 401.
+        }
+
+        setSesion(null)
+      } else if (error?.status === 403) {
+        setErrorAutorizacion(
+          'Tu perfil no tiene acceso habilitado en este momento.',
+        )
+      } else {
+        setErrorAutorizacion(
+          'No fue posible actualizar los permisos. Intenta nuevamente.',
+        )
+      }
+
+      return null
+    } finally {
+      if (solicitudAutorizacionRef.current === solicitudId) {
+        setComprobandoAutorizacion(false)
+      }
+    }
+  }, [sesion?.access_token])
 
   useEffect(() => {
     let componenteActivo = true
@@ -65,6 +148,14 @@ function App() {
       }
 
       setSesion(nuevaSesion)
+
+      if (!nuevaSesion) {
+        solicitudAutorizacionRef.current += 1
+        setAutorizacion(null)
+        setComprobandoAutorizacion(false)
+        setVistaActual(VISTA_INICIO)
+      }
+
       setComprobandoSesion(false)
       setErrorSesion('')
     })
@@ -98,6 +189,38 @@ function App() {
   }, [])
 
   useEffect(() => {
+    if (!sesion?.access_token) return undefined
+
+    const temporizador = window.setTimeout(refrescarAutorizacion, 0)
+
+    return () => window.clearTimeout(temporizador)
+  }, [refrescarAutorizacion, sesion?.access_token])
+
+  useEffect(() => {
+    if (!sesion?.access_token) return undefined
+
+    let ultimoRefresco = 0
+    const refrescarAlRecuperarFoco = () => {
+      const ahora = Date.now()
+
+      if (document.visibilityState !== 'visible' || ahora - ultimoRefresco < 1000) {
+        return
+      }
+
+      ultimoRefresco = ahora
+      refrescarAutorizacion()
+    }
+
+    window.addEventListener('focus', refrescarAlRecuperarFoco)
+    document.addEventListener('visibilitychange', refrescarAlRecuperarFoco)
+
+    return () => {
+      window.removeEventListener('focus', refrescarAlRecuperarFoco)
+      document.removeEventListener('visibilitychange', refrescarAlRecuperarFoco)
+    }
+  }, [refrescarAutorizacion, sesion?.access_token])
+
+  useEffect(() => {
     const manejarCambioRuta = () => {
       setRutaActual(normalizarRuta(window.location.pathname))
     }
@@ -120,6 +243,7 @@ function App() {
   const manejarInicioSesion = (nuevaSesion) => {
     setSesion(nuevaSesion)
     setErrorSesion('')
+    setErrorAutorizacion('')
   }
 
   const reemplazarRuta = (ruta) => {
@@ -148,7 +272,10 @@ function App() {
 
     try {
       await cerrarSesion()
+      solicitudAutorizacionRef.current += 1
       setSesion(null)
+      setAutorizacion(null)
+      setVistaActual(VISTA_INICIO)
     } catch {
       setErrorSesion('No fue posible cerrar la sesión. Intenta nuevamente.')
     } finally {
@@ -218,49 +345,66 @@ function App() {
                 Inicio
               </button>
             </li>
-            <li className="opcion-navegacion">Ventas</li>
-            <li className="opcion-navegacion">Inventario</li>
-            <li>
-              <button
-                className={`opcion-navegacion boton-navegacion${
-                  vistaActual === VISTA_CLIENTES
-                    ? ' opcion-navegacion-activa'
-                    : ''
-                }`}
-                type="button"
-                onClick={() => setVistaActual(VISTA_CLIENTES)}
-                aria-current={
-                  vistaActual === VISTA_CLIENTES ? 'page' : undefined
-                }
-              >
-                Clientes
-              </button>
-            </li>
-            <li className="opcion-navegacion">Cotizaciones</li>
-            <li className="opcion-navegacion">Reportes</li>
-            <li className="grupo-navegacion">
-              <span className="opcion-navegacion opcion-navegacion-grupo">
-                Administración
-              </span>
-              <ul className="subnavegacion">
-                <li>
-                  <button
-                    className={`opcion-navegacion opcion-subnavegacion boton-navegacion${
-                      vistaActual === VISTA_USUARIOS
-                        ? ' opcion-navegacion-activa'
-                        : ''
-                    }`}
-                    type="button"
-                    onClick={() => setVistaActual(VISTA_USUARIOS)}
-                    aria-current={
-                      vistaActual === VISTA_USUARIOS ? 'page' : undefined
-                    }
-                  >
-                    Usuarios
-                  </button>
-                </li>
-              </ul>
-            </li>
+            {tienePermiso('venta.ver') && (
+              <li className="opcion-navegacion">Ventas</li>
+            )}
+            {tienePermiso('inventario.ver') && (
+              <li className="opcion-navegacion">Inventario</li>
+            )}
+            {tienePermiso('cliente.ver') && (
+              <li>
+                <button
+                  className={`opcion-navegacion boton-navegacion${
+                    vistaActual === VISTA_CLIENTES
+                      ? ' opcion-navegacion-activa'
+                      : ''
+                  }`}
+                  type="button"
+                  onClick={() => setVistaActual(VISTA_CLIENTES)}
+                  aria-current={
+                    vistaActual === VISTA_CLIENTES ? 'page' : undefined
+                  }
+                >
+                  Clientes
+                </button>
+              </li>
+            )}
+            {tienePermiso('cotizacion.ver') && (
+              <li className="opcion-navegacion">Cotizaciones</li>
+            )}
+            {tienePermiso('reporte.ver') && (
+              <li className="opcion-navegacion">Reportes</li>
+            )}
+            {tienePermiso('usuario.ver') && (
+              <li className="grupo-navegacion">
+                <span className="opcion-navegacion opcion-navegacion-grupo">
+                  Administración
+                </span>
+                <ul className="subnavegacion">
+                  <li>
+                    <button
+                      className={`opcion-navegacion opcion-subnavegacion boton-navegacion${
+                        vistaActual === VISTA_USUARIOS
+                          ? ' opcion-navegacion-activa'
+                          : ''
+                      }`}
+                      type="button"
+                      onClick={() => setVistaActual(VISTA_USUARIOS)}
+                      aria-current={
+                        vistaActual === VISTA_USUARIOS ? 'page' : undefined
+                      }
+                    >
+                      Usuarios
+                    </button>
+                  </li>
+                </ul>
+              </li>
+            )}
+            {comprobandoAutorizacion && !autorizacion && (
+              <li className="estado-navegacion" aria-live="polite">
+                Consultando accesos...
+              </li>
+            )}
           </ul>
         </nav>
       </aside>
@@ -293,9 +437,16 @@ function App() {
         <main className="area-principal">
           <div className="contenido-panel">
             {vistaActual === VISTA_CLIENTES ? (
-              <Clientes />
+              <Clientes
+                permisos={permisos}
+                alRefrescarAutorizacion={refrescarAutorizacion}
+              />
             ) : vistaActual === VISTA_USUARIOS ? (
-              <Usuarios />
+              <Usuarios
+                permisos={permisos}
+                usuarioActualId={autorizacion?.perfil?.id ?? null}
+                alRefrescarAutorizacion={refrescarAutorizacion}
+              />
             ) : (
               <>
                 <section
@@ -312,6 +463,12 @@ function App() {
                 {errorSesion && (
                   <p className="mensaje-error-sesion" role="alert">
                     {errorSesion}
+                  </p>
+                )}
+
+                {errorAutorizacion && (
+                  <p className="mensaje-error-sesion" role="alert">
+                    {errorAutorizacion}
                   </p>
                 )}
 

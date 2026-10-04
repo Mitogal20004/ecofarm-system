@@ -161,6 +161,12 @@
   font-weight: 700;
 }
 
+.estado-navegacion {
+  padding: 10px 12px;
+  color: #b8d1c2;
+  font-size: 12px;
+}
+
 .contenido-aplicacion {
   min-width: 0;
   min-height: 100vh;

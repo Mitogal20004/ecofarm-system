@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import './Clientes.css'
 import ClienteDialog from '../components/ClienteDialog'
-import { obtenerAutorizacionActual } from '../services/auth'
 import { listarClientes } from '../services/clientes'
 
 const LIMITE_CLIENTES = 10
@@ -24,7 +23,7 @@ const obtenerMensajeConsulta = (error) => {
   return 'No fue posible cargar los clientes.'
 }
 
-function Clientes() {
+function Clientes({ permisos, alRefrescarAutorizacion }) {
   const [clientes, setClientes] = useState([])
   const [paginacion, setPaginacion] = useState(PAGINACION_INICIAL)
   const [pagina, setPagina] = useState(1)
@@ -32,7 +31,6 @@ function Clientes() {
   const [busquedaAplicada, setBusquedaAplicada] = useState('')
   const [filtroActivo, setFiltroActivo] = useState('todos')
   const [filtroTipo, setFiltroTipo] = useState('todos')
-  const [permisos, setPermisos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [mensajeExito, setMensajeExito] = useState('')
@@ -53,37 +51,32 @@ function Clientes() {
       setError('')
 
       try {
-        const [resultado, autorizacion] = await Promise.all([
-          listarClientes({
-            pagina,
-            limite: LIMITE_CLIENTES,
-            busqueda: busquedaAplicada || undefined,
-            activo:
-              filtroActivo === 'todos'
-                ? undefined
-                : filtroActivo === 'activos',
-            tipo: filtroTipo === 'todos' ? undefined : filtroTipo,
-          }),
-          obtenerAutorizacionActual(),
-        ])
+        const resultado = await listarClientes({
+          pagina,
+          limite: LIMITE_CLIENTES,
+          busqueda: busquedaAplicada || undefined,
+          activo:
+            filtroActivo === 'todos'
+              ? undefined
+              : filtroActivo === 'activos',
+          tipo: filtroTipo === 'todos' ? undefined : filtroTipo,
+        })
 
         if (!vistaActiva) return
 
         setClientes(resultado.clientes)
         setPaginacion(resultado.paginacion)
-        setPermisos(
-          autorizacion.permisos
-            .map((permiso) => permiso?.codigo)
-            .filter((codigo) => typeof codigo === 'string'),
-        )
       } catch (errorConsulta) {
         if (!vistaActiva) return
 
         setClientes([])
         setPaginacion(PAGINACION_INICIAL)
-        setPermisos([])
         cerrarDialogo()
         setError(obtenerMensajeConsulta(errorConsulta))
+
+        if ([401, 403].includes(errorConsulta?.status)) {
+          alRefrescarAutorizacion()
+        }
       } finally {
         if (vistaActiva) setCargando(false)
       }
@@ -96,6 +89,7 @@ function Clientes() {
     }
   }, [
     busquedaAplicada,
+    alRefrescarAutorizacion,
     cerrarDialogo,
     filtroActivo,
     filtroTipo,
@@ -135,6 +129,7 @@ function Clientes() {
 
   const puedeCrear = permisos.includes('cliente.crear')
   const puedeEditar = permisos.includes('cliente.editar')
+  const dialogoPermitido = clienteEditando ? puedeEditar : puedeCrear
   const puedeRetroceder = pagina > 1 && !cargando
   const puedeAvanzar =
     paginacion.total_paginas > 0 &&
@@ -306,13 +301,14 @@ function Clientes() {
         )}
       </div>
 
-      {dialogoAbierto && (
+      {dialogoAbierto && dialogoPermitido && (
         <ClienteDialog
           key={clienteEditando?.id ?? 'nuevo-cliente'}
           abierto
           cliente={clienteEditando}
           alCerrar={cerrarDialogo}
           alGuardar={manejarGuardado}
+          alRefrescarAutorizacion={alRefrescarAutorizacion}
         />
       )}
     </section>

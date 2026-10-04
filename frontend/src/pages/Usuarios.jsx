@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import './Usuarios.css'
 import EditarUsuarioDialog from '../components/EditarUsuarioDialog'
 import NuevoUsuarioDialog from '../components/NuevoUsuarioDialog'
-import { obtenerAutorizacionActual } from '../services/auth'
 import {
   listarUsuarios,
   obtenerDetalleUsuario,
@@ -29,7 +28,7 @@ function obtenerMensajeError(error) {
   return 'No fue posible cargar los usuarios.'
 }
 
-function Usuarios() {
+function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
   const [usuarios, setUsuarios] = useState([])
   const [paginacion, setPaginacion] = useState(PAGINACION_INICIAL)
   const [pagina, setPagina] = useState(1)
@@ -40,7 +39,6 @@ function Usuarios() {
   const [error, setError] = useState('')
   const [dialogoAbierto, setDialogoAbierto] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState(null)
-  const [permisos, setPermisos] = useState([])
   const [cargandoDetalleId, setCargandoDetalleId] = useState(null)
   const [errorAccion, setErrorAccion] = useState('')
   const [mensajeExito, setMensajeExito] = useState('')
@@ -54,47 +52,32 @@ function Usuarios() {
       setError('')
 
       try {
-        const [resultado, autorizacion] = await Promise.all([
-          listarUsuarios({
-            pagina,
-            limite: LIMITE_USUARIOS,
-            busqueda: busquedaAplicada || undefined,
-            activo:
-              filtroActivo === 'todos'
-                ? undefined
-                : filtroActivo === 'activos',
-          }),
-          obtenerAutorizacionActual(),
-        ])
+        const resultado = await listarUsuarios({
+          pagina,
+          limite: LIMITE_USUARIOS,
+          busqueda: busquedaAplicada || undefined,
+          activo:
+            filtroActivo === 'todos'
+              ? undefined
+              : filtroActivo === 'activos',
+        })
 
         if (!vistaActiva) return
 
-        const codigosPermisos = autorizacion.permisos
-          .map((permiso) => permiso?.codigo)
-          .filter((codigo) => typeof codigo === 'string')
-
         setUsuarios(resultado.usuarios)
         setPaginacion(resultado.paginacion)
-        setPermisos(codigosPermisos)
-        setDialogoAbierto((actual) =>
-          codigosPermisos.includes('usuario.administrar') ? actual : false,
-        )
-        setUsuarioEditando((actual) =>
-          !codigosPermisos.includes('usuario.administrar') ||
-          (actual?.roles?.some((rol) => rol.nombre === 'Administrador') &&
-            !codigosPermisos.includes('rol.administrar'))
-            ? null
-            : actual,
-        )
       } catch (errorConsulta) {
         if (!vistaActiva) return
 
         setUsuarios([])
         setPaginacion(PAGINACION_INICIAL)
-        setPermisos([])
         setDialogoAbierto(false)
         setUsuarioEditando(null)
         setError(obtenerMensajeError(errorConsulta))
+
+        if ([401, 403].includes(errorConsulta?.status)) {
+          alRefrescarAutorizacion()
+        }
       } finally {
         if (vistaActiva) {
           setCargando(false)
@@ -107,7 +90,13 @@ function Usuarios() {
     return () => {
       vistaActiva = false
     }
-  }, [actualizacionListado, busquedaAplicada, filtroActivo, pagina])
+  }, [
+    actualizacionListado,
+    alRefrescarAutorizacion,
+    busquedaAplicada,
+    filtroActivo,
+    pagina,
+  ])
 
   const manejarBusqueda = (evento) => {
     evento.preventDefault()
@@ -154,6 +143,10 @@ function Usuarios() {
 
       setUsuarioEditando(usuarioDetallado)
     } catch (errorDetalle) {
+      if ([401, 403].includes(errorDetalle?.status)) {
+        alRefrescarAutorizacion()
+      }
+
       if (errorDetalle?.status === 401) {
         setErrorAccion('Tu sesión ya no es válida. Vuelve a iniciar sesión.')
       } else if (errorDetalle?.status === 403) {
@@ -168,8 +161,12 @@ function Usuarios() {
     }
   }
 
-  const manejarUsuarioActualizado = () => {
+  const manejarUsuarioActualizado = (usuarioId) => {
     setActualizacionListado((actual) => actual + 1)
+
+    if (usuarioId === usuarioActualId) {
+      alRefrescarAutorizacion()
+    }
   }
 
   const puedeAdministrarUsuarios = permisos.includes('usuario.administrar')
@@ -368,21 +365,25 @@ function Usuarios() {
       </div>
 
       <NuevoUsuarioDialog
-        abierto={dialogoAbierto}
+        abierto={dialogoAbierto && puedeAdministrarUsuarios}
         alCerrar={() => setDialogoAbierto(false)}
         alCrear={manejarUsuarioCreado}
         puedeAdministrarRoles={puedeAdministrarRoles}
+        alRefrescarAutorizacion={alRefrescarAutorizacion}
       />
 
-      {usuarioEditando && (
-        <EditarUsuarioDialog
-          key={usuarioEditando.id}
-          usuario={usuarioEditando}
-          puedeAdministrarRoles={puedeAdministrarRoles}
-          alCerrar={() => setUsuarioEditando(null)}
-          alActualizar={manejarUsuarioActualizado}
-        />
-      )}
+      {usuarioEditando &&
+        puedeAdministrarUsuarios &&
+        (puedeAdministrarRoles || !usuarioEsAdministrador(usuarioEditando)) && (
+          <EditarUsuarioDialog
+            key={usuarioEditando.id}
+            usuario={usuarioEditando}
+            puedeAdministrarRoles={puedeAdministrarRoles}
+            alCerrar={() => setUsuarioEditando(null)}
+            alActualizar={manejarUsuarioActualizado}
+            alRefrescarAutorizacion={alRefrescarAutorizacion}
+          />
+        )}
     </section>
   )
 }

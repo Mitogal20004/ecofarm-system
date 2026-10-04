@@ -48,7 +48,13 @@ const obtenerMensajeError = (error, editando) => {
   return `No fue posible ${editando ? 'actualizar' : 'crear'} el cliente.`
 }
 
-function ClienteDialog({ abierto, cliente, alCerrar, alGuardar }) {
+function ClienteDialog({
+  abierto,
+  cliente,
+  alCerrar,
+  alGuardar,
+  alRefrescarAutorizacion,
+}) {
   const [formulario, setFormulario] = useState(() => crearFormulario(cliente))
   const [errores, setErrores] = useState({})
   const [errorEnvio, setErrorEnvio] = useState('')
@@ -192,6 +198,10 @@ function ClienteDialog({ abierto, cliente, alCerrar, alGuardar }) {
       alGuardar(resultado.cliente, editando)
     } catch (error) {
       setErrorEnvio(obtenerMensajeError(error, editando))
+
+      if ([401, 403].includes(error?.status)) {
+        alRefrescarAutorizacion()
+      }
     } finally {
       setEnviando(false)
     }

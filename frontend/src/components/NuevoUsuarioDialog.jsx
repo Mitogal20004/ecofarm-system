@@ -77,6 +77,7 @@ function NuevoUsuarioDialog({
   alCerrar,
   alCrear,
   puedeAdministrarRoles,
+  alRefrescarAutorizacion,
 }) {
   const [formulario, setFormulario] = useState(FORMULARIO_INICIAL)
   const [errores, setErrores] = useState({})
@@ -117,6 +118,10 @@ function NuevoUsuarioDialog({
         if (dialogoActivo) {
           setRoles([])
           setErrorRoles(obtenerMensajeRoles(error))
+
+          if ([401, 403].includes(error?.status)) {
+            alRefrescarAutorizacion()
+          }
         }
       } finally {
         if (dialogoActivo) {
@@ -131,7 +136,7 @@ function NuevoUsuarioDialog({
     return () => {
       dialogoActivo = false
     }
-  }, [abierto, puedeAdministrarRoles])
+  }, [abierto, alRefrescarAutorizacion, puedeAdministrarRoles])
 
   useEffect(() => {
     if (!abierto) return undefined
@@ -248,6 +253,10 @@ function NuevoUsuarioDialog({
       alCrear(resultado.usuario)
     } catch (error) {
       setErrorCreacion(obtenerMensajeCreacion(error))
+
+      if ([401, 403].includes(error?.status)) {
+        alRefrescarAutorizacion()
+      }
     } finally {
       setEnviando(false)
     }

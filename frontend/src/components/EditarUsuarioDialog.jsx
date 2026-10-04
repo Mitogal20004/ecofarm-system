@@ -23,7 +23,7 @@ const obtenerMensajePerfil = (error) => {
   }
 
   if (error?.status === 409) {
-    return 'La cuenta no puede desactivarse porque debe permanecer al menos un Administrador activo.'
+    return 'La cuenta activa debe conservar un rol y el sistema al menos un Administrador activo.'
   }
 
   return 'No fue posible actualizar el perfil.'
@@ -47,7 +47,7 @@ const obtenerMensajeRoles = (error) => {
   }
 
   if (error?.status === 409) {
-    return 'El cambio no puede dejar al sistema sin un Administrador activo.'
+    return 'El cambio debe conservar un rol para cada usuario activo y al menos un Administrador activo.'
   }
 
   return 'No fue posible actualizar los roles.'
@@ -82,6 +82,7 @@ function EditarUsuarioDialog({
   puedeAdministrarRoles,
   alCerrar,
   alActualizar,
+  alRefrescarAutorizacion,
 }) {
   const [perfilBase, setPerfilBase] = useState(usuario)
   const [nombreCompleto, setNombreCompleto] = useState(
@@ -137,6 +138,10 @@ function EditarUsuarioDialog({
         if (dialogoActivo) {
           setRolesDisponibles([])
           setErrorConsultaRoles(obtenerMensajeConsultaRoles(error))
+
+          if ([401, 403].includes(error?.status)) {
+            alRefrescarAutorizacion()
+          }
         }
       } finally {
         if (dialogoActivo) {
@@ -150,7 +155,7 @@ function EditarUsuarioDialog({
     return () => {
       dialogoActivo = false
     }
-  }, [puedeAdministrarRoles])
+  }, [alRefrescarAutorizacion, puedeAdministrarRoles])
 
   useEffect(() => {
     const overflowAnterior = document.body.style.overflow
@@ -209,7 +214,7 @@ function EditarUsuarioDialog({
       !rolesActuales.some((rol) => rol.activo)
     ) {
       setErrorPerfil(
-        'Asigna al menos un rol activo antes de activar esta cuenta.',
+        'Asigna al menos un rol antes de reactivar este usuario.',
       )
       return
     }
@@ -251,10 +256,17 @@ function EditarUsuarioDialog({
       const resultado = await actualizarPerfilUsuario(perfilBase.id, cambios)
 
       setPerfilBase((actual) => ({ ...actual, ...resultado.perfil }))
+      setActivo(resultado.perfil.activo === true)
+      setErrorRoles('')
+      setMensajeRoles('')
       setMensajePerfil('Perfil actualizado correctamente.')
-      alActualizar()
+      alActualizar(perfilBase.id)
     } catch (error) {
       setErrorPerfil(obtenerMensajePerfil(error))
+
+      if ([401, 403].includes(error?.status)) {
+        alRefrescarAutorizacion()
+      }
     } finally {
       envioPerfilRef.current = false
       setEnviandoPerfil(false)
@@ -289,8 +301,9 @@ function EditarUsuarioDialog({
       .filter((rol) => rolesSeleccionados.has(rol.id))
       .map((rol) => rol.id)
     const rolesActualesIds = rolesActuales.map((rol) => rol.id)
+    const perfilPersistidoActivo = perfilBase.activo === true
 
-    if (perfilBase.activo && rolesIds.length === 0) {
+    if (perfilPersistidoActivo && rolesIds.length === 0) {
       setErrorRoles('Un usuario activo debe conservar al menos un rol.')
       return
     }
@@ -317,9 +330,13 @@ function EditarUsuarioDialog({
       setRolesActuales(resultado.roles)
       setRolesSeleccionados(new Set(resultado.roles.map((rol) => rol.id)))
       setMensajeRoles('Roles actualizados correctamente.')
-      alActualizar()
+      alActualizar(perfilBase.id)
     } catch (error) {
       setErrorRoles(obtenerMensajeRoles(error))
+
+      if ([401, 403].includes(error?.status)) {
+        alRefrescarAutorizacion()
+      }
     } finally {
       envioRolesRef.current = false
       setEnviandoRoles(false)
@@ -460,6 +477,8 @@ function EditarUsuarioDialog({
                   setActivo(evento.target.checked)
                   setErrorPerfil('')
                   setMensajePerfil('')
+                  setErrorRoles('')
+                  setMensajeRoles('')
                 }}
                 disabled={enviando}
               />
