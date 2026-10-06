@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import RecuperarPassword from './pages/RecuperarPassword'
 import RestablecerPassword from './pages/RestablecerPassword'
 import Clientes from './pages/Clientes'
+import Inventario from './pages/Inventario'
 import Productos from './pages/Productos'
 import Usuarios from './pages/Usuarios'
 import {
@@ -19,11 +20,13 @@ const RUTA_RECUPERAR_PASSWORD = '/recuperar-password'
 const RUTA_RESTABLECER_PASSWORD = '/restablecer-password'
 const VISTA_INICIO = 'inicio'
 const VISTA_CLIENTES = 'clientes'
+const VISTA_INVENTARIO = 'inventario'
 const VISTA_PRODUCTOS = 'productos'
 const VISTA_USUARIOS = 'usuarios'
 
 const PERMISO_POR_VISTA = {
   [VISTA_CLIENTES]: 'cliente.ver',
+  [VISTA_INVENTARIO]: 'inventario.ver',
   [VISTA_PRODUCTOS]: 'producto.ver',
   [VISTA_USUARIOS]: 'usuario.ver',
 }
@@ -352,7 +355,22 @@ function App() {
               <li className="opcion-navegacion">Ventas</li>
             )}
             {tienePermiso('inventario.ver') && (
-              <li className="opcion-navegacion">Inventario</li>
+              <li>
+                <button
+                  className={`opcion-navegacion boton-navegacion${
+                    vistaActual === VISTA_INVENTARIO
+                      ? ' opcion-navegacion-activa'
+                      : ''
+                  }`}
+                  type="button"
+                  onClick={() => setVistaActual(VISTA_INVENTARIO)}
+                  aria-current={
+                    vistaActual === VISTA_INVENTARIO ? 'page' : undefined
+                  }
+                >
+                  Inventario
+                </button>
+              </li>
             )}
             {tienePermiso('producto.ver') && (
               <li>
@@ -459,6 +477,11 @@ function App() {
           <div className="contenido-panel">
             {vistaActual === VISTA_CLIENTES ? (
               <Clientes
+                permisos={permisos}
+                alRefrescarAutorizacion={refrescarAutorizacion}
+              />
+            ) : vistaActual === VISTA_INVENTARIO ? (
+              <Inventario
                 permisos={permisos}
                 alRefrescarAutorizacion={refrescarAutorizacion}
               />
