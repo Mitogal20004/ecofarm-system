@@ -162,6 +162,17 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
       )}
 
       <form className="filtros-clientes" onSubmit={manejarBusqueda}>
+        <header className="encabezado-filtros-clientes">
+          <div>
+            <h2>Filtros</h2>
+            <p>Consulta el catálogo por identidad, tipo y estado.</p>
+          </div>
+          {!cargando && (
+            <span>
+              {paginacion.total} {paginacion.total === 1 ? 'cliente' : 'clientes'}
+            </span>
+          )}
+        </header>
         <div className="control-busqueda-clientes">
           <label htmlFor="busqueda-clientes">Buscar clientes</label>
           <div>
@@ -239,16 +250,22 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
               <tbody>
                 {clientes.map((cliente) => (
                   <tr key={cliente.id}>
-                    <td className="nombre-cliente-tabla">
+                    <td className="nombre-cliente-tabla" data-label="Cliente">
                       {cliente.nombre_completo ?? cliente.razon_social}
                     </td>
-                    <td>{cliente.tipo === 'individual' ? 'Individual' : 'Empresa'}</td>
-                    <td>{cliente.nit}</td>
-                    <td className="contacto-cliente-tabla">
+                    <td data-label="Tipo">
+                      <span className={`tipo-cliente tipo-cliente-${cliente.tipo}`}>
+                        {cliente.tipo === 'individual' ? 'Individual' : 'Empresa'}
+                      </span>
+                    </td>
+                    <td className="nit-cliente-tabla" data-label="NIT">
+                      {cliente.nit}
+                    </td>
+                    <td className="contacto-cliente-tabla" data-label="Contacto">
                       <span>{cliente.telefono || 'Sin teléfono'}</span>
                       <small>{cliente.correo_electronico || 'Sin correo'}</small>
                     </td>
-                    <td>
+                    <td data-label="Estado">
                       <span
                         className={`estado-cliente ${
                           cliente.activo
@@ -260,7 +277,7 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
                       </span>
                     </td>
                     {puedeEditar && (
-                      <td>
+                      <td className="celda-acciones-clientes" data-label="Acciones">
                         <button
                           className="boton-editar-cliente"
                           type="button"

@@ -213,6 +213,17 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
       )}
 
       <form className="filtros-usuarios" onSubmit={manejarBusqueda}>
+        <header className="encabezado-filtros-usuarios">
+          <div>
+            <h2>Filtros</h2>
+            <p>Busca personal por nombre o correo y filtra por estado.</p>
+          </div>
+          {!cargando && (
+            <span>
+              {paginacion.total} {paginacion.total === 1 ? 'usuario' : 'usuarios'}
+            </span>
+          )}
+        </header>
         <div className="control-busqueda">
           <label htmlFor="busqueda-usuarios">Buscar usuarios</label>
           <div className="campo-busqueda-usuarios">
@@ -276,12 +287,14 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
               <tbody>
                 {usuarios.map((usuario) => (
                   <tr key={usuario.id}>
-                    <td className="nombre-usuario-tabla">
+                    <td className="nombre-usuario-tabla" data-label="Nombre">
                       {usuario.nombre_completo}
                     </td>
-                    <td className="correo-usuario-tabla">{usuario.email}</td>
-                    <td>{usuario.telefono || '—'}</td>
-                    <td>
+                    <td className="correo-usuario-tabla" data-label="Correo">
+                      {usuario.email}
+                    </td>
+                    <td data-label="Teléfono">{usuario.telefono || '—'}</td>
+                    <td data-label="Roles">
                       <div className="roles-usuario">
                         {Array.isArray(usuario.roles) &&
                         usuario.roles.length > 0 ? (
@@ -301,7 +314,7 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
                         )}
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Estado">
                       <span
                         className={`etiqueta-estado-usuario ${
                           usuario.activo
@@ -313,7 +326,10 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
                       </span>
                     </td>
                     {puedeAdministrarUsuarios && (
-                      <td className="celda-acciones-usuarios">
+                      <td
+                        className="celda-acciones-usuarios"
+                        data-label="Acciones"
+                      >
                         {puedeAdministrarRoles ||
                         !usuarioEsAdministrador(usuario) ? (
                           <button

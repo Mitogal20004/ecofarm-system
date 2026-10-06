@@ -190,13 +190,41 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
       )}
 
       <div className="resumen-productos" aria-label="Resumen del catálogo">
-        <article><span>Variantes encontradas</span><strong>{paginacion.total}</strong></article>
-        <article><span>Colores activos en página</span><strong>{coloresPagina}</strong></article>
-        <article><span>Premium activas en página</span><strong>{premiumPagina}</strong></article>
-        <article><span>Presentaciones</span><strong>{presentaciones.length}</strong></article>
+        <article>
+          <span>Variantes encontradas</span>
+          <strong>{paginacion.total}</strong>
+          <small>En el resultado filtrado</small>
+        </article>
+        <article>
+          <span>Colores activos en página</span>
+          <strong>{coloresPagina}</strong>
+          <small>Entre las variantes visibles</small>
+        </article>
+        <article className="tarjeta-resumen-premium">
+          <span>Premium activas en página</span>
+          <strong>{premiumPagina}</strong>
+          <small>Entre las variantes visibles</small>
+        </article>
+        <article>
+          <span>Presentaciones</span>
+          <strong>{presentaciones.length}</strong>
+          <small>Unidades comerciales disponibles</small>
+        </article>
       </div>
 
       <form className="filtros-productos" onSubmit={manejarBusqueda}>
+        <header className="encabezado-filtros-productos">
+          <div>
+            <h2>Filtros</h2>
+            <p>Localiza variantes de Snapdragon por sus atributos.</p>
+          </div>
+          {!cargando && (
+            <span>
+              {paginacion.total}{' '}
+              {paginacion.total === 1 ? 'variante' : 'variantes'}
+            </span>
+          )}
+        </header>
         <div className="control-busqueda-productos">
           <label htmlFor="busqueda-productos">Buscar variante</label>
           <div>
@@ -283,7 +311,6 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
                 <tr>
                   <th scope="col">SKU</th>
                   <th scope="col">Variante</th>
-                  <th scope="col">Clasificación</th>
                   <th scope="col">Estado</th>
                   {presentaciones.map((presentacion) => (
                     <th scope="col" key={presentacion.id}>{presentacion.nombre}</th>
@@ -299,13 +326,17 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
 
                   return (
                     <tr key={variante.id}>
-                      <td className="sku-producto-tabla">{variante.codigo_sku}</td>
-                      <td className="variante-producto-tabla">
-                        <strong>{variante.color}</strong>
-                        <small>{variante.longitud_cm} cm</small>
+                      <td className="sku-producto-tabla" data-label="SKU">
+                        {variante.codigo_sku}
                       </td>
-                      <td>{nombreClasificacion[variante.clasificacion]}</td>
-                      <td>
+                      <td className="variante-producto-tabla" data-label="Variante">
+                        <strong>{variante.color}</strong>
+                        <small>
+                          {variante.longitud_cm} cm ·{' '}
+                          {nombreClasificacion[variante.clasificacion]}
+                        </small>
+                      </td>
+                      <td data-label="Estado">
                         <span className={`estado-producto ${
                           variante.activo
                             ? 'estado-producto-activo'
@@ -317,15 +348,19 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
                       {presentaciones.map((presentacion) => {
                         const precio = preciosPorPresentacion.get(presentacion.id)
                         return (
-                          <td className="precio-producto-tabla" key={presentacion.id}>
+                          <td
+                            className="precio-producto-tabla"
+                            data-label={presentacion.nombre}
+                            key={presentacion.id}
+                          >
                             {precio ? formatearMoneda(precio.precio) : 'Sin precio'}
                           </td>
                         )
                       })}
-                      <td>
+                      <td className="celda-acciones-productos" data-label="Acciones">
                         <div className="acciones-producto-tabla">
                           <button
-                            className="boton-secundario-producto"
+                            className="boton-detalle-producto"
                             type="button"
                             onClick={() => setVarianteDetalleId(variante.id)}
                           >
