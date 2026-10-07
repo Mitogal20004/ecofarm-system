@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import RecuperarPassword from './pages/RecuperarPassword'
 import RestablecerPassword from './pages/RestablecerPassword'
 import Clientes from './pages/Clientes'
+import Cotizaciones from './pages/Cotizaciones'
 import Inventario from './pages/Inventario'
 import Productos from './pages/Productos'
 import Usuarios from './pages/Usuarios'
@@ -20,12 +21,14 @@ const RUTA_RECUPERAR_PASSWORD = '/recuperar-password'
 const RUTA_RESTABLECER_PASSWORD = '/restablecer-password'
 const VISTA_INICIO = 'inicio'
 const VISTA_CLIENTES = 'clientes'
+const VISTA_COTIZACIONES = 'cotizaciones'
 const VISTA_INVENTARIO = 'inventario'
 const VISTA_PRODUCTOS = 'productos'
 const VISTA_USUARIOS = 'usuarios'
 
 const PERMISO_POR_VISTA = {
   [VISTA_CLIENTES]: 'cliente.ver',
+  [VISTA_COTIZACIONES]: 'cotizacion.ver',
   [VISTA_INVENTARIO]: 'inventario.ver',
   [VISTA_PRODUCTOS]: 'producto.ver',
   [VISTA_USUARIOS]: 'usuario.ver',
@@ -409,7 +412,22 @@ function App() {
               </li>
             )}
             {tienePermiso('cotizacion.ver') && (
-              <li className="opcion-navegacion">Cotizaciones</li>
+              <li>
+                <button
+                  className={`opcion-navegacion boton-navegacion${
+                    vistaActual === VISTA_COTIZACIONES
+                      ? ' opcion-navegacion-activa'
+                      : ''
+                  }`}
+                  type="button"
+                  onClick={() => setVistaActual(VISTA_COTIZACIONES)}
+                  aria-current={
+                    vistaActual === VISTA_COTIZACIONES ? 'page' : undefined
+                  }
+                >
+                  Cotizaciones
+                </button>
+              </li>
             )}
             {tienePermiso('reporte.ver') && (
               <li className="opcion-navegacion">Reportes</li>
@@ -477,6 +495,11 @@ function App() {
           <div className="contenido-panel">
             {vistaActual === VISTA_CLIENTES ? (
               <Clientes
+                permisos={permisos}
+                alRefrescarAutorizacion={refrescarAutorizacion}
+              />
+            ) : vistaActual === VISTA_COTIZACIONES ? (
+              <Cotizaciones
                 permisos={permisos}
                 alRefrescarAutorizacion={refrescarAutorizacion}
               />

@@ -1,0 +1,969 @@
+.pagina-cotizaciones,
+.formulario-cotizacion,
+.detalle-cotizacion {
+  display: grid;
+  gap: 22px;
+  color: var(--color-texto);
+}
+
+.encabezado-cotizaciones {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.encabezado-cotizaciones h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.08;
+}
+
+.encabezado-cotizaciones p:not(.etiqueta-seccion-cotizaciones) {
+  max-width: 680px;
+  margin: 8px 0 0;
+  color: var(--color-texto-secundario);
+}
+
+.etiqueta-seccion-cotizaciones {
+  margin: 0 0 7px;
+  color: var(--color-verde-principal);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.boton-primario-cotizaciones,
+.boton-secundario-cotizaciones,
+.boton-peligro-cotizaciones,
+.boton-limpiar-cotizaciones,
+.boton-texto-cotizaciones,
+.boton-texto-peligro-cotizaciones {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.boton-primario-cotizaciones {
+  border-color: var(--color-verde-principal);
+  color: #fff;
+  background: var(--color-verde-principal);
+}
+
+.boton-primario-cotizaciones:hover:not(:disabled) {
+  border-color: var(--color-verde-hover);
+  background: var(--color-verde-hover);
+}
+
+.boton-secundario-cotizaciones,
+.boton-limpiar-cotizaciones {
+  border-color: var(--color-borde-fuerte);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie);
+}
+
+.boton-secundario-cotizaciones:hover:not(:disabled),
+.boton-limpiar-cotizaciones:hover:not(:disabled),
+.boton-texto-cotizaciones:hover:not(:disabled) {
+  border-color: var(--color-verde-principal);
+  color: var(--color-verde-principal);
+  background: var(--color-verde-suave);
+}
+
+.boton-peligro-cotizaciones {
+  border-color: #d8aaa6;
+  color: #8f2922;
+  background: #fff;
+}
+
+.boton-peligro-cotizaciones:hover:not(:disabled),
+.boton-texto-peligro-cotizaciones:hover:not(:disabled) {
+  color: #741d17;
+  background: #fcedeb;
+}
+
+.boton-texto-cotizaciones,
+.boton-texto-peligro-cotizaciones {
+  min-height: 36px;
+  padding: 6px 9px;
+  color: var(--color-verde-principal);
+  background: transparent;
+}
+
+.boton-texto-peligro-cotizaciones {
+  color: #8f2922;
+}
+
+.boton-primario-cotizaciones:focus-visible,
+.boton-secundario-cotizaciones:focus-visible,
+.boton-peligro-cotizaciones:focus-visible,
+.boton-limpiar-cotizaciones:focus-visible,
+.boton-texto-cotizaciones:focus-visible,
+.boton-texto-peligro-cotizaciones:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.boton-primario-cotizaciones:disabled,
+.boton-secundario-cotizaciones:disabled,
+.boton-peligro-cotizaciones:disabled,
+.boton-limpiar-cotizaciones:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.filtros-cotizaciones {
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) repeat(3, minmax(135px, 170px)) auto;
+  align-items: end;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.encabezado-filtros-cotizaciones {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.encabezado-filtros-cotizaciones p {
+  margin: 4px 0 0;
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+}
+
+.campo-filtro-cotizaciones,
+.campo-cotizacion {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.campo-filtro-cotizaciones label,
+.campo-cotizacion label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.campo-filtro-cotizaciones input,
+.campo-filtro-cotizaciones select,
+.campo-cotizacion input,
+.campo-cotizacion select,
+.campo-cotizacion textarea,
+.cantidad-linea-cotizacion {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 11px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+  outline: none;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  font: inherit;
+}
+
+.campo-cotizacion textarea {
+  resize: vertical;
+}
+
+.campo-filtro-cotizaciones input:focus,
+.campo-filtro-cotizaciones select:focus,
+.campo-cotizacion input:focus,
+.campo-cotizacion select:focus,
+.campo-cotizacion textarea:focus,
+.cantidad-linea-cotizacion:focus {
+  border-color: var(--color-verde-principal);
+  box-shadow: 0 0 0 3px var(--color-focus);
+}
+
+.campo-cotizacion small {
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+}
+
+.control-con-boton-cotizacion {
+  display: flex;
+  gap: 8px;
+}
+
+.control-con-boton-cotizacion input {
+  min-width: 0;
+}
+
+.seccion-listado-cotizaciones,
+.seccion-formulario-cotizacion,
+.seccion-detalle-cotizacion {
+  display: grid;
+  gap: 16px;
+}
+
+.encabezado-listado-cotizaciones,
+.titulo-seccion-detalle-cotizacion {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.encabezado-listado-cotizaciones h2,
+.titulo-seccion-detalle-cotizacion h2,
+.cierre-detalle-cotizacion h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.encabezado-listado-cotizaciones p,
+.titulo-seccion-detalle-cotizacion p {
+  margin: 4px 0 0;
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+}
+
+.titulo-seccion-detalle-cotizacion > span {
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contenedor-tabla-cotizaciones {
+  overflow: hidden;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.desplazamiento-tabla-cotizaciones {
+  overflow-x: auto;
+}
+
+.contenedor-tabla-cotizaciones table {
+  width: 100%;
+  min-width: 940px;
+  border-collapse: collapse;
+  color: var(--color-texto);
+  font-size: 14px;
+}
+
+.contenedor-tabla-cotizaciones th,
+.contenedor-tabla-cotizaciones td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--color-borde);
+  text-align: left;
+  vertical-align: top;
+}
+
+.contenedor-tabla-cotizaciones th {
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie-secundaria);
+  font-size: 11px;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.contenedor-tabla-cotizaciones tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.contenedor-tabla-cotizaciones tbody tr:hover {
+  background: #fbfcfb;
+}
+
+.contenedor-tabla-cotizaciones td strong,
+.contenedor-tabla-cotizaciones td small {
+  display: block;
+}
+
+.contenedor-tabla-cotizaciones td small {
+  margin-top: 4px;
+  color: var(--color-texto-secundario);
+}
+
+.numero-cotizacion {
+  color: var(--color-verde-principal);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.estado-cotizacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.estado-cotizacion::before {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: currentcolor;
+  content: '';
+}
+
+.estado-cotizacion-borrador {
+  color: #5f6670;
+  background: #edf0f2;
+}
+
+.estado-cotizacion-emitida {
+  color: #17633e;
+  background: var(--color-verde-suave);
+}
+
+.estado-cotizacion-anulada {
+  color: #8f2922;
+  background: #fcedeb;
+}
+
+.estado-cotizacion-convertida {
+  color: #28557a;
+  background: #e8f2fb;
+}
+
+.acciones-fila-cotizaciones,
+.acciones-encabezado-cotizacion,
+.acciones-formulario-cotizacion {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.estado-cotizaciones {
+  margin: 0;
+  padding: 48px 24px;
+  color: var(--color-texto-secundario);
+  text-align: center;
+}
+
+.estado-error-cotizaciones,
+.mensaje-error-cotizaciones {
+  color: var(--color-error);
+  background: var(--color-error-fondo);
+}
+
+.estado-error-cotizaciones button {
+  margin-top: 14px;
+}
+
+.mensaje-cotizaciones {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #efc2bf;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.paginacion-cotizaciones {
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 15px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.paginacion-cotizaciones span {
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.formulario-cotizacion {
+  padding-bottom: 20px;
+}
+
+.seccion-formulario-cotizacion,
+.datos-detalle-cotizacion,
+.seccion-detalle-cotizacion,
+.cierre-detalle-cotizacion {
+  padding: 22px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.titulo-seccion-cotizacion {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.titulo-seccion-cotizacion > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--color-verde-principal);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.titulo-seccion-cotizacion h2 {
+  margin: 1px 0 0;
+  font-size: 19px;
+}
+
+.titulo-seccion-cotizacion p {
+  margin: 4px 0 0;
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+}
+
+.selector-tipo-comprador {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.selector-tipo-comprador label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  background: var(--color-superficie-secundaria);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.selector-tipo-comprador label:has(input:checked) {
+  border-color: var(--color-verde-principal);
+  color: var(--color-verde-principal);
+  background: var(--color-verde-suave);
+}
+
+.selector-tipo-comprador input {
+  accent-color: var(--color-verde-principal);
+}
+
+.contenido-comprador-cotizacion,
+.resumen-formulario-cotizacion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.campo-ancho-cotizacion {
+  grid-column: 1 / -1;
+}
+
+.agregador-productos-cotizacion {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.25fr) minmax(170px, 1fr) minmax(170px, 1fr) minmax(100px, 0.45fr);
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  background: var(--color-superficie-secundaria);
+}
+
+.campo-busqueda-producto-cotizacion,
+.vista-previa-linea-cotizacion {
+  grid-column: 1 / -1;
+}
+
+.vista-previa-linea-cotizacion {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.vista-previa-linea-cotizacion span {
+  display: grid;
+  gap: 3px;
+  color: var(--color-texto-secundario);
+  font-size: 11px;
+}
+
+.vista-previa-linea-cotizacion strong {
+  color: var(--color-texto);
+  font-size: 13px;
+}
+
+.aviso-linea-cotizacion {
+  margin: 0;
+  color: var(--color-verde-principal);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.tabla-lineas-cotizacion table {
+  min-width: 880px;
+}
+
+.cantidad-linea-cotizacion {
+  width: 90px;
+  min-height: 36px;
+  padding: 5px 8px;
+}
+
+.total-formulario-cotizacion {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-content: start;
+  gap: 9px 18px;
+  padding: 18px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  background: var(--color-superficie-secundaria);
+}
+
+.total-formulario-cotizacion > span {
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+}
+
+.total-formulario-cotizacion > strong {
+  text-align: right;
+}
+
+.total-formulario-cotizacion .monto-total-cotizacion {
+  color: var(--color-verde-principal);
+  font-size: 22px;
+}
+
+.total-formulario-cotizacion small {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-borde);
+  color: var(--color-texto-secundario);
+}
+
+.acciones-formulario-cotizacion {
+  position: sticky;
+  bottom: 12px;
+  justify-content: flex-end;
+  padding: 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 5px 16px rgb(15 35 26 / 8%);
+  backdrop-filter: blur(8px);
+}
+
+.titulo-documento-cotizacion {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cabecera-impresion-cotizacion {
+  display: none;
+}
+
+.datos-detalle-cotizacion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tarjeta-dato-cotizacion {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 17px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  background: var(--color-superficie-secundaria);
+}
+
+.tarjeta-dato-cotizacion > span:first-child {
+  color: var(--color-texto-secundario);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tarjeta-dato-cotizacion > strong {
+  font-size: 18px;
+}
+
+.tarjeta-dato-cotizacion > small {
+  color: var(--color-texto-secundario);
+}
+
+.tipo-comprador-cotizacion {
+  width: fit-content;
+  margin-top: 5px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: var(--color-verde-principal);
+  background: var(--color-verde-suave);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tarjeta-dato-cotizacion dl,
+.totales-detalle-cotizacion {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.tarjeta-dato-cotizacion dl > div,
+.totales-detalle-cotizacion > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.tarjeta-dato-cotizacion dt,
+.tarjeta-dato-cotizacion dd,
+.totales-detalle-cotizacion dt,
+.totales-detalle-cotizacion dd {
+  margin: 0;
+}
+
+.tarjeta-dato-cotizacion dt {
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+}
+
+.tarjeta-dato-cotizacion dd {
+  font-size: 13px;
+  font-weight: 650;
+  text-align: right;
+}
+
+.cierre-detalle-cotizacion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.5fr);
+  gap: 28px;
+}
+
+.cierre-detalle-cotizacion p {
+  margin: 8px 0 0;
+  color: var(--color-texto-secundario);
+  white-space: pre-wrap;
+}
+
+.totales-detalle-cotizacion {
+  align-content: start;
+}
+
+.totales-detalle-cotizacion dd {
+  font-weight: 700;
+}
+
+.total-final-detalle-cotizacion {
+  padding-top: 11px;
+  border-top: 1px solid var(--color-borde-fuerte);
+  color: var(--color-verde-principal);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.nota-estado-documento-cotizacion {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #efc2bf;
+  border-radius: 7px;
+  color: #8f2922;
+  background: #fcedeb;
+  font-weight: 700;
+  text-align: center;
+}
+
+.solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .filtros-cotizaciones {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campo-busqueda-cotizaciones,
+  .boton-buscar-cotizaciones {
+    grid-column: 1 / -1;
+  }
+
+  .agregador-productos-cotizacion {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .encabezado-cotizaciones,
+  .encabezado-filtros-cotizaciones,
+  .encabezado-listado-cotizaciones,
+  .titulo-seccion-detalle-cotizacion {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filtros-cotizaciones,
+  .contenido-comprador-cotizacion,
+  .agregador-productos-cotizacion,
+  .resumen-formulario-cotizacion,
+  .datos-detalle-cotizacion,
+  .cierre-detalle-cotizacion {
+    grid-template-columns: 1fr;
+  }
+
+  .campo-busqueda-cotizaciones,
+  .boton-buscar-cotizaciones,
+  .campo-ancho-cotizacion,
+  .campo-busqueda-producto-cotizacion,
+  .vista-previa-linea-cotizacion {
+    grid-column: auto;
+  }
+
+  .encabezado-cotizaciones > button,
+  .boton-buscar-cotizaciones,
+  .boton-limpiar-cotizaciones {
+    width: 100%;
+  }
+
+  .desplazamiento-tabla-cotizaciones {
+    overflow: visible;
+  }
+
+  .tabla-cotizaciones,
+  .tabla-cotizaciones tbody,
+  .tabla-lineas-cotizacion table,
+  .tabla-lineas-cotizacion tbody {
+    min-width: 0;
+    display: block;
+  }
+
+  .tabla-cotizaciones thead,
+  .tabla-lineas-cotizacion thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .tabla-cotizaciones tbody,
+  .tabla-lineas-cotizacion tbody {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+    background: var(--color-superficie-secundaria);
+  }
+
+  .tabla-cotizaciones tbody tr,
+  .tabla-lineas-cotizacion tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+    padding: 16px;
+    border: 1px solid var(--color-borde);
+    border-radius: 8px;
+    background: var(--color-superficie);
+  }
+
+  .tabla-cotizaciones tbody td,
+  .tabla-lineas-cotizacion tbody td {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .tabla-cotizaciones tbody td::before,
+  .tabla-lineas-cotizacion tbody td::before {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--color-texto-secundario);
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .tabla-cotizaciones tbody td:first-child,
+  .tabla-cotizaciones tbody td:nth-child(3),
+  .tabla-cotizaciones tbody td:last-child,
+  .tabla-lineas-cotizacion tbody td:first-child,
+  .tabla-lineas-cotizacion tbody td:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .vista-previa-linea-cotizacion {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .acciones-formulario-cotizacion {
+    bottom: 6px;
+  }
+}
+
+@media (max-width: 500px) {
+  .seccion-formulario-cotizacion,
+  .datos-detalle-cotizacion,
+  .seccion-detalle-cotizacion,
+  .cierre-detalle-cotizacion {
+    padding: 17px;
+  }
+
+  .control-con-boton-cotizacion,
+  .selector-tipo-comprador,
+  .acciones-encabezado-cotizacion,
+  .acciones-formulario-cotizacion,
+  .paginacion-cotizaciones {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .selector-tipo-comprador label,
+  .acciones-encabezado-cotizacion button,
+  .acciones-formulario-cotizacion button {
+    width: 100%;
+  }
+
+  .tabla-cotizaciones tbody tr,
+  .tabla-lineas-cotizacion tbody tr {
+    grid-template-columns: 1fr;
+  }
+
+  .tabla-cotizaciones tbody td,
+  .tabla-lineas-cotizacion tbody td {
+    grid-column: 1;
+  }
+
+  .paginacion-cotizaciones span {
+    order: -1;
+    text-align: center;
+  }
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .barra-lateral,
+  .barra-superior,
+  .no-imprimir {
+    display: none !important;
+  }
+
+  .aplicacion-administrativa,
+  .contenido-aplicacion,
+  .area-principal,
+  .contenido-panel {
+    min-height: 0 !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .documento-cotizacion {
+    display: block;
+    color: #111;
+  }
+
+  .documento-cotizacion > * {
+    margin-bottom: 16px;
+  }
+
+  .cabecera-impresion-cotizacion {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #236a45;
+  }
+
+  .cabecera-impresion-cotizacion > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .cabecera-impresion-cotizacion > div:last-child {
+    text-align: right;
+  }
+
+  .marca-impresion-cotizacion {
+    margin: 0;
+    color: #236a45;
+    font-size: 25px;
+    font-weight: 800;
+  }
+
+  .datos-detalle-cotizacion,
+  .seccion-detalle-cotizacion,
+  .cierre-detalle-cotizacion {
+    padding: 0;
+    border: 0;
+    break-inside: avoid;
+  }
+
+  .tarjeta-dato-cotizacion {
+    border-color: #ccc;
+    background: #fff;
+  }
+
+  .contenedor-tabla-cotizaciones {
+    overflow: visible;
+    border-color: #bbb;
+  }
+
+  .desplazamiento-tabla-cotizaciones {
+    overflow: visible;
+  }
+
+  .contenedor-tabla-cotizaciones table {
+    min-width: 0;
+    font-size: 10px;
+  }
+
+  .contenedor-tabla-cotizaciones th,
+  .contenedor-tabla-cotizaciones td {
+    padding: 7px;
+  }
+
+  .contenedor-tabla-cotizaciones th {
+    color: #222;
+    background: #f2f2f2 !important;
+  }
+
+  .estado-cotizacion {
+    border: 1px solid currentcolor;
+    background: transparent !important;
+  }
+}

@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
 import clientesRoutes from './routes/clientes.routes.js'
+import cotizacionesRoutes from './routes/cotizaciones.routes.js'
 import inventarioRoutes from './routes/inventario.routes.js'
 import productosRoutes from './routes/productos.routes.js'
 import rolesRoutes from './routes/roles.routes.js'
@@ -35,6 +36,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes)
 app.use('/api/clientes', clientesRoutes)
+app.use('/api/cotizaciones', cotizacionesRoutes)
 app.use('/api/inventario', inventarioRoutes)
 app.use('/api/productos', productosRoutes)
 app.use('/api/usuarios', usuariosRoutes)
