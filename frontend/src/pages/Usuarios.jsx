@@ -216,7 +216,7 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
         <header className="encabezado-filtros-usuarios">
           <div>
             <h2>Filtros</h2>
-            <p>Busca personal por nombre o correo y filtra por estado.</p>
+            <p>Busca personal por nombre, correo o serie y filtra por estado.</p>
           </div>
           {!cargando && (
             <span>
@@ -232,7 +232,7 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
               type="search"
               value={busqueda}
               onChange={(evento) => setBusqueda(evento.target.value)}
-              placeholder="Buscar por nombre o correo"
+              placeholder="Buscar por nombre, correo o serie"
               maxLength={150}
             />
             <button type="submit" disabled={cargando}>
@@ -273,6 +273,7 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
               <thead>
                 <tr>
                   <th scope="col">Nombre</th>
+                  <th scope="col">Serie</th>
                   <th scope="col">Correo</th>
                   <th scope="col">Teléfono</th>
                   <th scope="col">Roles</th>
@@ -289,6 +290,17 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
                   <tr key={usuario.id}>
                     <td className="nombre-usuario-tabla" data-label="Nombre">
                       {usuario.nombre_completo}
+                    </td>
+                    <td data-label="Serie">
+                      {usuario.serie_documentos ? (
+                        <span className="serie-documentos-usuario">
+                          {usuario.serie_documentos}
+                        </span>
+                      ) : (
+                        <span className="serie-documentos-sin-asignar">
+                          Sin asignar
+                        </span>
+                      )}
                     </td>
                     <td className="correo-usuario-tabla" data-label="Correo">
                       {usuario.email}

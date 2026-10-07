@@ -5,7 +5,13 @@ import {
   reemplazarRolesUsuario,
 } from '../services/usuarios'
 
+const PATRON_SERIE_DOCUMENTOS = /^[A-Z0-9]{1,8}$/
+
 const obtenerMensajePerfil = (error) => {
+  if (error?.codigo === 'serie_documentos_duplicada') {
+    return 'La serie de documentos ya está asignada a otro usuario.'
+  }
+
   if (error?.status === 400) {
     return 'Revisa los datos ingresados e intenta nuevamente.'
   }
@@ -89,6 +95,9 @@ function EditarUsuarioDialog({
     usuario.nombre_completo ?? '',
   )
   const [telefono, setTelefono] = useState(usuario.telefono ?? '')
+  const [serieDocumentos, setSerieDocumentos] = useState(
+    usuario.serie_documentos ?? '',
+  )
   const [activo, setActivo] = useState(usuario.activo === true)
   const [rolesActuales, setRolesActuales] = useState(usuario.roles ?? [])
   const [rolesDisponibles, setRolesDisponibles] = useState([])
@@ -192,6 +201,7 @@ function EditarUsuarioDialog({
 
     const nombreNormalizado = nombreCompleto.trim()
     const telefonoNormalizado = telefono.trim()
+    const serieNormalizada = serieDocumentos.trim().toUpperCase()
     const nuevosErrores = {}
 
     if (!nombreNormalizado || nombreNormalizado.length > 150) {
@@ -200,6 +210,11 @@ function EditarUsuarioDialog({
 
     if (telefonoNormalizado.length > 30) {
       nuevosErrores.telefono = 'El teléfono no puede exceder 30 caracteres.'
+    }
+
+    if (serieNormalizada && !PATRON_SERIE_DOCUMENTOS.test(serieNormalizada)) {
+      nuevosErrores.serie_documentos =
+        'Usa hasta 8 caracteres, únicamente letras y números.'
     }
 
     setErroresPerfil(nuevosErrores)
@@ -221,6 +236,7 @@ function EditarUsuarioDialog({
 
     const cambios = {}
     const telefonoOriginal = perfilBase.telefono ?? ''
+    const serieOriginal = perfilBase.serie_documentos ?? ''
 
     if (nombreNormalizado !== perfilBase.nombre_completo) {
       cambios.nombre_completo = nombreNormalizado
@@ -228,6 +244,10 @@ function EditarUsuarioDialog({
 
     if (telefonoNormalizado !== telefonoOriginal) {
       cambios.telefono = telefonoNormalizado || null
+    }
+
+    if (serieNormalizada !== serieOriginal) {
+      cambios.serie_documentos = serieNormalizada || null
     }
 
     if (activo !== perfilBase.activo) {
@@ -257,6 +277,7 @@ function EditarUsuarioDialog({
 
       setPerfilBase((actual) => ({ ...actual, ...resultado.perfil }))
       setActivo(resultado.perfil.activo === true)
+      setSerieDocumentos(resultado.perfil.serie_documentos ?? '')
       setErrorRoles('')
       setMensajeRoles('')
       setMensajePerfil('Perfil actualizado correctamente.')
@@ -381,7 +402,7 @@ function EditarUsuarioDialog({
         >
           <div className="titulo-bloque-edicion">
             <h3>Datos del perfil</h3>
-            <p>Nombre, teléfono y estado de acceso.</p>
+            <p>Nombre, teléfono, serie interna y estado de acceso.</p>
           </div>
 
           <div className="campo-formulario-usuario">
@@ -457,6 +478,47 @@ function EditarUsuarioDialog({
             <p className="ayuda-campo-usuario">
               El correo no se modifica en esta operación.
             </p>
+          </div>
+
+          <div className="campo-formulario-usuario">
+            <label htmlFor="editar-serie-documentos">
+              Serie de documentos (opcional)
+            </label>
+            <input
+              id="editar-serie-documentos"
+              type="text"
+              value={serieDocumentos}
+              onChange={(evento) => {
+                setSerieDocumentos(evento.target.value.toUpperCase())
+                setErroresPerfil((actuales) => ({
+                  ...actuales,
+                  serie_documentos: '',
+                }))
+                setErrorPerfil('')
+                setMensajePerfil('')
+              }}
+              placeholder="V01"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck="false"
+              maxLength={8}
+              disabled={enviando}
+              aria-invalid={Boolean(erroresPerfil.serie_documentos)}
+              aria-describedby={
+                erroresPerfil.serie_documentos
+                  ? 'ayuda-editar-serie error-editar-serie'
+                  : 'ayuda-editar-serie'
+              }
+            />
+            <p id="ayuda-editar-serie" className="ayuda-campo-usuario">
+              Identificador interno para documentos comerciales. Ej.: V01,
+              CAJA1.
+            </p>
+            {erroresPerfil.serie_documentos && (
+              <p id="error-editar-serie" className="error-campo-usuario">
+                {erroresPerfil.serie_documentos}
+              </p>
+            )}
           </div>
 
           <div className="control-estado-edicion">

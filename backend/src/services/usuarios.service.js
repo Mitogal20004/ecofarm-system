@@ -4,6 +4,7 @@ import {
 } from '../lib/supabase.js'
 
 const CODIGO_CONFLICTO_USUARIO = 'conflicto_usuario'
+const CODIGO_CONFLICTO_SERIE_DOCUMENTOS = 'conflicto_serie_documentos'
 const CODIGO_COMPENSACION_FALLIDA = 'compensacion_usuario_fallida'
 const CODIGOS_CONFLICTO_AUTH = new Set([
   'email_exists',
@@ -17,6 +18,12 @@ const CODIGOS_SOLICITUD_INVALIDA_AUTH = new Set([
 
 const esObjeto = (valor) =>
   Boolean(valor) && typeof valor === 'object' && !Array.isArray(valor)
+
+const esConflictoSerieDocumentos = (error) =>
+  error?.code === '23505' &&
+  /perfiles_serie_documentos_unica|serie de documentos/i.test(
+    [error?.message, error?.details, error?.hint].filter(Boolean).join(' '),
+  )
 
 export class ErrorServicioUsuarios extends Error {
   constructor(mensaje, causa, codigo = causa?.code ?? null) {
@@ -43,6 +50,9 @@ async function ejecutarRpcUsuarios(token, nombre, parametros) {
       throw new ErrorServicioUsuarios(
         'No fue posible completar la operación de usuarios en Supabase.',
         error,
+        esConflictoSerieDocumentos(error)
+          ? CODIGO_CONFLICTO_SERIE_DOCUMENTOS
+          : error.code,
       )
     }
 
@@ -145,6 +155,7 @@ export async function crearUsuario(token, datos) {
       p_nombre_usuario: datos.nombre_usuario,
       p_telefono: datos.telefono,
       p_rol_id: datos.rol_id,
+      p_serie_documentos: datos.serie_documentos,
     })
 
     if (!esObjeto(data) || !esObjeto(data.perfil) || !esObjeto(data.rol)) {
@@ -181,6 +192,7 @@ export async function crearUsuario(token, datos) {
       nombre_usuario: data.perfil.nombre_usuario,
       email: usuarioAuth.email ?? datos.email,
       telefono: data.perfil.telefono,
+      serie_documentos: data.perfil.serie_documentos,
       activo: data.perfil.activo,
       roles: [data.rol],
     },

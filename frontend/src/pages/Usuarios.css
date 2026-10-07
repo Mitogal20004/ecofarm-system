@@ -229,7 +229,7 @@
 
 .tabla-usuarios {
   width: 100%;
-  min-width: 880px;
+  min-width: 960px;
   border-collapse: collapse;
   color: var(--color-texto);
   font-size: 14px;
@@ -269,6 +269,26 @@
 .correo-usuario-tabla {
   min-width: 210px;
   overflow-wrap: anywhere;
+}
+
+.serie-documentos-usuario {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 1px solid #cbd9d0;
+  border-radius: 6px;
+  color: var(--color-verde-profundo);
+  background: #f1f6f3;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.serie-documentos-sin-asignar {
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+  font-style: italic;
 }
 
 .roles-usuario {

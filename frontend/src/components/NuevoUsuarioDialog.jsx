@@ -5,12 +5,14 @@ import { listarRolesActivos } from '../services/roles'
 const PATRON_NOMBRE_USUARIO =
   /^[a-z0-9][a-z0-9._-]*[a-z0-9]$/
 const PATRON_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PATRON_SERIE_DOCUMENTOS = /^[A-Z0-9]{1,8}$/
 
 const FORMULARIO_INICIAL = {
   nombre_completo: '',
   nombre_usuario: '',
   email: '',
   telefono: '',
+  serie_documentos: '',
   password: '',
   confirmarPassword: '',
   rol_id: '',
@@ -45,6 +47,10 @@ const obtenerRequisitosPassword = (password) => [
 ]
 
 const obtenerMensajeCreacion = (error) => {
+  if (error?.codigo === 'serie_documentos_duplicada') {
+    return 'La serie de documentos ya está asignada a otro usuario.'
+  }
+
   if (error?.status === 409) {
     return 'El correo o nombre de usuario ya está registrado.'
   }
@@ -171,7 +177,9 @@ function NuevoUsuarioDialog({
     const valor =
       name === 'nombre_usuario' || name === 'email'
         ? value.toLowerCase()
-        : value
+        : name === 'serie_documentos'
+          ? value.toUpperCase()
+          : value
 
     setFormulario((actual) => ({ ...actual, [name]: valor }))
     setErrores((actuales) => ({ ...actuales, [name]: '' }))
@@ -184,6 +192,7 @@ function NuevoUsuarioDialog({
     const nombreUsuario = formulario.nombre_usuario.trim().toLowerCase()
     const email = formulario.email.trim().toLowerCase()
     const telefono = formulario.telefono.trim()
+    const serieDocumentos = formulario.serie_documentos.trim().toUpperCase()
 
     if (!nombreCompleto || nombreCompleto.length > 150) {
       nuevosErrores.nombre_completo = 'Ingresa un nombre completo válido.'
@@ -204,6 +213,14 @@ function NuevoUsuarioDialog({
 
     if (telefono.length > 30) {
       nuevosErrores.telefono = 'El teléfono no puede exceder 30 caracteres.'
+    }
+
+    if (
+      serieDocumentos &&
+      !PATRON_SERIE_DOCUMENTOS.test(serieDocumentos)
+    ) {
+      nuevosErrores.serie_documentos =
+        'Usa hasta 8 caracteres, únicamente letras y números.'
     }
 
     if (!requisitosPassword.every((requisito) => requisito.cumple)) {
@@ -227,6 +244,7 @@ function NuevoUsuarioDialog({
         nombre_usuario: nombreUsuario,
         email,
         telefono: telefono || null,
+        serie_documentos: serieDocumentos || null,
         password: formulario.password,
         rol_id: formulario.rol_id,
       },
@@ -394,6 +412,40 @@ function NuevoUsuarioDialog({
             {errores.telefono && (
               <p id="error-nuevo-telefono" className="error-campo-usuario">
                 {errores.telefono}
+              </p>
+            )}
+          </div>
+
+          <div className="campo-formulario-usuario">
+            <label htmlFor="nueva-serie-documentos">
+              Serie de documentos (opcional)
+            </label>
+            <input
+              id="nueva-serie-documentos"
+              name="serie_documentos"
+              type="text"
+              value={formulario.serie_documentos}
+              onChange={actualizarCampo}
+              placeholder="V01"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck="false"
+              maxLength={8}
+              disabled={enviando}
+              aria-invalid={Boolean(errores.serie_documentos)}
+              aria-describedby={
+                errores.serie_documentos
+                  ? 'ayuda-nueva-serie error-nueva-serie'
+                  : 'ayuda-nueva-serie'
+              }
+            />
+            <p id="ayuda-nueva-serie" className="ayuda-campo-usuario">
+              Identificador interno para documentos comerciales. Ej.: V01,
+              CAJA1.
+            </p>
+            {errores.serie_documentos && (
+              <p id="error-nueva-serie" className="error-campo-usuario">
+                {errores.serie_documentos}
               </p>
             )}
           </div>

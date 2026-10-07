@@ -15,18 +15,20 @@ export class ErrorConsultaUsuarios extends Error {
 }
 
 export class ErrorCreacionUsuario extends Error {
-  constructor(status = null) {
+  constructor(status = null, codigo = null) {
     super('No fue posible crear el usuario.')
     this.name = 'ErrorCreacionUsuario'
     this.status = status
+    this.codigo = codigo
   }
 }
 
 export class ErrorActualizacionUsuario extends Error {
-  constructor(status = null) {
+  constructor(status = null, codigo = null) {
     super('No fue posible actualizar el usuario.')
     this.name = 'ErrorActualizacionUsuario'
     this.status = status
+    this.codigo = codigo
   }
 }
 
@@ -197,6 +199,7 @@ export async function crearUsuario(datos) {
         nombre_usuario: datos.nombre_usuario,
         email: datos.email,
         telefono: datos.telefono,
+        serie_documentos: datos.serie_documentos,
         password: datos.password,
         rol_id: datos.rol_id,
       }),
@@ -207,9 +210,18 @@ export async function crearUsuario(datos) {
 
   if (!respuesta.ok) {
     const estadosControlados = new Set([400, 401, 403, 409])
+    let codigo = null
+
+    try {
+      const error = await respuesta.json()
+      codigo = typeof error?.code === 'string' ? error.code : null
+    } catch {
+      codigo = null
+    }
 
     throw new ErrorCreacionUsuario(
       estadosControlados.has(respuesta.status) ? respuesta.status : null,
+      codigo,
     )
   }
 
@@ -267,9 +279,18 @@ export async function actualizarPerfilUsuario(usuarioId, cambios) {
 
   if (!respuesta.ok) {
     const estadosControlados = new Set([400, 401, 403, 404, 409])
+    let codigo = null
+
+    try {
+      const error = await respuesta.json()
+      codigo = typeof error?.code === 'string' ? error.code : null
+    } catch {
+      codigo = null
+    }
 
     throw new ErrorActualizacionUsuario(
       estadosControlados.has(respuesta.status) ? respuesta.status : null,
+      codigo,
     )
   }
 

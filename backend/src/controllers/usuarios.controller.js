@@ -13,11 +13,13 @@ const PATRON_UUID =
 const PATRON_NOMBRE_USUARIO =
   /^[a-z0-9][a-z0-9._-]*[a-z0-9]$/
 const PATRON_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PATRON_SERIE_DOCUMENTOS = /^[A-Z0-9]{1,8}$/
 const CAMPOS_CREACION_USUARIO = new Set([
   'nombre_completo',
   'nombre_usuario',
   'email',
   'telefono',
+  'serie_documentos',
   'password',
   'rol_id',
 ])
@@ -85,6 +87,11 @@ const respuestasPorCodigo = {
     estado: 409,
     mensaje: 'El correo o nombre de usuario ya está registrado.',
   },
+  conflicto_serie_documentos: {
+    estado: 409,
+    mensaje: 'La serie de documentos ya está asignada a otro usuario.',
+    codigo: 'serie_documentos_duplicada',
+  },
 }
 
 const responderError = (res, error) => {
@@ -96,10 +103,16 @@ const responderError = (res, error) => {
     const respuesta = respuestasPorCodigo[error.codigo]
 
     if (respuesta) {
-      return res.status(respuesta.estado).json({
+      const cuerpo = {
         ok: false,
         message: respuesta.mensaje,
-      })
+      }
+
+      if (respuesta.codigo) {
+        cuerpo.code = respuesta.codigo
+      }
+
+      return res.status(respuesta.estado).json(cuerpo)
     }
   }
 
@@ -155,6 +168,25 @@ const validarPassword = (password) =>
   /[0-9]/.test(password) &&
   /[^A-Za-z0-9\s]/.test(password)
 
+const normalizarSerieDocumentos = (valor) => {
+  if (valor === undefined) return undefined
+  if (valor === null) return null
+
+  if (typeof valor !== 'string') {
+    throw new ErrorSolicitudInvalida()
+  }
+
+  const serieDocumentos = valor.trim().toUpperCase()
+
+  if (serieDocumentos === '') return null
+
+  if (!PATRON_SERIE_DOCUMENTOS.test(serieDocumentos)) {
+    throw new ErrorSolicitudInvalida()
+  }
+
+  return serieDocumentos
+}
+
 const crearDatosUsuario = (body) => {
   if (!esObjeto(body)) {
     throw new ErrorSolicitudInvalida()
@@ -179,7 +211,10 @@ const crearDatosUsuario = (body) => {
     typeof body.rol_id !== 'string' ||
     (body.telefono !== undefined &&
       body.telefono !== null &&
-      typeof body.telefono !== 'string')
+      typeof body.telefono !== 'string') ||
+    (body.serie_documentos !== undefined &&
+      body.serie_documentos !== null &&
+      typeof body.serie_documentos !== 'string')
   ) {
     throw new ErrorSolicitudInvalida()
   }
@@ -188,6 +223,7 @@ const crearDatosUsuario = (body) => {
   const nombreUsuario = body.nombre_usuario.trim().toLowerCase()
   const email = body.email.trim().toLowerCase()
   const telefono = body.telefono?.trim() || null
+  const serieDocumentos = normalizarSerieDocumentos(body.serie_documentos)
   const rolId = body.rol_id.trim()
 
   if (
@@ -210,6 +246,7 @@ const crearDatosUsuario = (body) => {
     nombre_usuario: nombreUsuario,
     email,
     telefono,
+    serie_documentos: serieDocumentos ?? null,
     password: body.password,
     rol_id: rolId,
   }
@@ -268,10 +305,18 @@ export async function actualizarPerfilUsuario(req, res) {
       throw new ErrorSolicitudInvalida()
     }
 
+    const cambios = { ...req.body }
+
+    if (Object.prototype.hasOwnProperty.call(cambios, 'serie_documentos')) {
+      cambios.serie_documentos = normalizarSerieDocumentos(
+        cambios.serie_documentos,
+      )
+    }
+
     const resultado = await actualizarPerfilUsuarioServicio(
       req.autenticacion?.token,
       usuarioId,
-      req.body,
+      cambios,
     )
 
     return res.status(200).json(resultado)
