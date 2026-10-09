@@ -35,7 +35,11 @@ const formatoFecha = new Intl.DateTimeFormat('es-GT', {
 const mostrarFecha = (valor) =>
   valor ? formatoFecha.format(new Date(valor)) : '—'
 
-function Cotizaciones({ permisos = [], alRefrescarAutorizacion }) {
+function Cotizaciones({
+  permisos = [],
+  alRefrescarAutorizacion,
+  alAbrirVenta,
+}) {
   const [cotizaciones, setCotizaciones] = useState([])
   const [paginacion, setPaginacion] = useState(PAGINACION_INICIAL)
   const [filtrosEdicion, setFiltrosEdicion] = useState(FILTROS_INICIALES)
@@ -49,6 +53,7 @@ function Cotizaciones({ permisos = [], alRefrescarAutorizacion }) {
 
   const puedeCrear = permisos.includes('cotizacion.crear')
   const puedeEditar = permisos.includes('cotizacion.editar')
+  const puedeConvertir = permisos.includes('cotizacion.convertir')
 
   const cargarListado = useCallback(async () => {
     setCargando(true)
@@ -153,8 +158,13 @@ function Cotizaciones({ permisos = [], alRefrescarAutorizacion }) {
       <DetalleCotizacion
         cotizacionId={cotizacionId}
         puedeEditar={puedeEditar}
+        puedeConvertir={puedeConvertir}
         alVolver={volverAlListado}
         alEditar={() => abrirFormulario(cotizacionId)}
+        alAbrirVenta={
+          permisos.includes('venta.ver') ? alAbrirVenta : undefined
+        }
+        alRefrescarAutorizacion={alRefrescarAutorizacion}
         alActualizar={async () =>
           setVersionListado((version) => version + 1)
         }

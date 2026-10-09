@@ -357,6 +357,117 @@
   background: var(--color-error-fondo);
 }
 
+.resultado-conversion-cotizacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 15px 18px;
+  border: 1px solid #b9dac6;
+  border-radius: 8px;
+  color: #17633e;
+  background: var(--color-verde-suave);
+}
+
+.resultado-conversion-cotizacion p {
+  margin: 3px 0 0;
+  font-size: 13px;
+}
+
+.panel-pago-conversion-cotizacion {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(220px, 0.6fr);
+  gap: 16px 24px;
+  padding: 18px;
+  border: 1px solid #b9dac6;
+  border-radius: 8px;
+  background: #f5faf7;
+}
+
+.panel-pago-conversion-cotizacion h2,
+.panel-pago-conversion-cotizacion p {
+  margin: 0;
+}
+
+.panel-pago-conversion-cotizacion > div:first-child > p:last-child {
+  margin-top: 4px;
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+}
+
+.panel-pago-conversion-cotizacion dl {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  margin: 0;
+}
+
+.panel-pago-conversion-cotizacion dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.panel-pago-conversion-cotizacion dt,
+.panel-pago-conversion-cotizacion dd {
+  margin: 0;
+}
+
+.panel-pago-conversion-cotizacion dt,
+.panel-pago-conversion-cotizacion > label {
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.panel-pago-conversion-cotizacion dd {
+  color: var(--color-verde-principal);
+  font-weight: 800;
+}
+
+.panel-pago-conversion-cotizacion .monto-insuficiente-cotizacion {
+  color: var(--color-error);
+}
+
+.control-pago-conversion-cotizacion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.control-pago-conversion-cotizacion input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+  color: var(--color-texto);
+  background: #fff;
+  font-size: 17px;
+  font-weight: 750;
+  text-align: right;
+}
+
+.acciones-pago-conversion-cotizacion {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.panel-pago-conversion-cotizacion > label,
+.control-pago-conversion-cotizacion,
+.acciones-pago-conversion-cotizacion {
+  grid-column: 2;
+}
+
+@media (max-width: 620px) {
+  .resultado-conversion-cotizacion {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 .estado-error-cotizaciones button {
   margin-top: 14px;
 }
@@ -734,6 +845,16 @@
     grid-template-columns: 1fr;
   }
 
+  .panel-pago-conversion-cotizacion {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-pago-conversion-cotizacion > label,
+  .control-pago-conversion-cotizacion,
+  .acciones-pago-conversion-cotizacion {
+    grid-column: 1;
+  }
+
   .campo-busqueda-cotizaciones,
   .boton-buscar-cotizaciones,
   .campo-ancho-cotizacion,
@@ -840,6 +961,15 @@
   .acciones-encabezado-cotizacion,
   .acciones-formulario-cotizacion,
   .paginacion-cotizaciones {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .control-pago-conversion-cotizacion {
+    grid-template-columns: 1fr;
+  }
+
+  .acciones-pago-conversion-cotizacion {
     align-items: stretch;
     flex-direction: column;
   }

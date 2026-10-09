@@ -10,6 +10,7 @@ import Cotizaciones from './pages/Cotizaciones'
 import Inventario from './pages/Inventario'
 import Productos from './pages/Productos'
 import Usuarios from './pages/Usuarios'
+import Ventas from './pages/Ventas'
 import {
   cerrarSesion,
   observarCambiosAutenticacion,
@@ -25,13 +26,15 @@ const VISTA_COTIZACIONES = 'cotizaciones'
 const VISTA_INVENTARIO = 'inventario'
 const VISTA_PRODUCTOS = 'productos'
 const VISTA_USUARIOS = 'usuarios'
+const VISTA_VENTAS = 'ventas'
 
 const PERMISO_POR_VISTA = {
-  [VISTA_CLIENTES]: 'cliente.ver',
-  [VISTA_COTIZACIONES]: 'cotizacion.ver',
-  [VISTA_INVENTARIO]: 'inventario.ver',
-  [VISTA_PRODUCTOS]: 'producto.ver',
-  [VISTA_USUARIOS]: 'usuario.ver',
+  [VISTA_CLIENTES]: ['cliente.ver'],
+  [VISTA_COTIZACIONES]: ['cotizacion.ver'],
+  [VISTA_INVENTARIO]: ['inventario.ver'],
+  [VISTA_PRODUCTOS]: ['producto.ver'],
+  [VISTA_USUARIOS]: ['usuario.ver'],
+  [VISTA_VENTAS]: ['venta.ver', 'venta.crear'],
 }
 
 function normalizarRuta(pathname) {
@@ -58,6 +61,7 @@ function App() {
   const [errorSesion, setErrorSesion] = useState('')
   const [errorAutorizacion, setErrorAutorizacion] = useState('')
   const [vistaActual, setVistaActual] = useState(VISTA_INICIO)
+  const [ventaInicialId, setVentaInicialId] = useState(null)
   const [rutaActual, setRutaActual] = useState(() =>
     normalizarRuta(window.location.pathname),
   )
@@ -101,9 +105,10 @@ function App() {
       setAutorizacion(autorizacionActual)
       setErrorAutorizacion('')
       setVistaActual((vista) => {
-        const permisoRequerido = PERMISO_POR_VISTA[vista]
+        const permisosRequeridos = PERMISO_POR_VISTA[vista]
 
-        return permisoRequerido && !codigos.includes(permisoRequerido)
+        return permisosRequeridos &&
+          !permisosRequeridos.some((codigo) => codigos.includes(codigo))
           ? VISTA_INICIO
           : vista
       })
@@ -354,8 +359,26 @@ function App() {
                 Inicio
               </button>
             </li>
-            {tienePermiso('venta.ver') && (
-              <li className="opcion-navegacion">Ventas</li>
+            {(tienePermiso('venta.ver') || tienePermiso('venta.crear')) && (
+              <li>
+                <button
+                  className={`opcion-navegacion boton-navegacion${
+                    vistaActual === VISTA_VENTAS
+                      ? ' opcion-navegacion-activa'
+                      : ''
+                  }`}
+                  type="button"
+                  onClick={() => {
+                    setVentaInicialId(null)
+                    setVistaActual(VISTA_VENTAS)
+                  }}
+                  aria-current={
+                    vistaActual === VISTA_VENTAS ? 'page' : undefined
+                  }
+                >
+                  Ventas
+                </button>
+              </li>
             )}
             {tienePermiso('inventario.ver') && (
               <li>
@@ -493,7 +516,14 @@ function App() {
 
         <main className="area-principal">
           <div className="contenido-panel">
-            {vistaActual === VISTA_CLIENTES ? (
+            {vistaActual === VISTA_VENTAS ? (
+              <Ventas
+                permisos={permisos}
+                ventaInicialId={ventaInicialId}
+                alConsumirVentaInicial={() => setVentaInicialId(null)}
+                alRefrescarAutorizacion={refrescarAutorizacion}
+              />
+            ) : vistaActual === VISTA_CLIENTES ? (
               <Clientes
                 permisos={permisos}
                 alRefrescarAutorizacion={refrescarAutorizacion}
@@ -502,6 +532,10 @@ function App() {
               <Cotizaciones
                 permisos={permisos}
                 alRefrescarAutorizacion={refrescarAutorizacion}
+                alAbrirVenta={(ventaId) => {
+                  setVentaInicialId(ventaId)
+                  setVistaActual(VISTA_VENTAS)
+                }}
               />
             ) : vistaActual === VISTA_INVENTARIO ? (
               <Inventario

@@ -7,6 +7,7 @@ import inventarioRoutes from './routes/inventario.routes.js'
 import productosRoutes from './routes/productos.routes.js'
 import rolesRoutes from './routes/roles.routes.js'
 import usuariosRoutes from './routes/usuarios.routes.js'
+import ventasRoutes from './routes/ventas.routes.js'
 
 const app = express()
 
@@ -41,5 +42,6 @@ app.use('/api/inventario', inventarioRoutes)
 app.use('/api/productos', productosRoutes)
 app.use('/api/usuarios', usuariosRoutes)
 app.use('/api/roles', rolesRoutes)
+app.use('/api/ventas', ventasRoutes)
 
 export default app
