@@ -791,7 +791,13 @@ begin
     or p_generar_recibo is null
     or p_detalles is null
     or jsonb_typeof(p_detalles) <> 'array'
-    or jsonb_array_length(p_detalles) < 1
+  then
+    raise exception using
+      errcode = '22023',
+      message = 'Los parámetros proporcionados no son válidos.';
+  end if;
+
+  if jsonb_array_length(p_detalles) < 1
     or jsonb_array_length(p_detalles) > 100
   then
     raise exception using
