@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import iconoCerrarSesion from './assets/icono-cerrar-sesion.svg'
 import logoEfarm from './assets/logo-efarm-brand.png'
+import IconoInterfaz from './components/IconoInterfaz'
 import Login from './pages/Login'
 import RecuperarPassword from './pages/RecuperarPassword'
 import RestablecerPassword from './pages/RestablecerPassword'
@@ -329,6 +330,40 @@ function App() {
 
   return (
     <div className="aplicacion-administrativa">
+      <header className="barra-superior">
+        <div className="contexto-barra-superior" aria-hidden="true">
+          <span>Gestión interna</span>
+          <strong>Operaciones E-farm</strong>
+        </div>
+
+        <div className="acciones-barra-superior">
+          <div className="identidad-usuario">
+            <span className="etiqueta-usuario">Usuario actual</span>
+            <strong className="nombre-usuario">
+              {autorizacion?.perfil?.nombre_completo || 'Cuenta E-farm'}
+            </strong>
+            {sesion.user?.email && (
+              <span className="correo-usuario">{sesion.user.email}</span>
+            )}
+          </div>
+
+          <button
+            className="boton-cerrar-sesion"
+            type="button"
+            onClick={manejarCierreSesion}
+            disabled={cerrandoSesion}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+          >
+            {cerrandoSesion ? (
+              <span className="spinner-cerrar-sesion" aria-hidden="true" />
+            ) : (
+              <img src={iconoCerrarSesion} alt="" aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      </header>
+
       <aside className="barra-lateral">
         <div className="marca-panel">
           <span className="simbolo-panel" aria-hidden="true">
@@ -341,7 +376,7 @@ function App() {
         </div>
 
         <nav className="navegacion-principal" aria-label="Navegación principal">
-          <p className="titulo-navegacion">Menú principal</p>
+          <p className="titulo-navegacion">General</p>
           <ul className="lista-navegacion-principal">
             <li>
               <button
@@ -356,6 +391,7 @@ function App() {
                   vistaActual === VISTA_INICIO ? 'page' : undefined
                 }
               >
+                <IconoInterfaz nombre="inicio" className="icono-navegacion" />
                 Inicio
               </button>
             </li>
@@ -376,6 +412,7 @@ function App() {
                     vistaActual === VISTA_VENTAS ? 'page' : undefined
                   }
                 >
+                  <IconoInterfaz nombre="ventas" className="icono-navegacion" />
                   Ventas
                 </button>
               </li>
@@ -394,6 +431,7 @@ function App() {
                     vistaActual === VISTA_INVENTARIO ? 'page' : undefined
                   }
                 >
+                  <IconoInterfaz nombre="inventario" className="icono-navegacion" />
                   Inventario
                 </button>
               </li>
@@ -412,6 +450,7 @@ function App() {
                     vistaActual === VISTA_PRODUCTOS ? 'page' : undefined
                   }
                 >
+                  <IconoInterfaz nombre="productos" className="icono-navegacion" />
                   Productos
                 </button>
               </li>
@@ -430,6 +469,7 @@ function App() {
                     vistaActual === VISTA_CLIENTES ? 'page' : undefined
                   }
                 >
+                  <IconoInterfaz nombre="clientes" className="icono-navegacion" />
                   Clientes
                 </button>
               </li>
@@ -448,36 +488,15 @@ function App() {
                     vistaActual === VISTA_COTIZACIONES ? 'page' : undefined
                   }
                 >
+                  <IconoInterfaz nombre="cotizaciones" className="icono-navegacion" />
                   Cotizaciones
                 </button>
               </li>
             )}
             {tienePermiso('reporte.ver') && (
-              <li className="opcion-navegacion">Reportes</li>
-            )}
-            {tienePermiso('usuario.ver') && (
-              <li className="grupo-navegacion">
-                <span className="opcion-navegacion opcion-navegacion-grupo">
-                  Administración
-                </span>
-                <ul className="subnavegacion">
-                  <li>
-                    <button
-                      className={`opcion-navegacion opcion-subnavegacion boton-navegacion${
-                        vistaActual === VISTA_USUARIOS
-                          ? ' opcion-navegacion-activa'
-                          : ''
-                      }`}
-                      type="button"
-                      onClick={() => setVistaActual(VISTA_USUARIOS)}
-                      aria-current={
-                        vistaActual === VISTA_USUARIOS ? 'page' : undefined
-                      }
-                    >
-                      Usuarios
-                    </button>
-                  </li>
-                </ul>
+              <li className="opcion-navegacion">
+                <IconoInterfaz nombre="reportes" className="icono-navegacion" />
+                Reportes
               </li>
             )}
             {comprobandoAutorizacion && !autorizacion && (
@@ -486,34 +505,41 @@ function App() {
               </li>
             )}
           </ul>
+
+          {tienePermiso('usuario.ver') && (
+            <div className="seccion-navegacion-administracion">
+              <p className="titulo-navegacion titulo-navegacion-con-icono">
+                <IconoInterfaz
+                  nombre="administracion"
+                  className="icono-titulo-navegacion"
+                />
+                Administración
+              </p>
+              <ul className="lista-navegacion-principal">
+                <li>
+                  <button
+                    className={`opcion-navegacion boton-navegacion${
+                      vistaActual === VISTA_USUARIOS
+                        ? ' opcion-navegacion-activa'
+                        : ''
+                    }`}
+                    type="button"
+                    onClick={() => setVistaActual(VISTA_USUARIOS)}
+                    aria-current={
+                      vistaActual === VISTA_USUARIOS ? 'page' : undefined
+                    }
+                  >
+                    <IconoInterfaz nombre="usuarios" className="icono-navegacion" />
+                    Usuarios
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
         </nav>
       </aside>
 
       <div className="contenido-aplicacion">
-        <header className="barra-superior">
-          <div className="identidad-usuario">
-            <span className="etiqueta-usuario">Usuario actual</span>
-            {sesion.user?.email && (
-              <span className="correo-usuario">{sesion.user.email}</span>
-            )}
-          </div>
-
-          <button
-            className="boton-cerrar-sesion"
-            type="button"
-            onClick={manejarCierreSesion}
-            disabled={cerrandoSesion}
-            aria-label="Cerrar sesión"
-            title="Cerrar sesión"
-          >
-            {cerrandoSesion ? (
-              <span className="spinner-cerrar-sesion" aria-hidden="true" />
-            ) : (
-              <img src={iconoCerrarSesion} alt="" aria-hidden="true" />
-            )}
-          </button>
-        </header>
-
         <main className="area-principal">
           <div className="contenido-panel">
             {vistaActual === VISTA_VENTAS ? (
@@ -554,16 +580,23 @@ function App() {
                 alRefrescarAutorizacion={refrescarAutorizacion}
               />
             ) : (
-              <>
+              <div className="inicio-panel">
                 <section
-                  className="encabezado-panel"
+                  className="encabezado-panel inicio-bienvenida"
                   aria-labelledby="titulo-panel"
                 >
-                  <p className="etiqueta-seccion">Panel administrativo</p>
-                  <h1 id="titulo-panel">Bienvenido a E-farm</h1>
-                  <p className="descripcion-panel">
-                    Espacio de trabajo para las operaciones internas de E-farm.
-                  </p>
+                  <div>
+                    <p className="etiqueta-seccion">Panel administrativo</p>
+                    <h1 id="titulo-panel">Resumen de operaciones internas</h1>
+                    <p className="descripcion-panel">
+                      Gestiona la actividad diaria de E-farm desde un espacio
+                      claro, ordenado y conectado con el trabajo del campo.
+                    </p>
+                  </div>
+                  <div className="estado-inicio" aria-label="Estado de la sesión">
+                    <span aria-hidden="true" />
+                    Sesión activa
+                  </div>
                 </section>
 
                 {errorSesion && (
@@ -578,19 +611,123 @@ function App() {
                   </p>
                 )}
 
-                <section
-                  className="tarjeta-sesion"
-                  aria-labelledby="titulo-sesion"
-                >
-                  <div>
-                    <p className="etiqueta-estado">Sesión activa</p>
-                    <h2 id="titulo-sesion">Acceso al sistema</h2>
+                <section className="seccion-accesos-inicio" aria-labelledby="titulo-accesos">
+                  <div className="encabezado-accesos-inicio">
+                    <div>
+                      <p className="etiqueta-seccion">Área de trabajo</p>
+                      <h2 id="titulo-accesos">Accesos disponibles</h2>
+                    </div>
+                    <p>Las opciones se muestran según tus permisos actuales.</p>
                   </div>
-                  <p className="descripcion-sesion">
-                    Tu sesión se encuentra activa.
-                  </p>
+
+                  <div className="cuadricula-accesos-inicio">
+                    {(tienePermiso('venta.ver') || tienePermiso('venta.crear')) && (
+                      <button
+                        className="acceso-inicio"
+                        type="button"
+                        onClick={() => {
+                          setVentaInicialId(null)
+                          setVistaActual(VISTA_VENTAS)
+                        }}
+                      >
+                        <span className="icono-acceso-inicio" aria-hidden="true">
+                          <IconoInterfaz nombre="ventas" />
+                        </span>
+                        <span>
+                          <strong>Ventas</strong>
+                          <small>Atiende el punto de venta y consulta operaciones.</small>
+                        </span>
+                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
+                      </button>
+                    )}
+
+                    {tienePermiso('inventario.ver') && (
+                      <button
+                        className="acceso-inicio"
+                        type="button"
+                        onClick={() => setVistaActual(VISTA_INVENTARIO)}
+                      >
+                        <span className="icono-acceso-inicio" aria-hidden="true">
+                          <IconoInterfaz nombre="inventario" />
+                        </span>
+                        <span>
+                          <strong>Inventario</strong>
+                          <small>Revisa existencias, alertas y movimientos.</small>
+                        </span>
+                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
+                      </button>
+                    )}
+
+                    {tienePermiso('producto.ver') && (
+                      <button
+                        className="acceso-inicio"
+                        type="button"
+                        onClick={() => setVistaActual(VISTA_PRODUCTOS)}
+                      >
+                        <span className="icono-acceso-inicio" aria-hidden="true">
+                          <IconoInterfaz nombre="productos" />
+                        </span>
+                        <span>
+                          <strong>Productos</strong>
+                          <small>Consulta variantes, presentaciones y precios.</small>
+                        </span>
+                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
+                      </button>
+                    )}
+
+                    {tienePermiso('cliente.ver') && (
+                      <button
+                        className="acceso-inicio"
+                        type="button"
+                        onClick={() => setVistaActual(VISTA_CLIENTES)}
+                      >
+                        <span className="icono-acceso-inicio" aria-hidden="true">
+                          <IconoInterfaz nombre="clientes" />
+                        </span>
+                        <span>
+                          <strong>Clientes</strong>
+                          <small>Administra la información comercial de clientes.</small>
+                        </span>
+                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
+                      </button>
+                    )}
+
+                    {tienePermiso('cotizacion.ver') && (
+                      <button
+                        className="acceso-inicio"
+                        type="button"
+                        onClick={() => setVistaActual(VISTA_COTIZACIONES)}
+                      >
+                        <span className="icono-acceso-inicio" aria-hidden="true">
+                          <IconoInterfaz nombre="cotizaciones" />
+                        </span>
+                        <span>
+                          <strong>Cotizaciones</strong>
+                          <small>Prepara y consulta propuestas comerciales.</small>
+                        </span>
+                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
+                      </button>
+                    )}
+
+                    {tienePermiso('usuario.ver') && (
+                      <button
+                        className="acceso-inicio"
+                        type="button"
+                        onClick={() => setVistaActual(VISTA_USUARIOS)}
+                      >
+                        <span className="icono-acceso-inicio" aria-hidden="true">
+                          <IconoInterfaz nombre="usuarios" />
+                        </span>
+                        <span>
+                          <strong>Usuarios</strong>
+                          <small>Consulta cuentas, roles y estados de acceso.</small>
+                        </span>
+                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
+                      </button>
+                    )}
+                  </div>
                 </section>
-              </>
+              </div>
             )}
           </div>
         </main>

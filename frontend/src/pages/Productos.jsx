@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import DetalleVarianteDialog from '../components/DetalleVarianteDialog'
+import IconoInterfaz from '../components/IconoInterfaz'
 import VarianteProductoDialog from '../components/VarianteProductoDialog'
 import { listarPresentaciones, listarVariantes } from '../services/productos'
 import './Productos.css'
@@ -190,25 +191,45 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
       )}
 
       <div className="resumen-productos" aria-label="Resumen del catálogo">
-        <article>
-          <span>Variantes encontradas</span>
-          <strong>{paginacion.total}</strong>
-          <small>En el resultado filtrado</small>
+        <article className="tarjeta-kpi tarjeta-kpi-terracota">
+          <div className="cabecera-tarjeta-kpi">
+            <span className="icono-tarjeta-kpi" aria-hidden="true">
+              <IconoInterfaz nombre="inventario" />
+            </span>
+            <span className="etiqueta-tarjeta-kpi">Variantes encontradas</span>
+          </div>
+          <strong className="valor-tarjeta-kpi">{paginacion.total}</strong>
+          <small className="descripcion-tarjeta-kpi">En el resultado filtrado</small>
         </article>
-        <article>
-          <span>Colores activos en página</span>
-          <strong>{coloresPagina}</strong>
-          <small>Entre las variantes visibles</small>
+        <article className="tarjeta-kpi tarjeta-kpi-salvia">
+          <div className="cabecera-tarjeta-kpi">
+            <span className="icono-tarjeta-kpi" aria-hidden="true">
+              <IconoInterfaz nombre="paleta" />
+            </span>
+            <span className="etiqueta-tarjeta-kpi">Colores activos en página</span>
+          </div>
+          <strong className="valor-tarjeta-kpi">{coloresPagina}</strong>
+          <small className="descripcion-tarjeta-kpi">Entre las variantes visibles</small>
         </article>
-        <article className="tarjeta-resumen-premium">
-          <span>Premium activas en página</span>
-          <strong>{premiumPagina}</strong>
-          <small>Entre las variantes visibles</small>
+        <article className="tarjeta-kpi tarjeta-kpi-dorada">
+          <div className="cabecera-tarjeta-kpi">
+            <span className="icono-tarjeta-kpi" aria-hidden="true">
+              <IconoInterfaz nombre="estrella" />
+            </span>
+            <span className="etiqueta-tarjeta-kpi">Premium activas en página</span>
+          </div>
+          <strong className="valor-tarjeta-kpi">{premiumPagina}</strong>
+          <small className="descripcion-tarjeta-kpi">Entre las variantes visibles</small>
         </article>
-        <article>
-          <span>Presentaciones</span>
-          <strong>{presentaciones.length}</strong>
-          <small>Unidades comerciales disponibles</small>
+        <article className="tarjeta-kpi tarjeta-kpi-tierra">
+          <div className="cabecera-tarjeta-kpi">
+            <span className="icono-tarjeta-kpi" aria-hidden="true">
+              <IconoInterfaz nombre="capas" />
+            </span>
+            <span className="etiqueta-tarjeta-kpi">Presentaciones</span>
+          </div>
+          <strong className="valor-tarjeta-kpi">{presentaciones.length}</strong>
+          <small className="descripcion-tarjeta-kpi">Unidades comerciales disponibles</small>
         </article>
       </div>
 

@@ -140,8 +140,8 @@
 }
 
 .mensaje-exito-ventas {
-  border: 1px solid #b9dac6;
-  color: #17633e;
+  border: 1px solid var(--color-exito-borde);
+  color: var(--color-exito);
   background: var(--color-verde-suave);
 }
 
@@ -152,10 +152,10 @@
 .acciones-reintento-ventas {
   justify-content: space-between;
   padding: 14px 16px;
-  border: 1px solid #efd08d;
+  border: 1px solid var(--color-advertencia-borde);
   border-radius: 7px;
-  color: #6e4b0c;
-  background: #fff8e8;
+  color: var(--color-advertencia);
+  background: var(--color-advertencia-fondo);
   font-size: 13px;
 }
 
@@ -388,7 +388,7 @@
 
 .vista-previa-venta .aviso-stock-previsto-ventas {
   margin: 12px 0 0;
-  color: #8a5a05;
+  color: var(--color-advertencia);
   font-size: 13px;
   font-weight: 700;
 }
@@ -622,7 +622,7 @@
   justify-content: space-between;
   gap: 18px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #d9e7dd;
+  border-bottom: 1px solid var(--color-exito-borde);
 }
 
 .encabezado-pago-ventas > div {
@@ -691,7 +691,7 @@
   justify-content: space-between;
   gap: 16px;
   padding-top: 11px;
-  border-top: 1px solid #d9e7dd;
+  border-top: 1px solid var(--color-exito-borde);
 }
 
 .resultado-pago-ventas strong {
@@ -717,7 +717,7 @@
   gap: 10px;
   margin: 20px auto;
   padding: 36px;
-  border: 1px solid #b9dac6;
+  border: 1px solid var(--color-exito-borde);
   border-radius: 10px;
   background: #fff;
   text-align: center;
@@ -775,8 +775,8 @@
 .resultado-venta .aviso-idempotencia-ventas {
   padding: 9px 12px;
   border-radius: 6px;
-  color: #6e4b0c;
-  background: #fff8e8;
+  color: var(--color-advertencia);
+  background: var(--color-advertencia-fondo);
   font-size: 13px;
 }
 
@@ -849,8 +849,8 @@
 }
 
 .estado-venta-confirmada {
-  color: #17633e;
-  background: #e3f3e9;
+  color: var(--color-exito);
+  background: var(--color-verde-suave);
 }
 
 .estado-venta-anulada {
@@ -1128,7 +1128,7 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgb(13 31 22 / 58%);
+  background: rgb(31 38 35 / 58%);
 }
 
 .dialogo-des-ventas {
@@ -1456,7 +1456,7 @@
 
   .cabecera-recibo-venta {
     padding: 16px;
-    border: 2px solid #153f2d;
+    border: 2px solid var(--color-verde-oscuro);
     color: #111;
     background: #fff;
   }

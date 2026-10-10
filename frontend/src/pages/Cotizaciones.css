@@ -321,7 +321,7 @@
 }
 
 .estado-cotizacion-emitida {
-  color: #17633e;
+  color: var(--color-exito);
   background: var(--color-verde-suave);
 }
 
@@ -363,9 +363,9 @@
   justify-content: space-between;
   gap: 18px;
   padding: 15px 18px;
-  border: 1px solid #b9dac6;
+  border: 1px solid var(--color-exito-borde);
   border-radius: 8px;
-  color: #17633e;
+  color: var(--color-exito);
   background: var(--color-verde-suave);
 }
 
@@ -379,7 +379,7 @@
   grid-template-columns: minmax(240px, 1fr) minmax(220px, 0.6fr);
   gap: 16px 24px;
   padding: 18px;
-  border: 1px solid #b9dac6;
+  border: 1px solid var(--color-exito-borde);
   border-radius: 8px;
   background: #f5faf7;
 }
@@ -673,7 +673,7 @@
   border: 1px solid var(--color-borde);
   border-radius: 8px;
   background: rgb(255 255 255 / 94%);
-  box-shadow: 0 5px 16px rgb(15 35 26 / 8%);
+  box-shadow: 0 5px 16px rgb(31 58 61 / 8%);
   backdrop-filter: blur(8px);
 }
 
@@ -1036,7 +1036,7 @@
     align-items: flex-start;
     justify-content: space-between;
     padding-bottom: 14px;
-    border-bottom: 2px solid #236a45;
+    border-bottom: 2px solid var(--color-verde-secundario);
   }
 
   .cabecera-impresion-cotizacion > div {
@@ -1050,7 +1050,7 @@
 
   .marca-impresion-cotizacion {
     margin: 0;
-    color: #236a45;
+    color: var(--color-verde-secundario);
     font-size: 25px;
     font-weight: 800;
   }

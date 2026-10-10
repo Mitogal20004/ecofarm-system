@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import HistorialInventarioDialog from '../components/HistorialInventarioDialog'
+import IconoInterfaz from '../components/IconoInterfaz'
 import MovimientoInventarioDialog from '../components/MovimientoInventarioDialog'
 import StockMinimoDialog from '../components/StockMinimoDialog'
 import { listarInventario } from '../services/inventario'
@@ -379,25 +380,45 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
       )}
 
       <div className="resumen-inventario" aria-label="Resumen del inventario filtrado">
-        <article className="tarjeta-resumen-inventario">
-          <span>Total de manojos</span>
-          <strong>{resumen.total_manojos}</strong>
-          <small>Existencia física filtrada</small>
+        <article className="tarjeta-kpi tarjeta-kpi-terracota">
+          <div className="cabecera-tarjeta-kpi">
+            <span className="icono-tarjeta-kpi" aria-hidden="true">
+              <IconoInterfaz nombre="manojos" />
+            </span>
+            <span className="etiqueta-tarjeta-kpi">Total de manojos</span>
+          </div>
+          <strong className="valor-tarjeta-kpi">{resumen.total_manojos}</strong>
+          <small className="descripcion-tarjeta-kpi">Existencia física filtrada</small>
         </article>
-        <article className="tarjeta-resumen-inventario">
-          <span>Variantes con stock</span>
-          <strong>{resumen.variantes_con_stock}</strong>
-          <small>Con saldo mayor que cero</small>
+        <article className="tarjeta-kpi tarjeta-kpi-salvia">
+          <div className="cabecera-tarjeta-kpi">
+            <span className="icono-tarjeta-kpi" aria-hidden="true">
+              <IconoInterfaz nombre="disponible" />
+            </span>
+            <span className="etiqueta-tarjeta-kpi">Variantes con stock</span>
+          </div>
+          <strong className="valor-tarjeta-kpi">{resumen.variantes_con_stock}</strong>
+          <small className="descripcion-tarjeta-kpi">Con saldo mayor que cero</small>
         </article>
-        <article className="tarjeta-resumen-inventario tarjeta-resumen-advertencia">
-          <span>Stock bajo</span>
-          <strong>{resumen.variantes_stock_bajo}</strong>
-          <small>En o por debajo del mínimo</small>
+        <article className="tarjeta-kpi tarjeta-kpi-dorada">
+          <div className="cabecera-tarjeta-kpi">
+            <span className="icono-tarjeta-kpi" aria-hidden="true">
+              <IconoInterfaz nombre="advertencia" />
+            </span>
+            <span className="etiqueta-tarjeta-kpi">Stock bajo</span>
+          </div>
+          <strong className="valor-tarjeta-kpi">{resumen.variantes_stock_bajo}</strong>
+          <small className="descripcion-tarjeta-kpi">En o por debajo del mínimo</small>
         </article>
-        <article className="tarjeta-resumen-inventario tarjeta-resumen-critico">
-          <span>Sin stock</span>
-          <strong>{resumen.variantes_sin_stock}</strong>
-          <small>Con saldo igual a cero</small>
+        <article className="tarjeta-kpi tarjeta-kpi-critica">
+          <div className="cabecera-tarjeta-kpi">
+            <span className="icono-tarjeta-kpi" aria-hidden="true">
+              <IconoInterfaz nombre="agotado" />
+            </span>
+            <span className="etiqueta-tarjeta-kpi">Sin stock</span>
+          </div>
+          <strong className="valor-tarjeta-kpi">{resumen.variantes_sin_stock}</strong>
+          <small className="descripcion-tarjeta-kpi">Con saldo igual a cero</small>
         </article>
       </div>
       <p className="nota-resumen-inventario">

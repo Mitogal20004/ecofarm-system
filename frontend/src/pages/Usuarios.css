@@ -70,9 +70,9 @@
 .mensaje-exito-usuario {
   margin: 0;
   padding: 12px 14px;
-  border: 1px solid #b9dac6;
+  border: 1px solid var(--color-exito-borde);
   border-radius: 6px;
-  color: #17633e;
+  color: var(--color-exito);
   background: var(--color-verde-suave);
   font-size: 14px;
   font-weight: 650;
@@ -337,7 +337,7 @@
 }
 
 .estado-usuario-activo {
-  color: #17633e;
+  color: var(--color-exito);
   background: var(--color-verde-suave);
 }
 
@@ -418,7 +418,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgb(15 35 26 / 52%);
+  background: rgb(31 38 35 / 52%);
 }
 
 .dialogo-nuevo-usuario {
@@ -429,7 +429,7 @@
   border: 1px solid var(--color-borde);
   border-radius: 10px;
   background: var(--color-superficie);
-  box-shadow: 0 12px 30px rgb(15 35 26 / 18%);
+  box-shadow: 0 12px 30px rgb(31 58 61 / 18%);
 }
 
 .dialogo-editar-usuario {
@@ -634,7 +634,7 @@
 
 .interruptor-estado-usuario input:checked + span {
   border-color: #9fcbb0;
-  color: #17633e;
+  color: var(--color-exito);
   background: var(--color-verde-suave);
 }
 
@@ -648,17 +648,17 @@
   padding: 11px 12px;
   border: 1px solid #e6c675;
   border-radius: 6px;
-  color: #6d5314;
-  background: #fff9e8;
+  color: var(--color-advertencia);
+  background: var(--color-advertencia-fondo);
   font-size: 12px;
 }
 
 .mensaje-exito-operacion {
   margin: 0;
   padding: 11px 12px;
-  border: 1px solid #b9dac6;
+  border: 1px solid var(--color-exito-borde);
   border-radius: 6px;
-  color: #17633e;
+  color: var(--color-exito);
   background: var(--color-verde-suave);
   font-size: 13px;
 }

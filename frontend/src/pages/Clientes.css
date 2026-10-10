@@ -70,8 +70,8 @@
 }
 
 .mensaje-exito-clientes {
-  border: 1px solid #b9dac6;
-  color: #17633e;
+  border: 1px solid var(--color-exito-borde);
+  color: var(--color-exito);
   background: var(--color-verde-suave);
 }
 
@@ -286,7 +286,7 @@
 }
 
 .estado-cliente-activo {
-  color: #17633e;
+  color: var(--color-exito);
   background: var(--color-verde-suave);
 }
 
@@ -360,7 +360,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgb(15 35 26 / 52%);
+  background: rgb(31 38 35 / 52%);
 }
 
 .dialogo-cliente {
@@ -370,7 +370,7 @@
   border: 1px solid var(--color-borde);
   border-radius: 10px;
   background: var(--color-superficie);
-  box-shadow: 0 12px 30px rgb(15 35 26 / 18%);
+  box-shadow: 0 12px 30px rgb(31 58 61 / 18%);
 }
 
 .encabezado-dialogo-cliente {

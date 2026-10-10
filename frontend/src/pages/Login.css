@@ -44,7 +44,7 @@
 
 .sobrelinea {
   margin: 0 0 16px;
-  color: #c8ddcf;
+  color: #d8e3e0;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -85,7 +85,7 @@
   border: 1px solid var(--color-borde);
   border-radius: 10px;
   background: var(--color-superficie);
-  box-shadow: 0 3px 12px rgb(21 63 45 / 7%);
+  box-shadow: 0 3px 12px rgb(31 58 61 / 7%);
 }
 
 .etiqueta-bienvenida {
@@ -306,7 +306,7 @@
 .spinner-google {
   width: 17px;
   height: 17px;
-  border: 2px solid rgb(31 111 74 / 25%);
+  border: 2px solid rgb(39 74 77 / 25%);
   border-top-color: var(--color-verde-principal);
   border-radius: 50%;
   animation: girar 0.8s linear infinite;

@@ -73,8 +73,8 @@
 }
 
 .mensaje-exito-productos {
-  border: 1px solid #b9dac6;
-  color: #17633e;
+  border: 1px solid var(--color-exito-borde);
+  color: var(--color-exito);
   background: var(--color-verde-suave);
 }
 
@@ -88,52 +88,6 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
-}
-
-.resumen-productos article {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  gap: 7px;
-  min-height: 132px;
-  padding: 18px 20px;
-  border: 1px solid var(--color-borde);
-  border-radius: 8px;
-  background: var(--color-superficie);
-}
-
-.resumen-productos article::before {
-  width: 32px;
-  height: 3px;
-  margin-bottom: 3px;
-  border-radius: 999px;
-  background: var(--color-verde-principal);
-  content: '';
-}
-
-.resumen-productos span {
-  color: var(--color-texto-secundario);
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.resumen-productos strong {
-  align-self: end;
-  color: var(--color-verde-principal);
-  font-size: clamp(26px, 3vw, 32px);
-  line-height: 1.1;
-}
-
-.resumen-productos small {
-  color: var(--color-texto-secundario);
-  font-size: 12px;
-}
-
-.resumen-productos .tarjeta-resumen-premium::before {
-  background: #c18112;
-}
-
-.resumen-productos .tarjeta-resumen-premium strong {
-  color: #7a4b00;
 }
 
 .filtros-productos {
@@ -247,7 +201,7 @@
 
 .contenedor-listado-productos {
   overflow: hidden;
-  border: 1px solid var(--color-borde);
+  border: 1px solid #bfc7c0;
   border-radius: 8px;
   background: var(--color-superficie);
 }
@@ -274,7 +228,8 @@
 .tabla-historial-productos th,
 .tabla-historial-productos td {
   padding: 13px 14px;
-  border-bottom: 1px solid var(--color-borde);
+  border-right: 1px solid #d6dbd6;
+  border-bottom: 1px solid #d6dbd6;
   text-align: left;
   vertical-align: middle;
 }
@@ -283,9 +238,17 @@
 .tabla-historial-productos th {
   color: var(--color-texto-secundario);
   background: var(--color-superficie-secundaria);
+  border-bottom-color: #aeb6af;
   font-size: 12px;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+}
+
+.tabla-productos th:last-child,
+.tabla-productos td:last-child,
+.tabla-historial-productos th:last-child,
+.tabla-historial-productos td:last-child {
+  border-right: 0;
 }
 
 .tabla-productos tbody tr:last-child td,
@@ -338,7 +301,7 @@
 }
 
 .estado-producto-activo {
-  color: #17633e;
+  color: var(--color-exito);
   background: var(--color-verde-suave);
 }
 
@@ -438,7 +401,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgb(15 35 26 / 52%);
+  background: rgb(31 38 35 / 52%);
 }
 
 .dialogo-producto {
@@ -448,7 +411,7 @@
   border: 1px solid var(--color-borde);
   border-radius: 10px;
   background: var(--color-superficie);
-  box-shadow: 0 12px 30px rgb(15 35 26 / 18%);
+  box-shadow: 0 12px 30px rgb(31 58 61 / 18%);
 }
 
 .dialogo-detalle-producto {
