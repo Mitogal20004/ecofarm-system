@@ -685,7 +685,63 @@
 }
 
 .cabecera-impresion-cotizacion {
-  display: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px 28px;
+  padding: 24px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-bottom: 4px solid var(--color-verde-secundario);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.identidad-documento-cotizacion {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.logo-documento-cotizacion {
+  width: clamp(142px, 18vw, 180px);
+  height: auto;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.identidad-documento-cotizacion > span {
+  padding-left: 18px;
+  border-left: 1px solid var(--color-borde-fuerte);
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+}
+
+.referencia-documento-cotizacion {
+  display: grid;
+  gap: 3px;
+  justify-items: end;
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+  text-align: right;
+}
+
+.referencia-documento-cotizacion strong {
+  color: var(--color-verde-profundo);
+  font-size: 18px;
+}
+
+.cabecera-impresion-cotizacion h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-borde);
+  color: var(--color-verde-oscuro);
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .datos-detalle-cotizacion {
@@ -729,6 +785,16 @@
   background: var(--color-verde-suave);
   font-size: 11px;
   font-weight: 700;
+}
+
+.seccion-detalle-cotizacion .contenedor-tabla-cotizaciones th,
+.seccion-detalle-cotizacion .contenedor-tabla-cotizaciones td {
+  border-right: 1px solid var(--color-borde);
+}
+
+.seccion-detalle-cotizacion .contenedor-tabla-cotizaciones th:last-child,
+.seccion-detalle-cotizacion .contenedor-tabla-cotizaciones td:last-child {
+  border-right: 0;
 }
 
 .tarjeta-dato-cotizacion dl,
@@ -802,6 +868,14 @@
   text-align: center;
 }
 
+.pie-documento-cotizacion {
+  padding-top: 14px;
+  border-top: 1px solid var(--color-borde-fuerte);
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+  text-align: center;
+}
+
 .solo-lector {
   position: absolute;
   width: 1px;
@@ -843,6 +917,19 @@
   .datos-detalle-cotizacion,
   .cierre-detalle-cotizacion {
     grid-template-columns: 1fr;
+  }
+
+  .cabecera-impresion-cotizacion {
+    grid-template-columns: 1fr;
+  }
+
+  .referencia-documento-cotizacion {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .documento-cotizacion .desplazamiento-tabla-cotizaciones {
+    overflow-x: auto;
   }
 
   .panel-pago-conversion-cotizacion {
@@ -994,6 +1081,19 @@
     order: -1;
     text-align: center;
   }
+
+  .identidad-documento-cotizacion {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .identidad-documento-cotizacion > span {
+    padding-top: 10px;
+    padding-left: 0;
+    border-top: 1px solid var(--color-borde-fuerte);
+    border-left: 0;
+  }
 }
 
 @media print {
@@ -1001,7 +1101,9 @@
     margin: 14mm;
   }
 
+  html,
   body {
+    width: 100%;
     background: #fff !important;
   }
 
@@ -1025,34 +1127,53 @@
   .documento-cotizacion {
     display: block;
     color: #111;
+    font-size: 11px;
   }
 
   .documento-cotizacion > * {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   .cabecera-impresion-cotizacion {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding-bottom: 14px;
-    border-bottom: 2px solid var(--color-verde-secundario);
-  }
-
-  .cabecera-impresion-cotizacion > div {
     display: grid;
-    gap: 3px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 20px;
+    padding: 12px 14px;
+    border: 1px solid #aeb6af;
+    border-bottom: 3px solid var(--color-verde-secundario);
+    border-radius: 0;
+    background: #fff !important;
+    break-inside: avoid;
   }
 
-  .cabecera-impresion-cotizacion > div:last-child {
+  .identidad-documento-cotizacion {
+    align-items: center;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .logo-documento-cotizacion {
+    width: 142px;
+    max-height: 50px;
+  }
+
+  .identidad-documento-cotizacion > span {
+    padding-top: 0;
+    padding-left: 12px;
+    border-top: 0;
+    border-left: 1px solid #bfc7c0;
+    color: #4f5853;
+  }
+
+  .referencia-documento-cotizacion {
+    justify-items: end;
     text-align: right;
   }
 
-  .marca-impresion-cotizacion {
-    margin: 0;
-    color: var(--color-verde-secundario);
-    font-size: 25px;
-    font-weight: 800;
+  .cabecera-impresion-cotizacion h2 {
+    padding-top: 10px;
+    color: #1f3a3d;
+    font-size: 27px;
   }
 
   .datos-detalle-cotizacion,
@@ -1060,17 +1181,39 @@
   .cierre-detalle-cotizacion {
     padding: 0;
     border: 0;
+    border-radius: 0;
+  }
+
+  .datos-detalle-cotizacion {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     break-inside: avoid;
   }
 
   .tarjeta-dato-cotizacion {
-    border-color: #ccc;
-    background: #fff;
+    padding: 12px 14px;
+    border-color: #bfc7c0;
+    background: #fff !important;
+  }
+
+  .seccion-detalle-cotizacion {
+    break-inside: auto;
+  }
+
+  .titulo-seccion-detalle-cotizacion {
+    margin-bottom: 8px;
+    break-after: avoid;
+  }
+
+  .titulo-seccion-detalle-cotizacion h2,
+  .cierre-detalle-cotizacion h2 {
+    font-size: 14px;
   }
 
   .contenedor-tabla-cotizaciones {
     overflow: visible;
-    border-color: #bbb;
+    border-color: #aeb6af;
+    border-radius: 0;
   }
 
   .desplazamiento-tabla-cotizaciones {
@@ -1078,22 +1221,68 @@
   }
 
   .contenedor-tabla-cotizaciones table {
+    display: table;
     min-width: 0;
-    font-size: 10px;
+    font-size: 9px;
+  }
+
+  .tabla-detalle-cotizacion thead {
+    display: table-header-group;
+  }
+
+  .tabla-detalle-cotizacion tbody {
+    display: table-row-group;
+  }
+
+  .tabla-detalle-cotizacion tr {
+    break-inside: avoid;
   }
 
   .contenedor-tabla-cotizaciones th,
   .contenedor-tabla-cotizaciones td {
-    padding: 7px;
+    padding: 6px;
+    border-right: 1px solid #cbd0cb;
+    border-bottom: 1px solid #cbd0cb;
+    color: #111;
+    background: #fff !important;
   }
 
   .contenedor-tabla-cotizaciones th {
     color: #222;
-    background: #f2f2f2 !important;
+    background: #f3eee3 !important;
+  }
+
+  .contenedor-tabla-cotizaciones th:last-child,
+  .contenedor-tabla-cotizaciones td:last-child {
+    border-right: 0;
+  }
+
+  .cierre-detalle-cotizacion {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.45fr);
+    gap: 18px;
+    padding-top: 2px;
+    break-inside: avoid;
+  }
+
+  .totales-detalle-cotizacion {
+    padding: 10px 12px;
+    border: 1px solid #aeb6af;
+  }
+
+  .total-final-detalle-cotizacion {
+    border-top-color: #1f3a3d;
+    color: #1f3a3d;
+    font-size: 17px;
   }
 
   .estado-cotizacion {
     border: 1px solid currentcolor;
     background: transparent !important;
+  }
+
+  .nota-estado-documento-cotizacion,
+  .pie-documento-cotizacion {
+    background: #fff !important;
+    break-inside: avoid;
   }
 }

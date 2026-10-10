@@ -909,38 +909,62 @@
 
 .cabecera-recibo-venta {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
   padding: 24px;
-  border: 1px solid var(--color-borde);
+  border: 1px solid var(--color-borde-fuerte);
+  border-top: 4px solid var(--color-verde-oscuro);
   border-radius: 9px;
-  color: #fff;
-  background: var(--color-verde-oscuro);
+  background: var(--color-superficie);
 }
 
-.cabecera-recibo-venta > div {
+.identidad-recibo-venta {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.logo-documento-venta {
+  width: clamp(142px, 18vw, 180px);
+  height: auto;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.identidad-recibo-venta > span {
+  padding-left: 18px;
+  border-left: 1px solid var(--color-borde-fuerte);
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+}
+
+.referencia-recibo-venta {
   display: grid;
-}
-
-.cabecera-recibo-venta > div:last-child {
+  gap: 2px;
   justify-items: end;
   text-align: right;
 }
 
-.marca-recibo-venta {
-  margin: 0;
-  font-size: 25px;
+.referencia-recibo-venta .tipo-documento-venta {
+  color: var(--color-verde-profundo);
+  font-size: 13px;
   font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
-.cabecera-recibo-venta span,
-.cabecera-recibo-venta small {
-  color: #d4e6db;
+.referencia-recibo-venta strong {
+  color: var(--color-texto);
+  font-size: 22px;
+  line-height: 1.25;
 }
 
-.cabecera-recibo-venta strong {
-  font-size: 20px;
+.referencia-recibo-venta span:not(.tipo-documento-venta),
+.referencia-recibo-venta small {
+  color: var(--color-texto-secundario);
+  font-size: 12px;
 }
 
 .datos-documento-venta {
@@ -1013,6 +1037,20 @@
   overflow: hidden;
 }
 
+.tabla-detalle-venta th,
+.tabla-detalle-venta td {
+  border-right: 1px solid var(--color-borde);
+}
+
+.tabla-detalle-venta th:last-child,
+.tabla-detalle-venta td:last-child {
+  border-right: 0;
+}
+
+.tabla-detalle-venta tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 .titulo-seccion-detalle-venta {
   display: flex;
   align-items: center;
@@ -1056,6 +1094,10 @@
   display: grid;
   gap: 8px;
   margin: 0;
+  padding: 16px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 7px;
+  background: var(--color-beige-suave);
 }
 
 .cierre-detalle-venta dl > div {
@@ -1415,6 +1457,19 @@
   .auditoria-inventario-venta li span {
     text-align: left;
   }
+
+  .identidad-recibo-venta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .identidad-recibo-venta > span {
+    padding-top: 10px;
+    padding-left: 0;
+    border-top: 1px solid var(--color-borde-fuerte);
+    border-left: 0;
+  }
 }
 
 @media print {
@@ -1422,7 +1477,9 @@
     margin: 12mm;
   }
 
+  html,
   body {
+    width: 100%;
     background: #fff !important;
   }
 
@@ -1447,41 +1504,162 @@
   .documento-venta {
     display: block;
     color: #111;
+    font-size: 11px;
   }
 
   .documento-venta > * {
-    margin-bottom: 12px;
-    break-inside: avoid;
+    margin-bottom: 10px;
   }
 
   .cabecera-recibo-venta {
-    padding: 16px;
-    border: 2px solid var(--color-verde-oscuro);
-    color: #111;
-    background: #fff;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    padding: 12px 14px;
+    border: 1px solid #9da9a0;
+    border-top: 3px solid var(--color-verde-oscuro);
+    border-radius: 0;
+    background: #fff !important;
+    break-inside: avoid;
   }
 
-  .cabecera-recibo-venta span,
-  .cabecera-recibo-venta small {
-    color: #333;
+  .identidad-recibo-venta {
+    align-items: center;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .logo-documento-venta {
+    width: 142px;
+    max-height: 50px;
+  }
+
+  .identidad-recibo-venta > span {
+    padding-top: 0;
+    padding-left: 12px;
+    border-top: 0;
+    border-left: 1px solid #bfc7c0;
+    color: #4f5853;
+  }
+
+  .referencia-recibo-venta {
+    justify-items: end !important;
+    text-align: right !important;
+  }
+
+  .referencia-recibo-venta strong {
+    font-size: 18px;
   }
 
   .datos-documento-venta,
   .seccion-detalle-venta,
   .cierre-detalle-venta {
-    border-color: #777;
+    border-color: #aeb6af;
+    border-radius: 0;
+  }
+
+  .datos-documento-venta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    break-inside: avoid;
+  }
+
+  .tarjeta-dato-venta {
+    padding: 12px 14px;
+  }
+
+  .seccion-detalle-venta {
+    overflow: visible;
+    break-inside: auto;
+  }
+
+  .titulo-seccion-detalle-venta {
+    padding: 10px 12px;
+    break-after: avoid;
+  }
+
+  .titulo-seccion-detalle-venta h2,
+  .cierre-detalle-venta h2 {
+    font-size: 14px;
+  }
+
+  .desplazamiento-tabla-ventas {
+    overflow: visible;
+  }
+
+  .tabla-detalle-venta {
+    display: table !important;
+    width: 100%;
+    font-size: 9px;
+  }
+
+  .tabla-detalle-venta thead {
+    display: table-header-group !important;
+  }
+
+  .tabla-detalle-venta tbody {
+    display: table-row-group !important;
+  }
+
+  .tabla-detalle-venta tr {
+    display: table-row !important;
+    padding: 0;
+    border: 0;
+    background: #fff !important;
+    break-inside: avoid;
+  }
+
+  .tabla-detalle-venta td::before {
+    display: none !important;
   }
 
   .tabla-detalle-venta th,
   .tabla-detalle-venta td {
-    padding: 7px;
+    display: table-cell !important;
+    padding: 6px;
+    border-right: 1px solid #cbd0cb;
+    border-bottom: 1px solid #cbd0cb;
     color: #111;
-    background: #fff;
+    background: #fff !important;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .tabla-detalle-venta th {
+    background: #f3eee3 !important;
+  }
+
+  .tabla-detalle-venta th:last-child,
+  .tabla-detalle-venta td:last-child {
+    border-right: 0;
+  }
+
+  .tabla-detalle-venta td > * {
+    justify-self: auto;
+  }
+
+  .cierre-detalle-venta {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.45fr);
+    gap: 18px;
+    padding: 12px 14px;
+    break-inside: avoid;
+  }
+
+  .cierre-detalle-venta dl {
+    padding: 10px 12px;
+    border-color: #aeb6af;
+    background: #fff !important;
+  }
+
+  .cierre-detalle-venta .total-final-venta {
+    border-top-color: var(--color-verde-oscuro);
+    color: #1f3a3d;
+    font-size: 17px;
   }
 
   .nota-anulacion-venta {
     border: 1px solid #777;
     color: #111;
-    background: #fff;
+    background: #fff !important;
+    break-inside: avoid;
   }
 }

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import logoEfarm from '../assets/logo-efarm-brand.png'
 import {
   anularVenta,
   generarReciboVenta,
   obtenerVenta,
 } from '../services/ventas'
+import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
 
 const formatoMoneda = new Intl.NumberFormat('es-GT', {
   style: 'currency',
@@ -223,14 +225,21 @@ function DetalleVenta({
       )}
 
       <section className="cabecera-recibo-venta">
-        <div>
-          <p className="marca-recibo-venta">E-farm</p>
-          <span>{recibo ? 'RECIBO' : 'COMPROBANTE DE VENTA'}</span>
+        <div className="identidad-recibo-venta">
+          <img
+            className="logo-documento-venta"
+            src={logoEfarm}
+            alt="E-farm"
+          />
+          <span>Sistema administrativo</span>
         </div>
-        <div>
+        <div className="referencia-recibo-venta">
+          <span className="tipo-documento-venta">
+            {recibo ? 'RECIBO' : 'COMPROBANTE DE VENTA'}
+          </span>
           <strong>{recibo?.numero ?? 'Recibo no emitido'}</strong>
-          <span>Venta {venta.numero}</span>
           <small>Serie {recibo?.serie_usuario_snapshot ?? venta.serie_usuario_snapshot}</small>
+          <span>Venta {venta.numero}</span>
         </div>
       </section>
 
@@ -245,10 +254,10 @@ function DetalleVenta({
         <div className="tarjeta-dato-venta">
           <span>Documento</span>
           <dl>
+            <div><dt>Venta</dt><dd>{venta.numero}</dd></div>
             <div><dt>Fecha</dt><dd>{mostrarFecha(recibo?.fecha_emision ?? venta.fecha_confirmacion)}</dd></div>
             <div><dt>Usuario</dt><dd>{venta.usuario_creador?.nombre_completo ?? '—'}</dd></div>
             <div><dt>Origen</dt><dd>{venta.origen === 'cotizacion' ? 'Cotización' : 'Venta directa'}</dd></div>
-            {venta.cotizacion_id && <div><dt>Cotización origen</dt><dd>{venta.cotizacion_id}</dd></div>}
           </dl>
         </div>
       </section>
@@ -282,7 +291,11 @@ function DetalleVenta({
                   </td>
                   <td data-label="Presentación">
                     <strong>{linea.presentacion_nombre}</strong>
-                    <small>{linea.cantidad_manojos_presentacion} manojos por unidad</small>
+                    <small>
+                      {formatearManojosPorUnidad(
+                        linea.cantidad_manojos_presentacion,
+                      )}
+                    </small>
                   </td>
                   <td data-label="Cantidad">{linea.cantidad_presentaciones}</td>
                   <td data-label="Manojos">{linea.cantidad_manojos}</td>

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import DescontarStockDialog from '../components/DescontarStockDialog'
 import DetalleVenta from '../components/DetalleVenta'
 import VentaPos from '../components/VentaPos'
 import { listarVentas } from '../services/ventas'
@@ -41,7 +40,6 @@ function Ventas({
   const puedeVer = permisos.includes('venta.ver')
   const puedeCrear = permisos.includes('venta.crear')
   const puedeAnular = permisos.includes('venta.anular')
-  const puedeDescontar = permisos.includes('inventario.registrar_movimiento')
   const [vista, setVista] = useState(
     ventaInicialId && puedeVer ? 'detalle' : puedeCrear ? 'pos' : 'historial',
   )
@@ -56,8 +54,6 @@ function Ventas({
   const [imprimirAlAbrir, setImprimirAlAbrir] = useState(false)
   const [anularAlAbrir, setAnularAlAbrir] = useState(false)
   const [versionListado, setVersionListado] = useState(0)
-  const [mostrarDes, setMostrarDes] = useState(false)
-  const [aviso, setAviso] = useState('')
 
   useEffect(() => {
     if (!ventaInicialId || !puedeVer) return undefined
@@ -171,15 +167,6 @@ function Ventas({
           <p>Registra ventas, emite recibos y consulta el historial.</p>
         </div>
         <div className="acciones-encabezado-ventas">
-          {puedeDescontar && (
-            <button
-              className="boton-secundario-ventas"
-              type="button"
-              onClick={() => setMostrarDes(true)}
-            >
-              Descontar stock
-            </button>
-          )}
           {puedeVer && (
             <button
               className={vista === 'historial' ? 'boton-primario-ventas' : 'boton-secundario-ventas'}
@@ -202,8 +189,6 @@ function Ventas({
           )}
         </div>
       </header>
-
-      {aviso && <p className="mensaje-ventas mensaje-exito-ventas">{aviso}</p>}
 
       {vista === 'pos' && puedeCrear ? (
         <VentaPos
@@ -329,13 +314,6 @@ function Ventas({
         </>
       )}
 
-      {mostrarDes && (
-        <DescontarStockDialog
-          alCerrar={() => setMostrarDes(false)}
-          alGuardado={() => setAviso('Salida manual registrada. No se creó una venta ni un recibo.')}
-          alRefrescarAutorizacion={alRefrescarAutorizacion}
-        />
-      )}
     </section>
   )
 }

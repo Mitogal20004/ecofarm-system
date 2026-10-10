@@ -6,6 +6,7 @@ import {
   confirmarVenta,
   crearIntencionVenta,
 } from '../services/ventas'
+import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
 
 const FORMULARIO_INICIAL = {
   cliente_id: '',
@@ -985,7 +986,11 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
                       </td>
                       <td data-label="Presentación">
                         <strong>{linea.presentacion_nombre}</strong>
-                        <small>{linea.cantidad_manojos_presentacion} manojos</small>
+                        <small>
+                          {formatearManojosPorUnidad(
+                            linea.cantidad_manojos_presentacion,
+                          )}
+                        </small>
                       </td>
                       <td data-label="Cantidad">
                         <input

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import logoEfarm from '../assets/logo-efarm-brand.png'
 import {
   cambiarEstadoCotizacion,
   obtenerCotizacion,
 } from '../services/cotizaciones'
 import { convertirCotizacionVenta } from '../services/ventas'
+import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
 
 const formatoMoneda = new Intl.NumberFormat('es-GT', {
   style: 'currency',
@@ -340,20 +342,33 @@ function DetalleCotizacion({
         </section>
       )}
 
-      <section className="cabecera-impresion-cotizacion">
-        <div>
-          <p className="marca-impresion-cotizacion">E-farm</p>
-          <span>Cotización comercial</span>
+      <section
+        className="cabecera-impresion-cotizacion"
+        aria-label="Encabezado de la cotización"
+      >
+        <div className="identidad-documento-cotizacion">
+          <img
+            className="logo-documento-cotizacion"
+            src={logoEfarm}
+            alt="E-farm"
+          />
+          <span>Sistema administrativo</span>
         </div>
-        <div>
+        <div className="referencia-documento-cotizacion">
           <strong>{cotizacion.numero}</strong>
-          <span>Serie {cotizacion.serie_usuario_snapshot}</span>
+          <span>
+            Fecha: {mostrarFecha(
+              cotizacion.fecha_emision ?? cotizacion.fecha_creacion,
+            )}
+          </span>
+          <small>Serie {cotizacion.serie_usuario_snapshot}</small>
         </div>
+        <h2>Cotización</h2>
       </section>
 
       <section className="datos-detalle-cotizacion" aria-label="Información de la cotización">
         <div className="tarjeta-dato-cotizacion">
-          <span>Comprador</span>
+          <span>Datos del cliente</span>
           <strong>{cotizacion.comprador_nombre}</strong>
           <small>NIT {cotizacion.comprador_nit}</small>
           <small>{cotizacion.comprador_direccion || 'Dirección no indicada'}</small>
@@ -392,7 +407,7 @@ function DetalleCotizacion({
         </div>
         <div className="contenedor-tabla-cotizaciones">
           <div className="desplazamiento-tabla-cotizaciones">
-            <table>
+            <table className="tabla-detalle-cotizacion">
               <thead>
                 <tr>
                   <th scope="col">#</th>
@@ -416,7 +431,11 @@ function DetalleCotizacion({
                     </td>
                     <td data-label="Presentación">
                       <strong>{linea.presentacion_nombre}</strong>
-                      <small>{linea.cantidad_manojos_presentacion} manojos por unidad</small>
+                      <small>
+                        {formatearManojosPorUnidad(
+                          linea.cantidad_manojos_presentacion,
+                        )}
+                      </small>
                     </td>
                     <td data-label="Cantidad">{linea.cantidad_presentaciones}</td>
                     <td data-label="Manojos">{linea.cantidad_manojos}</td>
@@ -456,6 +475,10 @@ function DetalleCotizacion({
           Documento anulado el {mostrarFecha(cotizacion.fecha_anulacion)}.
         </p>
       )}
+
+      <footer className="pie-documento-cotizacion">
+        Documento generado por E-farm.
+      </footer>
     </article>
   )
 }

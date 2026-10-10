@@ -6,6 +6,7 @@ import {
   obtenerCotizacion,
 } from '../services/cotizaciones'
 import { listarVariantes } from '../services/productos'
+import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
 
 const FORMULARIO_INICIAL = {
   tipo_comprador: 'registrado',
@@ -609,7 +610,9 @@ function CotizacionFormulario({ cotizacionId, alCancelar, alGuardado }) {
               Equivalencia
               <strong>
                 {precioSeleccionado
-                  ? `${precioSeleccionado.cantidad_manojos} manojos`
+                  ? formatearManojosPorUnidad(
+                      precioSeleccionado.cantidad_manojos,
+                    )
                   : '—'}
               </strong>
             </span>

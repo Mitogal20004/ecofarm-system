@@ -4,6 +4,7 @@ import {
   obtenerDetalleVariante,
   registrarPrecio,
 } from '../services/productos'
+import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
 
 const formatearMoneda = (valor) =>
   new Intl.NumberFormat('es-GT', {
@@ -261,7 +262,11 @@ function DetalleVarianteDialog({
                       >
                         <div>
                           <h4>{presentacion.presentacion}</h4>
-                          <small>{presentacion.cantidad_manojos} manojo(s)</small>
+                          <small>
+                            {formatearManojosPorUnidad(
+                              presentacion.cantidad_manojos,
+                            )}
+                          </small>
                         </div>
                         <strong className="precio-vigente-producto">
                           {presentacion.precio === null
