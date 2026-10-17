@@ -31,6 +31,51 @@ const formatoFecha = new Intl.DateTimeFormat('es-GT', {
 const mostrarFecha = (valor) =>
   valor ? formatoFecha.format(new Date(valor)) : '—'
 
+const trazosAccionVenta = {
+  ver: (
+    <>
+      <path d="M2.5 12s3.4-5 9.5-5 9.5 5 9.5 5-3.4 5-9.5 5-9.5-5-9.5-5Z" />
+      <circle cx="12" cy="12" r="2.5" />
+    </>
+  ),
+  anular: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m9 9 6 6m0-6-6 6" />
+    </>
+  ),
+  recibo: (
+    <>
+      <path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21V3Z" />
+      <path d="M9 8h6m-6 4h6" />
+    </>
+  ),
+  factura: (
+    <>
+      <path d="M6 3h9l3 3v15H6V3Z" />
+      <path d="M15 3v4h3M9 11h6m-6 4h6" />
+    </>
+  ),
+}
+
+function IconoAccionVenta({ tipo }) {
+  return (
+    <svg
+      className="icono-accion-venta"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {trazosAccionVenta[tipo]}
+    </svg>
+  )
+}
+
 function Ventas({
   permisos = [],
   ventaInicialId = null,
@@ -51,7 +96,7 @@ function Ventas({
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
   const [ventaId, setVentaId] = useState(ventaInicialId)
-  const [imprimirAlAbrir, setImprimirAlAbrir] = useState(false)
+  const [documentoImpresionInicial, setDocumentoImpresionInicial] = useState(null)
   const [anularAlAbrir, setAnularAlAbrir] = useState(false)
   const [versionListado, setVersionListado] = useState(0)
 
@@ -99,14 +144,16 @@ function Ventas({
 
   const abrirDetalle = (id, imprimir = false, anular = false) => {
     setVentaId(id)
-    setImprimirAlAbrir(imprimir)
+    setDocumentoImpresionInicial(
+      imprimir === true ? 'recibo' : imprimir || null,
+    )
     setAnularAlAbrir(anular)
     setVista('detalle')
   }
 
   const volverDesdeDetalle = () => {
     setVentaId(null)
-    setImprimirAlAbrir(false)
+    setDocumentoImpresionInicial(null)
     setAnularAlAbrir(false)
     setVista(puedeVer ? 'historial' : 'pos')
   }
@@ -145,11 +192,11 @@ function Ventas({
   if (vista === 'detalle' && ventaId) {
     return (
       <DetalleVenta
-        key={`${ventaId}-${imprimirAlAbrir}-${anularAlAbrir}`}
+        key={`${ventaId}-${documentoImpresionInicial}-${anularAlAbrir}`}
         ventaId={ventaId}
         puedeAnular={puedeAnular}
         puedeCrear={puedeCrear}
-        imprimirAlAbrir={imprimirAlAbrir}
+        documentoImpresionInicial={documentoImpresionInicial}
         anularAlAbrir={anularAlAbrir}
         alVolver={volverDesdeDetalle}
         alActualizar={() => setVersionListado((version) => version + 1)}
@@ -290,9 +337,42 @@ function Ventas({
                           <td data-label="Estado"><span className={`estado-venta estado-venta-${venta.estado}`}>{venta.estado === 'confirmada' ? 'Confirmada' : 'Anulada'}</span></td>
                           <td data-label="Acciones">
                             <div className="acciones-fila-ventas">
-                              <button className="boton-secundario-ventas" type="button" onClick={() => abrirDetalle(venta.id)}>Ver</button>
-                              {venta.recibo && <button className="boton-texto-ventas" type="button" onClick={() => abrirDetalle(venta.id, true)}>Imprimir recibo</button>}
-                              {puedeAnular && venta.estado === 'confirmada' && <button className="boton-texto-peligro-ventas" type="button" onClick={() => abrirDetalle(venta.id, false, true)}>Anular</button>}
+                              <button
+                                className="boton-secundario-ventas accion-ver-venta"
+                                type="button"
+                                onClick={() => abrirDetalle(venta.id)}
+                              >
+                                <IconoAccionVenta tipo="ver" />
+                                <span>Ver detalle</span>
+                              </button>
+                              {puedeAnular && venta.estado === 'confirmada' && (
+                                <button
+                                  className="boton-texto-peligro-ventas accion-anular-venta"
+                                  type="button"
+                                  onClick={() => abrirDetalle(venta.id, false, true)}
+                                >
+                                  <IconoAccionVenta tipo="anular" />
+                                  <span>Anular</span>
+                                </button>
+                              )}
+                              {venta.recibo && (
+                                <button
+                                  className="boton-documento-ventas boton-recibo-ventas accion-recibo-venta"
+                                  type="button"
+                                  onClick={() => abrirDetalle(venta.id, true)}
+                                >
+                                  <IconoAccionVenta tipo="recibo" />
+                                  <span>Imprimir recibo</span>
+                                </button>
+                              )}
+                              <button
+                                className="boton-documento-ventas boton-factura-ventas accion-factura-venta"
+                                type="button"
+                                onClick={() => abrirDetalle(venta.id, 'factura-demostracion')}
+                              >
+                                <IconoAccionVenta tipo="factura" />
+                                <span>Imprimir factura</span>
+                              </button>
                             </div>
                           </td>
                         </tr>

@@ -27,6 +27,9 @@ const nombreCliente = (cliente) =>
 const claveLinea = (varianteId, presentacionId) =>
   `${varianteId}:${presentacionId}`
 
+const DOCUMENTO_RECIBO = 'recibo'
+const DOCUMENTO_FACTURA = 'factura-demostracion'
+
 function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   const [formulario, setFormulario] = useState(FORMULARIO_INICIAL)
   const [clientes, setClientes] = useState([])
@@ -45,6 +48,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   const [consultandoClientes, setConsultandoClientes] = useState(false)
   const [consultandoProductos, setConsultandoProductos] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
+  const [documentoConfirmando, setDocumentoConfirmando] = useState(null)
   const [reintentoPendiente, setReintentoPendiente] = useState(false)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
@@ -208,6 +212,14 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   const montoFaltante = diferenciaPago !== null && diferenciaPago < 0
     ? Math.abs(diferenciaPago)
     : 0
+  const emisionDeshabilitada =
+    confirmando ||
+    lineas.length === 0 ||
+    lineasInvalidas ||
+    lineasSinStock ||
+    !montoRecibidoValido ||
+    !pagoSuficiente ||
+    !claveIdempotencia
 
   const hayDatosCapturados =
     lineas.length > 0 ||
@@ -452,7 +464,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
     reiniciarVenta()
   }
 
-  const emitirRecibo = async () => {
+  const confirmarVentaYEmitir = async (tipoDocumento) => {
     if (confirmandoRef.current) return
 
     if (
@@ -506,6 +518,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
 
     confirmandoRef.current = true
     setConfirmando(true)
+    setDocumentoConfirmando(tipoDocumento)
     setError('')
 
     try {
@@ -514,7 +527,16 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       setLineas([])
       setReintentoPendiente(false)
       setAviso('')
-      await cargarCatalogos()
+      if (puedeVer && alVerVenta) {
+        alVerVenta(
+          respuesta.venta.id,
+          tipoDocumento === DOCUMENTO_RECIBO
+            ? true
+            : DOCUMENTO_FACTURA,
+        )
+      } else {
+        await cargarCatalogos()
+      }
     } catch (errorConfirmacion) {
       setError(errorConfirmacion?.message || 'No fue posible confirmar la venta.')
       setReintentoPendiente(errorConfirmacion?.status == null)
@@ -524,6 +546,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
     } finally {
       confirmandoRef.current = false
       setConfirmando(false)
+      setDocumentoConfirmando(null)
     }
   }
 
@@ -576,11 +599,20 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
                 Ver recibo
               </button>
               <button
-                className="boton-secundario-ventas"
+                className="boton-documento-ventas boton-recibo-ventas"
                 type="button"
                 onClick={() => alVerVenta(resultado.venta.id, true)}
               >
                 Imprimir recibo
+              </button>
+              <button
+                className="boton-documento-ventas boton-factura-ventas"
+                type="button"
+                onClick={() =>
+                  alVerVenta(resultado.venta.id, 'factura-demostracion')
+                }
+              >
+                Imprimir factura
               </button>
             </>
           )}
@@ -1116,22 +1148,32 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
                 )}
               </div>
             </section>
-            <button
-              className="boton-emitir-ventas"
-              type="button"
-              onClick={emitirRecibo}
-              disabled={
-                confirmando ||
-                lineas.length === 0 ||
-                lineasInvalidas ||
-                lineasSinStock ||
-                !montoRecibidoValido ||
-                !pagoSuficiente ||
-                !claveIdempotencia
-              }
-            >
-              {confirmando ? 'Confirmando venta...' : reintentoPendiente ? 'Reintentar emisión' : 'Emitir recibo'}
-            </button>
+            <div className="acciones-emision-ventas">
+              <button
+                className="boton-emitir-ventas"
+                type="button"
+                onClick={() => confirmarVentaYEmitir(DOCUMENTO_RECIBO)}
+                disabled={emisionDeshabilitada}
+              >
+                {confirmando && documentoConfirmando === DOCUMENTO_RECIBO
+                  ? 'Confirmando venta...'
+                  : reintentoPendiente
+                    ? 'Reintentar recibo'
+                    : 'Emitir recibo'}
+              </button>
+              <button
+                className="boton-emitir-ventas boton-emitir-factura-ventas"
+                type="button"
+                onClick={() => confirmarVentaYEmitir(DOCUMENTO_FACTURA)}
+                disabled={emisionDeshabilitada}
+              >
+                {confirmando && documentoConfirmando === DOCUMENTO_FACTURA
+                  ? 'Confirmando venta...'
+                  : reintentoPendiente
+                    ? 'Reintentar factura'
+                    : 'Emitir factura'}
+              </button>
+            </div>
           </div>
         </div>
       </section>

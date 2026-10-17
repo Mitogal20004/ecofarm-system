@@ -87,6 +87,28 @@
   background: #b42318;
 }
 
+.boton-documento-ventas {
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.boton-recibo-ventas {
+  border-color: var(--color-verde-principal);
+  background: var(--color-verde-principal);
+}
+
+.boton-factura-ventas,
+.boton-emitir-factura-ventas {
+  border-color: #1f3a3d;
+  background: #1f3a3d;
+}
+
 .boton-primario-ventas:hover:not(:disabled),
 .boton-emitir-ventas:hover:not(:disabled),
 .boton-agregar-ventas:hover:not(:disabled) {
@@ -102,6 +124,17 @@
 
 .boton-peligro-ventas:hover:not(:disabled) {
   background: #912018;
+}
+
+.boton-recibo-ventas:hover:not(:disabled) {
+  border-color: var(--color-verde-hover);
+  background: var(--color-verde-hover);
+}
+
+.boton-factura-ventas:hover:not(:disabled),
+.boton-emitir-factura-ventas:hover:not(:disabled) {
+  border-color: #274a4d;
+  background: #274a4d;
 }
 
 .pagina-ventas button:focus-visible,
@@ -592,6 +625,66 @@
   text-decoration: underline;
 }
 
+.acciones-fila-ventas {
+  width: 260px;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 42px);
+  align-items: stretch;
+  gap: 8px;
+}
+
+.acciones-fila-ventas > button {
+  width: 100%;
+  height: 42px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 9px;
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+}
+
+.icono-accion-venta {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+.accion-ver-venta {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.accion-anular-venta {
+  grid-column: 2;
+  grid-row: 1;
+  border: 1px solid var(--color-error-borde);
+  color: var(--color-error);
+  background: var(--color-error-fondo);
+}
+
+.accion-anular-venta:hover:not(:disabled) {
+  border-color: #b42318;
+  color: #8f1d15;
+  background: #fde8e6;
+  text-decoration: none;
+}
+
+.accion-recibo-venta {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.accion-factura-venta {
+  grid-column: 2;
+  grid-row: 2;
+}
+
 .cierre-pos-ventas {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
@@ -708,6 +801,12 @@
   min-height: 50px;
   padding-inline: 22px;
   font-size: 16px;
+}
+
+.acciones-emision-ventas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .resultado-venta {
@@ -965,6 +1064,18 @@
 .referencia-recibo-venta small {
   color: var(--color-texto-secundario);
   font-size: 12px;
+}
+
+.leyenda-factura-demostracion {
+  margin: -12px 0 0;
+  padding: 9px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  color: var(--color-texto-secundario);
+  background: var(--color-beige-suave);
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .datos-documento-venta {
@@ -1316,6 +1427,10 @@
     width: 100%;
   }
 
+  .acciones-emision-ventas {
+    grid-template-columns: 1fr;
+  }
+
   .vista-previa-venta dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1376,7 +1491,20 @@
   }
 
   .acciones-fila-ventas {
+    width: 100%;
     justify-content: flex-end;
+  }
+
+  .tabla-ventas td[data-label="Acciones"] {
+    grid-template-columns: 1fr;
+  }
+
+  .tabla-ventas td[data-label="Acciones"]::before {
+    margin-bottom: 2px;
+  }
+
+  .tabla-ventas td[data-label="Acciones"] .acciones-fila-ventas {
+    justify-self: stretch;
   }
 
   .paginacion-ventas {
@@ -1474,6 +1602,7 @@
 
 @media print {
   @page {
+    size: letter portrait;
     margin: 12mm;
   }
 
@@ -1549,6 +1678,17 @@
 
   .referencia-recibo-venta strong {
     font-size: 18px;
+  }
+
+  .leyenda-factura-demostracion {
+    margin: 0 0 10px;
+    padding: 6px 10px;
+    border-color: #bfc7c0;
+    border-radius: 0;
+    color: #4f5853;
+    background: #f8f6f0 !important;
+    font-size: 9px;
+    break-inside: avoid;
   }
 
   .datos-documento-venta,
@@ -1661,5 +1801,99 @@
     color: #111;
     background: #fff !important;
     break-inside: avoid;
+  }
+
+  .recibo-venta-activo.documento-venta > * {
+    margin-bottom: 7px;
+  }
+
+  .recibo-venta-activo .cabecera-recibo-venta,
+  .recibo-venta-activo .tarjeta-dato-venta,
+  .recibo-venta-activo .titulo-seccion-detalle-venta,
+  .recibo-venta-activo .cierre-detalle-venta {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .recibo-venta-activo .titulo-seccion-detalle-venta p {
+    display: none;
+  }
+
+  .recibo-venta-activo .tabla-detalle-venta th,
+  .recibo-venta-activo .tabla-detalle-venta td {
+    padding: 4px 6px;
+  }
+
+  .recibo-venta-activo .cierre-detalle-venta dl {
+    gap: 4px;
+    padding: 8px 10px;
+  }
+
+  .recibo-venta-activo .pago-recibido-venta,
+  .recibo-venta-activo .cambio-pago-venta {
+    padding: 4px 6px;
+    border-radius: 2px;
+    background: #e6eee3 !important;
+    font-weight: 800;
+  }
+
+  .recibo-venta-activo .cambio-pago-venta {
+    color: #1f3a3d;
+  }
+
+  .factura-demostracion-activa.documento-venta > * {
+    margin-bottom: 12px;
+  }
+
+  .factura-demostracion-activa .cabecera-recibo-venta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 16px 18px;
+    border: 1px solid #aeb6af;
+    border-top: 0;
+    border-left: 5px solid #1f3a3d;
+    background: #fcfbf7 !important;
+  }
+
+  .factura-demostracion-activa .referencia-recibo-venta .tipo-documento-venta,
+  .factura-demostracion-activa .referencia-recibo-venta strong {
+    color: #1f3a3d;
+  }
+
+  .factura-demostracion-activa .datos-documento-venta {
+    gap: 10px;
+    border: 0;
+  }
+
+  .factura-demostracion-activa .tarjeta-dato-venta,
+  .factura-demostracion-activa .tarjeta-dato-venta + .tarjeta-dato-venta {
+    border: 1px solid #bfc7c0;
+    background: #fff !important;
+  }
+
+  .factura-demostracion-activa .titulo-seccion-detalle-venta {
+    background: #f8f6f0 !important;
+  }
+
+  .factura-demostracion-activa .tabla-detalle-venta th {
+    color: #1f3a3d;
+    background: #e6eee3 !important;
+  }
+
+  .factura-demostracion-activa .cierre-detalle-venta {
+    padding: 14px 0 0;
+    border: 0;
+    border-top: 2px solid #1f3a3d;
+  }
+
+  .factura-demostracion-activa .cierre-detalle-venta dl {
+    border: 2px solid #1f3a3d;
+    background: #f8f6f0 !important;
+  }
+
+  .factura-demostracion-activa .cierre-detalle-venta .total-final-venta {
+    border-top-color: #1f3a3d;
+    color: #1f3a3d;
+    font-size: 20px;
   }
 }

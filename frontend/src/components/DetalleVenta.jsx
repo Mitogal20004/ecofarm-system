@@ -25,7 +25,7 @@ function DetalleVenta({
   ventaId,
   puedeAnular,
   puedeCrear,
-  imprimirAlAbrir = false,
+  documentoImpresionInicial = null,
   anularAlAbrir = false,
   alVolver,
   alActualizar,
@@ -37,8 +37,17 @@ function DetalleVenta({
   const [mostrarAnulacion, setMostrarAnulacion] = useState(anularAlAbrir)
   const [motivo, setMotivo] = useState('')
   const [error, setError] = useState('')
-  const impresionSolicitadaRef = useRef(imprimirAlAbrir)
+  const [documentoImpresion, setDocumentoImpresion] = useState(null)
+  const impresionSolicitadaRef = useRef(documentoImpresionInicial)
   const procesandoRef = useRef(false)
+
+  const imprimirDocumento = useCallback((tipoDocumento) => {
+    setDocumentoImpresion(tipoDocumento)
+    window.setTimeout(() => {
+      window.print()
+      setDocumentoImpresion(null)
+    }, 150)
+  }, [])
 
   const cargarDetalle = useCallback(async () => {
     setCargando(true)
@@ -62,12 +71,14 @@ function DetalleVenta({
   }, [cargarDetalle])
 
   useEffect(() => {
-    if (!detalle?.recibo || !impresionSolicitadaRef.current) return undefined
+    const tipoDocumento = impresionSolicitadaRef.current
+    if (!detalle || !tipoDocumento) return undefined
+    if (tipoDocumento === 'recibo' && !detalle.recibo) return undefined
 
     impresionSolicitadaRef.current = false
-    const temporizador = window.setTimeout(() => window.print(), 150)
-    return () => window.clearTimeout(temporizador)
-  }, [detalle])
+    imprimirDocumento(tipoDocumento)
+    return undefined
+  }, [detalle, imprimirDocumento])
 
   const emitirRecibo = async () => {
     if (procesandoRef.current) return
@@ -145,6 +156,9 @@ function DetalleVenta({
 
   const { venta, recibo, detalles, movimientos_inventario: movimientos } = detalle
   const estaConfirmada = venta.estado === 'confirmada'
+  const esFacturaDemostracion =
+    documentoImpresion === 'factura-demostracion'
+  const esReciboImpreso = documentoImpresion === 'recibo'
   const tienePagoEfectivo =
     venta.monto_recibido !== null &&
     venta.monto_recibido !== undefined &&
@@ -152,7 +166,15 @@ function DetalleVenta({
     venta.cambio !== undefined
 
   return (
-    <article className="detalle-venta documento-venta">
+    <article
+      className={`detalle-venta documento-venta${
+        esFacturaDemostracion
+          ? ' factura-demostracion-activa'
+          : esReciboImpreso
+            ? ' recibo-venta-activo'
+            : ''
+      }`}
+    >
       <header className="encabezado-detalle-venta no-imprimir-ventas">
         <div>
           <p className="etiqueta-seccion-ventas">Detalle de venta</p>
@@ -169,10 +191,17 @@ function DetalleVenta({
             Volver
           </button>
           {recibo && (
-            <button className="boton-secundario-ventas" type="button" onClick={() => window.print()}>
+            <button className="boton-documento-ventas boton-recibo-ventas" type="button" onClick={() => imprimirDocumento('recibo')}>
               Imprimir / PDF
             </button>
           )}
+          <button
+            className="boton-documento-ventas boton-factura-ventas"
+            type="button"
+            onClick={() => imprimirDocumento('factura-demostracion')}
+          >
+            Imprimir factura
+          </button>
           {!recibo && puedeCrear && estaConfirmada && (
             <button className="boton-primario-ventas" type="button" onClick={emitirRecibo} disabled={procesando}>
               {procesando ? 'Emitiendo...' : 'Emitir recibo'}
@@ -231,17 +260,42 @@ function DetalleVenta({
             src={logoEfarm}
             alt="E-farm"
           />
-          <span>Sistema administrativo</span>
+          <span>
+            {esFacturaDemostracion
+              ? 'Documento comercial demostrativo'
+              : 'Sistema administrativo'}
+          </span>
         </div>
         <div className="referencia-recibo-venta">
           <span className="tipo-documento-venta">
-            {recibo ? 'RECIBO' : 'COMPROBANTE DE VENTA'}
+            {esFacturaDemostracion
+              ? 'FACTURA DE DEMOSTRACIÓN'
+              : recibo
+                ? 'RECIBO'
+                : 'COMPROBANTE DE VENTA'}
           </span>
-          <strong>{recibo?.numero ?? 'Recibo no emitido'}</strong>
-          <small>Serie {recibo?.serie_usuario_snapshot ?? venta.serie_usuario_snapshot}</small>
-          <span>Venta {venta.numero}</span>
+          {esFacturaDemostracion ? (
+            <>
+              <strong>Venta {venta.numero}</strong>
+              <small>Comprobante de facturación para fines demostrativos</small>
+              <span>{mostrarFecha(venta.fecha_confirmacion)}</span>
+            </>
+          ) : (
+            <>
+              <strong>{recibo?.numero ?? 'Recibo no emitido'}</strong>
+              <small>Serie {recibo?.serie_usuario_snapshot ?? venta.serie_usuario_snapshot}</small>
+              <span>Venta {venta.numero}</span>
+            </>
+          )}
         </div>
       </section>
+
+      {esFacturaDemostracion && (
+        <p className="leyenda-factura-demostracion">
+          Documento de demostración académica. No constituye un DTE ni una
+          factura FEL certificada.
+        </p>
+      )}
 
       <section className="datos-documento-venta" aria-label="Información de la venta">
         <div className="tarjeta-dato-venta">
@@ -316,10 +370,10 @@ function DetalleVenta({
         <dl>
           <div><dt>Subtotal</dt><dd>{formatoMoneda.format(Number(venta.subtotal))}</dd></div>
           <div className="total-final-venta"><dt>TOTAL</dt><dd>{formatoMoneda.format(Number(venta.total))}</dd></div>
-          {tienePagoEfectivo && (
+          {tienePagoEfectivo && !esFacturaDemostracion && (
             <>
-              <div><dt>RECIBIDO</dt><dd>{formatoMoneda.format(Number(venta.monto_recibido))}</dd></div>
-              <div><dt>CAMBIO</dt><dd>{formatoMoneda.format(Number(venta.cambio))}</dd></div>
+              <div className="pago-recibido-venta"><dt>RECIBIDO</dt><dd>{formatoMoneda.format(Number(venta.monto_recibido))}</dd></div>
+              <div className="cambio-pago-venta"><dt>CAMBIO</dt><dd>{formatoMoneda.format(Number(venta.cambio))}</dd></div>
             </>
           )}
         </dl>
