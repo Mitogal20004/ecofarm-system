@@ -6,6 +6,7 @@ import {
   multiplicarDecimalPorEntero,
   sumarDecimales,
 } from './decimal-exacto.js'
+import { validarConfiguracionFiscalFel } from './configuracion.js'
 import { ErrorConfiguracionTekra, ErrorValidacionFel } from './errores.js'
 import { escaparAtributoXml, escaparTextoXml } from './xml-seguro.js'
 
@@ -30,12 +31,26 @@ const exigirTexto = (valor, campo) => {
   return valor.trim()
 }
 
-const exigirEnteroPositivo = (valor, campo) => {
-  if (!Number.isSafeInteger(valor) || valor < 1) {
-    throw new ErrorValidacionFel(`${campo} debe ser un entero positivo.`)
+const exigirEnteroEnRango = (valor, campo, maximo) => {
+  if (!Number.isSafeInteger(valor) || valor < 1 || valor > maximo) {
+    throw new ErrorValidacionFel(
+      `${campo} debe ser un entero entre 1 y ${maximo}.`,
+    )
   }
   return valor
 }
+
+const exigirSnapshotTexto = (valor, campo) => {
+  const texto = exigirTexto(valor, campo)
+
+  if (texto !== valor) {
+    throw new ErrorValidacionFel(`${campo} no está normalizado.`)
+  }
+
+  return texto
+}
+
+const normalizarNit = (valor) => valor.replace(/[\s-]+/g, '').toUpperCase()
 
 const validarDireccion = (direccion, campo) => ({
   direccion: exigirTexto(direccion?.direccion, `${campo}.direccion`),
@@ -60,64 +75,24 @@ const xmlDireccion = (nombre, direccion) => `
             <dte:Pais>${escaparTextoXml(direccion.pais)}</dte:Pais>
           </dte:${nombre}>`
 
-const validarConfiguracion = (configuracion) => {
-  if (configuracion?.contratoXmlConfirmado !== true) {
-    throw new ErrorConfiguracionTekra(
-      'El contrato XML FEL no ha sido confirmado para producción.',
-    )
-  }
-
-  const emisor = configuracion.emisor
-  const frases = configuracion.frases
-
-  if (!Array.isArray(frases) || frases.length === 0) {
-    throw new ErrorConfiguracionTekra(
-      'No existen frases fiscales confirmadas para el emisor.',
-    )
-  }
-
-  return {
-    emisor: {
-      nit: exigirTexto(emisor?.nit, 'emisor.nit'),
-      nombre: exigirTexto(emisor?.nombre, 'emisor.nombre'),
-      nombreComercial: exigirTexto(
-        emisor?.nombreComercial,
-        'emisor.nombreComercial',
-      ),
-      afiliacionIva: exigirTexto(emisor?.afiliacionIva, 'emisor.afiliacionIva'),
-      codigoEstablecimiento: exigirTexto(
-        emisor?.codigoEstablecimiento,
-        'emisor.codigoEstablecimiento',
-      ),
-      correo:
-        emisor?.correo === null || emisor?.correo === undefined
-          ? null
-          : exigirTexto(emisor.correo, 'emisor.correo'),
-      direccion: validarDireccion(emisor?.direccion, 'emisor.direccion'),
-    },
-    frases: frases.map((frase, indice) => ({
-      tipoFrase: exigirTexto(frase?.tipoFrase, `frases[${indice}].tipoFrase`),
-      codigoEscenario: exigirTexto(
-        frase?.codigoEscenario,
-        `frases[${indice}].codigoEscenario`,
-      ),
-    })),
-  }
-}
-
-const validarDatosPersistidos = (datos) => {
+export const validarDatosPersistidosFact = (datos) => {
   const { factura, venta, detalles } = datos ?? {}
 
   if (
     !factura ||
     !venta ||
     !Array.isArray(detalles) ||
-    detalles.length === 0
+    detalles.length === 0 ||
+    detalles.length > 100
   ) {
     throw new ErrorValidacionFel('Los datos persistidos de la Venta están incompletos.')
   }
 
-  if (!PATRON_UUID.test(factura.id) || factura.venta_id !== venta.id) {
+  if (
+    !PATRON_UUID.test(factura.id) ||
+    !PATRON_UUID.test(venta.id) ||
+    factura.venta_id !== venta.id
+  ) {
     throw new ErrorValidacionFel('La Factura no corresponde con la Venta persistida.')
   }
 
@@ -129,7 +104,7 @@ const validarDatosPersistidos = (datos) => {
     throw new ErrorValidacionFel('La Venta no admite una Factura FEL FACT.')
   }
 
-  if (factura.requiere_conciliacion === true) {
+  if (factura.requiere_conciliacion !== false) {
     throw new ErrorValidacionFel(
       'La Factura requiere conciliación antes de cualquier nuevo envío.',
     )
@@ -147,21 +122,147 @@ const validarDatosPersistidos = (datos) => {
     throw new ErrorValidacionFel('La fecha persistida de la Venta no es válida.')
   }
 
-  exigirTexto(factura.nit_receptor_snapshot, 'factura.nit_receptor_snapshot')
-  exigirTexto(
+  const nitReceptor = exigirSnapshotTexto(
+    factura.nit_receptor_snapshot,
+    'factura.nit_receptor_snapshot',
+  )
+  const nombreReceptor = exigirSnapshotTexto(
     factura.nombre_receptor_snapshot,
     'factura.nombre_receptor_snapshot',
   )
+  const direccionReceptorSnapshot = exigirSnapshotTexto(
+    factura.direccion_receptor_snapshot,
+    'factura.direccion_receptor_snapshot',
+  )
+  const nitVenta = exigirSnapshotTexto(
+    venta.comprador_nit,
+    'venta.comprador_nit',
+  )
+  const nombreVenta = exigirSnapshotTexto(
+    venta.comprador_nombre,
+    'venta.comprador_nombre',
+  )
+  const direccionVenta = exigirSnapshotTexto(
+    venta.comprador_direccion,
+    'venta.comprador_direccion',
+  )
 
-  return { factura, venta, detalles, fechaEmision }
+  if (
+    nitReceptor !== normalizarNit(nitReceptor) ||
+    nitReceptor !== nitVenta ||
+    nombreReceptor !== nombreVenta ||
+    direccionReceptorSnapshot !== direccionVenta
+  ) {
+    throw new ErrorValidacionFel(
+      'Los snapshots fiscales de la Factura no coinciden con la Venta.',
+    )
+  }
+
+  const totalFactura = decimalExacto(
+    factura.total_snapshot,
+    'factura.total_snapshot',
+    2,
+  )
+  const totalVenta = decimalExacto(venta.total, 'venta.total', 2)
+  const subtotalVenta = decimalExacto(venta.subtotal, 'venta.subtotal', 2)
+
+  if (
+    compararDecimales(totalFactura, totalVenta) !== 0 ||
+    compararDecimales(totalVenta, subtotalVenta) !== 0
+  ) {
+    throw new ErrorValidacionFel(
+      'Los totales persistidos de la Factura y la Venta no coinciden.',
+    )
+  }
+
+  let sumaDetalles = DECIMAL_CERO
+  const lineas = new Set()
+  const detallesValidados = [...detalles]
+    .sort((a, b) => a.numero_linea - b.numero_linea)
+    .map((detalle) => {
+      if (detalle.venta_id !== venta.id) {
+        throw new ErrorValidacionFel(
+          'Un detalle no corresponde con la Venta persistida.',
+        )
+      }
+
+      const numeroLinea = exigirEnteroEnRango(
+        detalle.numero_linea,
+        'detalle.numero_linea',
+        100,
+      )
+      if (lineas.has(numeroLinea)) {
+        throw new ErrorValidacionFel(
+          `La línea ${numeroLinea} está duplicada en la Venta.`,
+        )
+      }
+      lineas.add(numeroLinea)
+
+      const cantidad = exigirEnteroEnRango(
+        detalle.cantidad_presentaciones,
+        'detalle.cantidad_presentaciones',
+        1000000,
+      )
+      const precioUnitario = decimalExacto(
+        detalle.precio_unitario,
+        'detalle.precio_unitario',
+        2,
+      )
+      const subtotal = decimalExacto(detalle.subtotal, 'detalle.subtotal', 2)
+      const precio = multiplicarDecimalPorEntero(
+        precioUnitario,
+        cantidad,
+        'detalle.cantidad_presentaciones',
+      )
+
+      if (compararDecimales(precio, subtotal) !== 0) {
+        throw new ErrorValidacionFel(
+          `El subtotal persistido de la línea ${numeroLinea} no coincide.`,
+        )
+      }
+
+      const descripcion = [
+        exigirSnapshotTexto(
+          detalle.producto_nombre_snapshot,
+          'producto_nombre_snapshot',
+        ),
+        exigirSnapshotTexto(
+          detalle.presentacion_nombre_snapshot,
+          'presentacion_nombre_snapshot',
+        ),
+        exigirSnapshotTexto(detalle.codigo_sku_snapshot, 'codigo_sku_snapshot'),
+      ].join(' / ')
+
+      sumaDetalles = sumarDecimales(sumaDetalles, subtotal)
+
+      return {
+        cantidad,
+        descripcion,
+        detalle,
+        numeroLinea,
+        precio,
+        precioUnitario,
+        subtotal,
+      }
+    })
+
+  if (compararDecimales(sumaDetalles, totalFactura) !== 0) {
+    throw new ErrorValidacionFel(
+      'La suma de detalles no coincide con el total de la Factura.',
+    )
+  }
+
+  return {
+    detallesValidados,
+    direccionReceptorSnapshot,
+    factura,
+    fechaEmision,
+    nitReceptor,
+    nombreReceptor,
+    totalFactura,
+    venta,
+  }
 }
-
-const descripcionDetalle = (detalle) =>
-  [
-    exigirTexto(detalle.producto_nombre_snapshot, 'producto_nombre_snapshot'),
-    exigirTexto(detalle.presentacion_nombre_snapshot, 'presentacion_nombre_snapshot'),
-    exigirTexto(detalle.codigo_sku_snapshot, 'codigo_sku_snapshot'),
-  ].join(' / ')
 
 const normalizarImpuestos = (impuestos, numeroLinea) => {
   if (!Array.isArray(impuestos) || impuestos.length === 0) {
@@ -170,7 +271,7 @@ const normalizarImpuestos = (impuestos, numeroLinea) => {
     )
   }
 
-  return impuestos.map((impuesto, indice) => ({
+  const normalizados = impuestos.map((impuesto, indice) => ({
     nombreCorto: exigirTexto(
       impuesto?.nombreCorto,
       `impuestos[${indice}].nombreCorto`,
@@ -188,6 +289,15 @@ const normalizarImpuestos = (impuestos, numeroLinea) => {
       `impuestos[${indice}].montoImpuesto`,
     ),
   }))
+
+  const nombres = normalizados.map((impuesto) => impuesto.nombreCorto)
+  if (new Set(nombres).size !== nombres.length) {
+    throw new ErrorConfiguracionTekra(
+      `El tratamiento fiscal de la línea ${numeroLinea} repite impuestos.`,
+    )
+  }
+
+  return normalizados
 }
 
 const xmlImpuesto = (impuesto) => `
@@ -215,55 +325,39 @@ export function generarXmlFact(
     )
   }
 
-  const fiscal = validarConfiguracion(configuracion)
-  const { factura, venta, detalles, fechaEmision } =
-    validarDatosPersistidos(datos)
+  const fiscal = validarConfiguracionFiscalFel(configuracion)
+  const {
+    detallesValidados,
+    direccionReceptorSnapshot,
+    factura,
+    fechaEmision,
+    nitReceptor,
+    nombreReceptor,
+    totalFactura,
+    venta,
+  } = validarDatosPersistidosFact(datos)
   const direccionReceptor = validarDireccion(
     resolverDireccionReceptor({ factura, venta }),
     'receptor.direccion',
   )
-  const totalFactura = decimalExacto(
-    factura.total_snapshot,
-    'factura.total_snapshot',
-    2,
-  )
-  const totalVenta = decimalExacto(venta.total, 'venta.total', 2)
 
-  if (compararDecimales(totalFactura, totalVenta) !== 0) {
-    throw new ErrorValidacionFel('El total de la Factura no coincide con la Venta.')
+  if (direccionReceptor.direccion !== direccionReceptorSnapshot) {
+    throw new ErrorValidacionFel(
+      'La dirección fiscal resuelta no coincide con el snapshot de la Venta.',
+    )
   }
 
-  let sumaDetalles = DECIMAL_CERO
   const impuestosTotales = new Map()
-  const items = [...detalles]
-    .sort((a, b) => a.numero_linea - b.numero_linea)
-    .map((detalle) => {
-      const numeroLinea = exigirEnteroPositivo(
-        detalle.numero_linea,
-        'detalle.numero_linea',
-      )
-      const cantidad = exigirEnteroPositivo(
-        detalle.cantidad_presentaciones,
-        'detalle.cantidad_presentaciones',
-      )
-      const precioUnitario = decimalExacto(
-        detalle.precio_unitario,
-        'detalle.precio_unitario',
-        2,
-      )
-      const subtotal = decimalExacto(detalle.subtotal, 'detalle.subtotal', 2)
-      const precio = multiplicarDecimalPorEntero(
-        precioUnitario,
-        cantidad,
-        'detalle.cantidad_presentaciones',
-      )
-
-      if (compararDecimales(precio, subtotal) !== 0) {
-        throw new ErrorValidacionFel(
-          `El subtotal persistido de la línea ${numeroLinea} no coincide.`,
-        )
-      }
-
+  const items = detallesValidados.map(
+    ({
+      cantidad,
+      descripcion,
+      detalle,
+      numeroLinea,
+      precio,
+      precioUnitario,
+      subtotal,
+    }) => {
       const tratamiento = resolverTratamientoFiscal({
         factura,
         venta,
@@ -293,13 +387,11 @@ export function generarXmlFact(
         )
       }
 
-      sumaDetalles = sumarDecimales(sumaDetalles, subtotal)
-
       return `
           <dte:Item BienOServicio="${escaparAtributoXml(bienOServicio)}" NumeroLinea="${numeroLinea}">
             <dte:Cantidad>${cantidad}</dte:Cantidad>
             <dte:UnidadMedida>${escaparTextoXml(unidadMedida)}</dte:UnidadMedida>
-            <dte:Descripcion>${escaparTextoXml(descripcionDetalle(detalle))}</dte:Descripcion>
+            <dte:Descripcion>${escaparTextoXml(descripcion)}</dte:Descripcion>
             <dte:PrecioUnitario>${formatearDecimal(precioUnitario, 2)}</dte:PrecioUnitario>
             <dte:Precio>${formatearDecimal(precio, 2)}</dte:Precio>
             <dte:Descuento>0.00</dte:Descuento>
@@ -307,13 +399,8 @@ export function generarXmlFact(
             </dte:Impuestos>
             <dte:Total>${formatearDecimal(subtotal, 2)}</dte:Total>
           </dte:Item>`
-    })
-
-  if (compararDecimales(sumaDetalles, totalFactura) !== 0) {
-    throw new ErrorValidacionFel(
-      'La suma de detalles no coincide con el total de la Factura.',
-    )
-  }
+    },
+  )
 
   const atributosCorreo = fiscal.emisor.correo
     ? ` CorreoEmisor="${escaparAtributoXml(fiscal.emisor.correo)}"`
@@ -340,7 +427,7 @@ export function generarXmlFact(
         <dte:DatosGenerales Tipo="FACT" FechaHoraEmision="${escaparAtributoXml(fechaEmision)}" CodigoMoneda="GTQ"/>
         <dte:Emisor NITEmisor="${escaparAtributoXml(fiscal.emisor.nit)}" NombreEmisor="${escaparAtributoXml(fiscal.emisor.nombre)}" NombreComercial="${escaparAtributoXml(fiscal.emisor.nombreComercial)}" CodigoEstablecimiento="${escaparAtributoXml(fiscal.emisor.codigoEstablecimiento)}" AfiliacionIVA="${escaparAtributoXml(fiscal.emisor.afiliacionIva)}"${atributosCorreo}>${xmlDireccion('DireccionEmisor', fiscal.emisor.direccion)}
         </dte:Emisor>
-        <dte:Receptor IDReceptor="${escaparAtributoXml(factura.nit_receptor_snapshot)}" NombreReceptor="${escaparAtributoXml(factura.nombre_receptor_snapshot)}">${xmlDireccion('DireccionReceptor', direccionReceptor)}
+        <dte:Receptor IDReceptor="${escaparAtributoXml(nitReceptor)}" NombreReceptor="${escaparAtributoXml(nombreReceptor)}">${xmlDireccion('DireccionReceptor', direccionReceptor)}
         </dte:Receptor>
         <dte:Frases>${frasesXml}
         </dte:Frases>

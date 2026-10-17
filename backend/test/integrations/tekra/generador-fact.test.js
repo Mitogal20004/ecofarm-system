@@ -26,11 +26,16 @@ const crearDatos = () => ({
     id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
     numero: 'VTA-A01-000001',
     estado: 'confirmada',
+    comprador_nombre: 'María & Asociados <Central>',
+    comprador_nit: 'CF',
+    comprador_direccion: '5a. avenida & 1a. calle',
+    subtotal: '100.00',
     total: '100.00',
     fecha_confirmacion: '2026-10-14T10:30:00-06:00',
   },
   detalles: [
     {
+      venta_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
       numero_linea: 1,
       producto_nombre_snapshot: 'Snapdragon & flores',
       presentacion_nombre_snapshot: 'Caja <10>',
@@ -173,5 +178,96 @@ test('rechaza totales persistidos incoherentes sin usar floats', () => {
   assert.throws(
     () => generarXmlFact(datos, configuracion, adaptadores),
     /subtotal persistido.*no coincide/i,
+  )
+})
+
+test('rechaza subtotal y total incoherentes en la Venta persistida', () => {
+  const datos = crearDatos()
+  datos.venta.subtotal = '99.99'
+
+  assert.throws(
+    () => generarXmlFact(datos, configuracion, adaptadores),
+    /totales persistidos de la Factura y la Venta no coinciden/i,
+  )
+})
+
+test('rechaza snapshots fiscales distintos de la Venta', () => {
+  const datos = crearDatos()
+  datos.factura.nit_receptor_snapshot = '1234567K'
+
+  assert.throws(
+    () => generarXmlFact(datos, configuracion, adaptadores),
+    /snapshots fiscales.*no coinciden/i,
+  )
+})
+
+test('rechaza una Venta sin dirección fiscal persistida', () => {
+  const datos = crearDatos()
+  datos.factura.direccion_receptor_snapshot = null
+  datos.venta.comprador_direccion = null
+
+  assert.throws(
+    () => generarXmlFact(datos, configuracion, adaptadores),
+    /factura\.direccion_receptor_snapshot es obligatorio/i,
+  )
+})
+
+test('rechaza dirección resuelta distinta del snapshot persistido', () => {
+  const adaptadoresInconsistentes = {
+    ...adaptadores,
+    resolverDireccionReceptor: () => ({
+      direccion: 'Dirección diferente',
+      codigoPostal: '01001',
+      municipio: 'Municipio confirmado',
+      departamento: 'Departamento confirmado',
+      pais: 'GT',
+    }),
+  }
+
+  assert.throws(
+    () => generarXmlFact(crearDatos(), configuracion, adaptadoresInconsistentes),
+    /dirección fiscal resuelta.*snapshot/i,
+  )
+})
+
+test('rechaza líneas duplicadas aunque la entrada no provenga del frontend', () => {
+  const datos = crearDatos()
+  datos.detalles.push({ ...datos.detalles[0] })
+  datos.factura.total_snapshot = '200.00'
+  datos.venta.subtotal = '200.00'
+  datos.venta.total = '200.00'
+
+  assert.throws(
+    () => generarXmlFact(datos, configuracion, adaptadores),
+    /línea 1.*duplicada/i,
+  )
+})
+
+test('rechaza impuestos repetidos sin asumir su fórmula tributaria', () => {
+  const tratamientoDuplicado = {
+    ...adaptadores,
+    resolverTratamientoFiscal: () => ({
+      bienOServicio: 'B',
+      unidadMedida: 'UNI',
+      impuestos: [
+        {
+          nombreCorto: 'IVA',
+          codigoUnidadGravable: '1',
+          montoGravable: '89.29',
+          montoImpuesto: '10.71',
+        },
+        {
+          nombreCorto: 'IVA',
+          codigoUnidadGravable: '1',
+          montoGravable: '89.29',
+          montoImpuesto: '10.71',
+        },
+      ],
+    }),
+  }
+
+  assert.throws(
+    () => generarXmlFact(crearDatos(), configuracion, tratamientoDuplicado),
+    /repite impuestos/i,
   )
 })

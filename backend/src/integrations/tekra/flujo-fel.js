@@ -1,20 +1,53 @@
+import { compararDecimales, decimalExacto } from './decimal-exacto.js'
 import { ErrorResultadoInciertoTekra, ErrorValidacionFel } from './errores.js'
+import { validarDatosPersistidosFact } from './generador-fact.js'
 import { buscarPrimerNodoLocal, parsearXmlSeguro, textoNodo } from './xml-seguro.js'
 
 const PATRON_UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const NAMESPACE_DTE = 'http://www.sat.gob.gt/dte/fel/0.2.0'
 
-const validarXmlPersistido = (xml, facturaId) => {
+const buscarHijoLocal = (nodo, nombreLocal) =>
+  nodo?.hijos.find((hijo) => hijo.nombreLocal === nombreLocal) ?? null
+
+const validarXmlPersistido = (xml, factura) => {
   const raiz = parsearXmlSeguro(xml)
-  const identificador = buscarPrimerNodoLocal(raiz, 'DECertificador')
+  const sat = buscarHijoLocal(raiz, 'SAT')
+  const adenda = buscarHijoLocal(sat, 'Adenda')
+  const identificador = adenda
+    ? buscarPrimerNodoLocal(adenda, 'DECertificador')
+    : null
+  const datosGenerales = buscarPrimerNodoLocal(raiz, 'DatosGenerales')
+  const receptor = buscarPrimerNodoLocal(raiz, 'Receptor')
+  const granTotal = buscarPrimerNodoLocal(raiz, 'GranTotal')
 
   if (
     raiz.nombreLocal !== 'GTDocumento' ||
+    raiz.atributos.get('xmlns:dte') !== NAMESPACE_DTE ||
+    datosGenerales?.atributos.get('Tipo') !== 'FACT' ||
     !identificador ||
-    textoNodo(identificador) !== facturaId
+    textoNodo(identificador) !== factura.id ||
+    receptor?.atributos.get('IDReceptor') !==
+      factura.nit_receptor_snapshot ||
+    receptor?.atributos.get('NombreReceptor') !==
+      factura.nombre_receptor_snapshot ||
+    !granTotal
   ) {
     throw new ErrorValidacionFel(
       'El XML persistido no corresponde con la Factura FEL.',
+    )
+  }
+
+  const totalXml = decimalExacto(textoNodo(granTotal), 'xml.GranTotal')
+  const totalFactura = decimalExacto(
+    factura.total_snapshot,
+    'factura.total_snapshot',
+    2,
+  )
+
+  if (compararDecimales(totalXml, totalFactura) !== 0) {
+    throw new ErrorValidacionFel(
+      'El total del XML persistido no corresponde con la Factura FEL.',
     )
   }
 }
@@ -33,16 +66,20 @@ export async function prepararYReclamarFacturaFel({
     throw new TypeError('Las dependencias del flujo FEL están incompletas.')
   }
 
-  const datos = await repositorio.obtenerFacturaParaPreparacion(facturaId)
-
-  if (datos.factura.requiere_conciliacion === true) {
-    throw new ErrorValidacionFel(
-      'La Factura requiere conciliación antes de un nuevo envío.',
-    )
+  if (typeof facturaId !== 'string' || !PATRON_UUID.test(facturaId)) {
+    throw new TypeError('El identificador de la Factura FEL no es válido.')
   }
 
+  const datos = await repositorio.obtenerFacturaParaPreparacion(facturaId)
+  if (datos?.factura?.id !== facturaId) {
+    throw new ErrorValidacionFel(
+      'La Factura cargada no corresponde con el identificador solicitado.',
+    )
+  }
+  validarDatosPersistidosFact(datos)
+
   const xml = datos.factura.xml_solicitud ?? generarXml(datos)
-  validarXmlPersistido(xml, datos.factura.id)
+  validarXmlPersistido(xml, datos.factura)
 
   return reclamarFactura(datos.factura.id, xml)
 }

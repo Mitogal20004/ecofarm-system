@@ -60,28 +60,133 @@ const leerFrases = (entorno) => {
     throw new ErrorConfiguracionTekra('FEL_FRASES_JSON no contiene JSON válido.')
   }
 
-  if (
-    !Array.isArray(frases) ||
-    frases.length === 0 ||
-    frases.some(
-      (frase) =>
-        !frase ||
-        typeof frase !== 'object' ||
-        typeof frase.tipoFrase !== 'string' ||
-        !frase.tipoFrase.trim() ||
-        typeof frase.codigoEscenario !== 'string' ||
-        !frase.codigoEscenario.trim(),
+  return frases
+}
+
+const exigirTextoFiscal = (valor, campo, { opcional = false } = {}) => {
+  if (valor === null || valor === undefined) {
+    if (opcional) return null
+    throw new ErrorConfiguracionTekra(`${campo} es obligatorio.`)
+  }
+
+  if (typeof valor !== 'string' || !valor.trim()) {
+    throw new ErrorConfiguracionTekra(`${campo} es obligatorio.`)
+  }
+
+  return valor.trim()
+}
+
+const exigirNitNormalizado = (valor) => {
+  const nit = exigirTextoFiscal(valor, 'emisor.nit')
+  const normalizado = nit.replace(/[\s-]+/g, '').toUpperCase()
+
+  if (nit !== normalizado) {
+    throw new ErrorConfiguracionTekra(
+      'FEL_EMISOR_NIT debe estar normalizado, sin espacios ni guiones.',
     )
-  ) {
+  }
+
+  return nit
+}
+
+const validarCorreo = (correo) => {
+  if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+    throw new ErrorConfiguracionTekra(
+      'FEL_EMISOR_CORREO no tiene un formato válido.',
+    )
+  }
+
+  return correo
+}
+
+export function validarConfiguracionFiscalFel(configuracion) {
+  if (configuracion?.contratoXmlConfirmado !== true) {
+    throw new ErrorConfiguracionTekra(
+      'El contrato XML FEL no ha sido confirmado para producción.',
+    )
+  }
+
+  if (!Array.isArray(configuracion.frases) || configuracion.frases.length === 0) {
     throw new ErrorConfiguracionTekra(
       'FEL_FRASES_JSON debe declarar frases fiscales confirmadas.',
     )
   }
 
-  return frases.map((frase) => ({
-    tipoFrase: frase.tipoFrase.trim(),
-    codigoEscenario: frase.codigoEscenario.trim(),
-  }))
+  const frases = configuracion.frases.map((frase, indice) => {
+    if (!frase || typeof frase !== 'object' || Array.isArray(frase)) {
+      throw new ErrorConfiguracionTekra(
+        `La frase fiscal ${indice + 1} no es válida.`,
+      )
+    }
+
+    return {
+      tipoFrase: exigirTextoFiscal(
+        frase.tipoFrase,
+        `frases[${indice}].tipoFrase`,
+      ),
+      codigoEscenario: exigirTextoFiscal(
+        frase.codigoEscenario,
+        `frases[${indice}].codigoEscenario`,
+      ),
+    }
+  })
+  const claves = frases.map(
+    (frase) => `${frase.tipoFrase}\u0000${frase.codigoEscenario}`,
+  )
+  if (new Set(claves).size !== claves.length) {
+    throw new ErrorConfiguracionTekra(
+      'FEL_FRASES_JSON contiene frases fiscales duplicadas.',
+    )
+  }
+
+  const emisor = configuracion.emisor
+  const correo = validarCorreo(
+    exigirTextoFiscal(emisor?.correo, 'emisor.correo', { opcional: true }),
+  )
+
+  return {
+    contratoXmlConfirmado: true,
+    emisor: {
+      nit: exigirNitNormalizado(emisor?.nit),
+      nombre: exigirTextoFiscal(emisor?.nombre, 'emisor.nombre'),
+      nombreComercial: exigirTextoFiscal(
+        emisor?.nombreComercial,
+        'emisor.nombreComercial',
+      ),
+      afiliacionIva: exigirTextoFiscal(
+        emisor?.afiliacionIva,
+        'emisor.afiliacionIva',
+      ),
+      codigoEstablecimiento: exigirTextoFiscal(
+        emisor?.codigoEstablecimiento,
+        'emisor.codigoEstablecimiento',
+      ),
+      correo,
+      direccion: {
+        direccion: exigirTextoFiscal(
+          emisor?.direccion?.direccion,
+          'emisor.direccion.direccion',
+        ),
+        codigoPostal: exigirTextoFiscal(
+          emisor?.direccion?.codigoPostal,
+          'emisor.direccion.codigoPostal',
+        ),
+        municipio: exigirTextoFiscal(
+          emisor?.direccion?.municipio,
+          'emisor.direccion.municipio',
+        ),
+        departamento: exigirTextoFiscal(
+          emisor?.direccion?.departamento,
+          'emisor.direccion.departamento',
+        ),
+        pais: exigirTextoFiscal(
+          emisor?.direccion?.pais,
+          'emisor.direccion.pais',
+        ),
+      },
+    },
+    frases,
+  }
 }
 
 export function cargarConfiguracionTekra(entorno = process.env) {
@@ -131,7 +236,7 @@ export function cargarConfiguracionFiscalFel(entorno = process.env) {
     )
   }
 
-  return {
+  return validarConfiguracionFiscalFel({
     contratoXmlConfirmado: true,
     emisor: {
       nit: leerTexto(entorno, 'FEL_EMISOR_NIT'),
@@ -152,5 +257,5 @@ export function cargarConfiguracionFiscalFel(entorno = process.env) {
       },
     },
     frases: leerFrases(entorno),
-  }
+  })
 }

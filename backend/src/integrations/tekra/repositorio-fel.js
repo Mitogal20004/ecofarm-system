@@ -21,6 +21,7 @@ const CAMPOS_VENTA = [
   'comprador_nombre',
   'comprador_nit',
   'comprador_direccion',
+  'subtotal',
   'total',
   'fecha_confirmacion',
 ].join(',')

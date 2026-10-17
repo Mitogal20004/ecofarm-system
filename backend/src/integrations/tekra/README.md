@@ -1,7 +1,8 @@
 # Integración TEKRA FEL
 
-La Fase 2B-1 prepara el cliente SOAP 1.1, el XML `FACT`, el parser seguro y
-el flujo de claim/finalización. No existe un worker automático y ningún módulo
+Las fases 2B-1 y 2B-2 preparan el cliente SOAP 1.1, el XML `FACT`, el parser
+seguro, las validaciones fiscales previas y el flujo de claim/finalización.
+No existe un worker automático y ningún módulo
 realiza llamadas durante su importación.
 
 El PDF certificado se mantiene como `Buffer` solamente durante el
@@ -61,11 +62,46 @@ cantidad por precio coincide con su subtotal y que la suma coincide con los
 totales persistidos. No acepta precios ni impuestos procedentes de una
 solicitud frontend.
 
+Antes de generar o reutilizar un XML también comprueba que:
+
+- los snapshots de NIT, nombre y dirección de `facturas_fel` coincidan con la
+  Venta que originó la solicitud;
+- `subtotal`, `total`, `total_snapshot` y la suma de detalles sean iguales;
+- cada detalle pertenezca a la Venta y no repita su número de línea;
+- la dirección libre devuelta por el resolver sea exactamente la persistida;
+- un XML reutilizado conserve tipo `FACT`, receptor, total y `DECertificador`.
+
 La base actual solo conserva una dirección libre del comprador. Por ello es
 obligatorio inyectar un resolver aprobado para código postal, municipio,
 departamento y país. También es obligatorio inyectar el tratamiento fiscal
 confirmado de cada línea. No hay reglas implícitas de IVA, exención,
 redondeo o unidad de medida.
+
+## Datos disponibles y faltantes
+
+Actualmente existen:
+
+- del emisor: todos los campos se exigen mediante configuración privada del
+  servidor; el repositorio no contiene valores fiscales reales;
+- del receptor: snapshots de NIT, nombre y una dirección libre en la Factura;
+- de la Venta: subtotal, total, fecha y snapshots de producto, presentación,
+  cantidad y precio por línea.
+
+Todavía no existen en el esquema:
+
+- código postal, municipio, departamento y país del receptor como snapshots
+  estructurados;
+- correo del receptor como snapshot de la Venta;
+- clasificación bien/servicio, unidad y tratamiento tributario confirmado por
+  línea.
+
+Si TEKRA/SAT confirma que la dirección estructurada debe conservarse por
+transacción, se propone una migración futura, aditiva y nullable para agregar
+esos cuatro componentes tanto a `ventas` como a `facturas_fel` con sus
+snapshots. No se crea aún porque faltan las definiciones fiscales finales y
+las Ventas históricas no contienen esos datos. Si el tratamiento tributario
+varía por producto, también deberá definirse primero si se configura en servidor
+o si requiere snapshots aditivos por detalle.
 
 ## Idempotencia y errores inciertos
 
