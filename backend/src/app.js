@@ -6,6 +6,7 @@ import cotizacionesRoutes from './routes/cotizaciones.routes.js'
 import facturasFelRoutes from './routes/facturas-fel.routes.js'
 import inventarioRoutes from './routes/inventario.routes.js'
 import productosRoutes from './routes/productos.routes.js'
+import reportesRoutes from './routes/reportes.routes.js'
 import rolesRoutes from './routes/roles.routes.js'
 import usuariosRoutes from './routes/usuarios.routes.js'
 import ventasRoutes from './routes/ventas.routes.js'
@@ -42,6 +43,7 @@ app.use('/api/cotizaciones', cotizacionesRoutes)
 app.use('/api/facturas-fel', facturasFelRoutes)
 app.use('/api/inventario', inventarioRoutes)
 app.use('/api/productos', productosRoutes)
+app.use('/api/reportes', reportesRoutes)
 app.use('/api/usuarios', usuariosRoutes)
 app.use('/api/roles', rolesRoutes)
 app.use('/api/ventas', ventasRoutes)
