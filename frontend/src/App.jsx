@@ -10,6 +10,7 @@ import Clientes from './pages/Clientes'
 import Cotizaciones from './pages/Cotizaciones'
 import Inventario from './pages/Inventario'
 import Productos from './pages/Productos'
+import Reportes from './pages/Reportes'
 import Usuarios from './pages/Usuarios'
 import Ventas from './pages/Ventas'
 import {
@@ -26,6 +27,7 @@ const VISTA_CLIENTES = 'clientes'
 const VISTA_COTIZACIONES = 'cotizaciones'
 const VISTA_INVENTARIO = 'inventario'
 const VISTA_PRODUCTOS = 'productos'
+const VISTA_REPORTES = 'reportes'
 const VISTA_USUARIOS = 'usuarios'
 const VISTA_VENTAS = 'ventas'
 
@@ -34,6 +36,7 @@ const PERMISO_POR_VISTA = {
   [VISTA_COTIZACIONES]: ['cotizacion.ver'],
   [VISTA_INVENTARIO]: ['inventario.ver'],
   [VISTA_PRODUCTOS]: ['producto.ver'],
+  [VISTA_REPORTES]: ['reporte.ver'],
   [VISTA_USUARIOS]: ['usuario.ver'],
   [VISTA_VENTAS]: ['venta.ver', 'venta.crear'],
 }
@@ -494,9 +497,22 @@ function App() {
               </li>
             )}
             {tienePermiso('reporte.ver') && (
-              <li className="opcion-navegacion">
-                <IconoInterfaz nombre="reportes" className="icono-navegacion" />
-                Reportes
+              <li>
+                <button
+                  className={`opcion-navegacion boton-navegacion${
+                    vistaActual === VISTA_REPORTES
+                      ? ' opcion-navegacion-activa'
+                      : ''
+                  }`}
+                  type="button"
+                  onClick={() => setVistaActual(VISTA_REPORTES)}
+                  aria-current={
+                    vistaActual === VISTA_REPORTES ? 'page' : undefined
+                  }
+                >
+                  <IconoInterfaz nombre="reportes" className="icono-navegacion" />
+                  Reportes
+                </button>
               </li>
             )}
             {comprobandoAutorizacion && !autorizacion && (
@@ -573,6 +589,8 @@ function App() {
                 permisos={permisos}
                 alRefrescarAutorizacion={refrescarAutorizacion}
               />
+            ) : vistaActual === VISTA_REPORTES ? (
+              <Reportes alRefrescarAutorizacion={refrescarAutorizacion} />
             ) : vistaActual === VISTA_USUARIOS ? (
               <Usuarios
                 permisos={permisos}
@@ -704,6 +722,23 @@ function App() {
                         <span>
                           <strong>Cotizaciones</strong>
                           <small>Prepara y consulta propuestas comerciales.</small>
+                        </span>
+                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
+                      </button>
+                    )}
+
+                    {tienePermiso('reporte.ver') && (
+                      <button
+                        className="acceso-inicio"
+                        type="button"
+                        onClick={() => setVistaActual(VISTA_REPORTES)}
+                      >
+                        <span className="icono-acceso-inicio" aria-hidden="true">
+                          <IconoInterfaz nombre="reportes" />
+                        </span>
+                        <span>
+                          <strong>Reportes</strong>
+                          <small>Analiza ventas, productos, inventario y cotizaciones.</small>
                         </span>
                         <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
                       </button>
