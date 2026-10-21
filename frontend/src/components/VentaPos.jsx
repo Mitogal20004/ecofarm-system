@@ -671,7 +671,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
           <span>1</span>
           <div>
             <h2 id="comprador-venta">Comprador</h2>
-            <p>Ingresa los datos del comprador o selecciona un cliente registrado.</p>
           </div>
         </div>
         <div className="buscador-cliente-ventas">
@@ -800,7 +799,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
             <span>2</span>
             <div>
               <h2 id="producto-venta">Producto y presentación</h2>
-              <p>Los precios son consultados desde PostgreSQL.</p>
             </div>
           </div>
           <div className="campo-ventas">
@@ -910,7 +908,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
             <span>3</span>
             <div>
               <h2 id="cantidad-venta">Cantidad</h2>
-              <p>Unidades de la presentación seleccionada.</p>
             </div>
           </div>
           <label htmlFor="pantalla-cantidad-venta">Cantidad</label>
@@ -963,9 +960,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
           >
             Agregar al carrito
           </button>
-          <small className="ayuda-teclado-ventas">
-            También puedes usar el teclado físico, C y retroceso.
-          </small>
         </section>
       </div>
 
@@ -981,7 +975,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
           <div className="total-carrito-ventas">
             <span>Total previsto</span>
             <strong>{formatoMoneda.format(totalPrevisto)}</strong>
-            <small>PostgreSQL calcula el total definitivo.</small>
           </div>
         </div>
 

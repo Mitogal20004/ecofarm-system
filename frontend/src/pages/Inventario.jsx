@@ -359,11 +359,7 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
   return (
     <section className="pagina-inventario" aria-labelledby="titulo-inventario">
       <header className="encabezado-inventario">
-        <div>
-          <p className="etiqueta-seccion">Operación física</p>
-          <h1 id="titulo-inventario">Inventario</h1>
-          <p>Control de existencias y movimientos de Snapdragon.</p>
-        </div>
+        <h1 id="titulo-inventario">Inventario</h1>
         {puedeVerMovimientos && (
           <button
             className="boton-primario-inventario"
@@ -388,7 +384,6 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
             <span className="etiqueta-tarjeta-kpi">Total de manojos</span>
           </div>
           <strong className="valor-tarjeta-kpi">{resumen.total_manojos}</strong>
-          <small className="descripcion-tarjeta-kpi">Existencia física filtrada</small>
         </article>
         <article className="tarjeta-kpi tarjeta-kpi-salvia">
           <div className="cabecera-tarjeta-kpi">
@@ -398,7 +393,6 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
             <span className="etiqueta-tarjeta-kpi">Variantes con stock</span>
           </div>
           <strong className="valor-tarjeta-kpi">{resumen.variantes_con_stock}</strong>
-          <small className="descripcion-tarjeta-kpi">Con saldo mayor que cero</small>
         </article>
         <article className="tarjeta-kpi tarjeta-kpi-dorada">
           <div className="cabecera-tarjeta-kpi">
@@ -408,7 +402,6 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
             <span className="etiqueta-tarjeta-kpi">Stock bajo</span>
           </div>
           <strong className="valor-tarjeta-kpi">{resumen.variantes_stock_bajo}</strong>
-          <small className="descripcion-tarjeta-kpi">En o por debajo del mínimo</small>
         </article>
         <article className="tarjeta-kpi tarjeta-kpi-critica">
           <div className="cabecera-tarjeta-kpi">
@@ -418,11 +411,10 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
             <span className="etiqueta-tarjeta-kpi">Sin stock</span>
           </div>
           <strong className="valor-tarjeta-kpi">{resumen.variantes_sin_stock}</strong>
-          <small className="descripcion-tarjeta-kpi">Con saldo igual a cero</small>
         </article>
       </div>
       <p className="nota-resumen-inventario">
-        El resumen corresponde a todas las variantes que cumplen los filtros, no solo a esta página.
+        Totales del resultado filtrado.
       </p>
 
       {!cargando && !error && inventario.length > 0 && (
@@ -431,10 +423,7 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
           aria-labelledby="titulo-alertas-inventario"
         >
           <header className="encabezado-alertas-inventario">
-            <div>
-              <p className="etiqueta-seccion">Seguimiento</p>
-              <h2 id="titulo-alertas-inventario">Alertas en resultados mostrados</h2>
-            </div>
+            <h2 id="titulo-alertas-inventario">Alertas de esta página</h2>
             <span>
               {alertasResultados.length}{' '}
               {alertasResultados.length === 1 ? 'alerta' : 'alertas'}
@@ -466,9 +455,6 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
               No hay alertas de stock en esta página de resultados.
             </p>
           )}
-          <p className="nota-alertas-inventario">
-            Esta lista corresponde únicamente a las variantes visibles en la página actual.
-          </p>
         </section>
       )}
 

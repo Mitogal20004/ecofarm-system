@@ -84,12 +84,6 @@
   background: var(--color-error-fondo);
 }
 
-.resumen-productos {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
 .filtros-productos {
   display: grid;
   grid-template-columns: minmax(250px, 1fr) repeat(3, minmax(130px, 170px));
@@ -631,9 +625,6 @@
     grid-column: 1 / -1;
   }
 
-  .resumen-productos {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 700px) {
@@ -737,10 +728,6 @@
 }
 
 @media (max-width: 480px) {
-  .resumen-productos {
-    grid-template-columns: 1fr;
-  }
-
   .boton-nuevo-producto {
     width: 100%;
   }

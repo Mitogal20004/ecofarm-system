@@ -175,11 +175,7 @@ function Cotizaciones({
   return (
     <section className="pagina-cotizaciones" aria-labelledby="titulo-cotizaciones">
       <header className="encabezado-cotizaciones">
-        <div>
-          <p className="etiqueta-seccion-cotizaciones">Gestión comercial</p>
-          <h1 id="titulo-cotizaciones">Cotizaciones</h1>
-          <p>Consulta, prepara y emite propuestas comerciales de E-farm.</p>
-        </div>
+        <h1 id="titulo-cotizaciones">Cotizaciones</h1>
         {puedeCrear && (
           <button
             className="boton-primario-cotizaciones"
@@ -193,10 +189,7 @@ function Cotizaciones({
 
       <form className="filtros-cotizaciones" onSubmit={aplicarFiltros}>
         <div className="encabezado-filtros-cotizaciones">
-          <div>
-            <strong>Buscar cotizaciones</strong>
-            <p>Filtra por documento, comprador, NIT, estado o fecha.</p>
-          </div>
+          <strong>Buscar cotizaciones</strong>
           <button
             className="boton-limpiar-cotizaciones"
             type="button"

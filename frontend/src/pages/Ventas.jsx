@@ -208,11 +208,7 @@ function Ventas({
   return (
     <section className="pagina-ventas" aria-labelledby="titulo-ventas">
       <header className="encabezado-ventas">
-        <div>
-          <p className="etiqueta-seccion-ventas">Operación comercial</p>
-          <h1 id="titulo-ventas">Ventas</h1>
-          <p>Registra ventas, emite recibos y consulta el historial.</p>
-        </div>
+        <h1 id="titulo-ventas">Ventas</h1>
         <div className="acciones-encabezado-ventas">
           {puedeVer && (
             <button
@@ -247,10 +243,7 @@ function Ventas({
         <>
           <form className="filtros-ventas" onSubmit={aplicarFiltros}>
             <div className="encabezado-filtros-ventas">
-              <div>
-                <strong>Buscar ventas</strong>
-                <p>Filtra por venta, recibo, comprador, NIT, estado o fecha.</p>
-              </div>
+              <strong>Buscar ventas</strong>
               <button className="boton-limpiar-ventas" type="button" onClick={limpiarFiltros}>
                 Limpiar filtros
               </button>

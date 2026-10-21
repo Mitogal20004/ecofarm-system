@@ -184,11 +184,7 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
   return (
     <section className="pagina-usuarios" aria-labelledby="titulo-usuarios">
       <header className="encabezado-usuarios">
-        <div>
-          <p className="etiqueta-seccion">Administración</p>
-          <h1 id="titulo-usuarios">Usuarios</h1>
-          <p>Consulta y administra el personal con acceso a E-farm.</p>
-        </div>
+        <h1 id="titulo-usuarios">Usuarios</h1>
         {puedeAdministrarUsuarios && (
           <button
             className="boton-nuevo-usuario"

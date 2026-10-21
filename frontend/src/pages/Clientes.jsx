@@ -139,11 +139,7 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
   return (
     <section className="pagina-clientes" aria-labelledby="titulo-clientes">
       <header className="encabezado-clientes">
-        <div>
-          <p className="etiqueta-seccion">Gestión comercial</p>
-          <h1 id="titulo-clientes">Clientes</h1>
-          <p>Consulta y administra clientes individuales y empresas.</p>
-        </div>
+        <h1 id="titulo-clientes">Clientes</h1>
         {puedeCrear && (
           <button
             className="boton-nuevo-cliente"
