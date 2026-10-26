@@ -13,6 +13,8 @@ import Productos from './pages/Productos'
 import Reportes from './pages/Reportes'
 import Usuarios from './pages/Usuarios'
 import Ventas from './pages/Ventas'
+import Caja from './pages/Caja'
+import { limpiarOperacionesPendientesCaja } from './services/caja'
 import {
   cerrarSesion,
   observarCambiosAutenticacion,
@@ -24,6 +26,7 @@ const RUTA_RECUPERAR_PASSWORD = '/recuperar-password'
 const RUTA_RESTABLECER_PASSWORD = '/restablecer-password'
 const VISTA_INICIO = 'inicio'
 const VISTA_CLIENTES = 'clientes'
+const VISTA_CAJA = 'caja'
 const VISTA_COTIZACIONES = 'cotizaciones'
 const VISTA_INVENTARIO = 'inventario'
 const VISTA_PRODUCTOS = 'productos'
@@ -32,6 +35,7 @@ const VISTA_USUARIOS = 'usuarios'
 const VISTA_VENTAS = 'ventas'
 
 const PERMISO_POR_VISTA = {
+  [VISTA_CAJA]: ['caja.operar', 'caja.ver'],
   [VISTA_CLIENTES]: ['cliente.ver'],
   [VISTA_COTIZACIONES]: ['cotizacion.ver'],
   [VISTA_INVENTARIO]: ['inventario.ver'],
@@ -133,6 +137,7 @@ function App() {
           // La sesión local se descarta igualmente al recibir un 401.
         }
 
+        limpiarOperacionesPendientesCaja()
         setSesion(null)
       } else if (error?.status === 403) {
         setErrorAutorizacion(
@@ -168,6 +173,7 @@ function App() {
       setSesion(nuevaSesion)
 
       if (!nuevaSesion) {
+        limpiarOperacionesPendientesCaja()
         solicitudAutorizacionRef.current += 1
         setAutorizacion(null)
         setComprobandoAutorizacion(false)
@@ -290,6 +296,7 @@ function App() {
 
     try {
       await cerrarSesion()
+      limpiarOperacionesPendientesCaja()
       solicitudAutorizacionRef.current += 1
       setSesion(null)
       setAutorizacion(null)
@@ -417,6 +424,25 @@ function App() {
                 >
                   <IconoInterfaz nombre="ventas" className="icono-navegacion" />
                   Ventas
+                </button>
+              </li>
+            )}
+            {(tienePermiso('caja.operar') || tienePermiso('caja.ver')) && (
+              <li>
+                <button
+                  className={`opcion-navegacion boton-navegacion${
+                    vistaActual === VISTA_CAJA
+                      ? ' opcion-navegacion-activa'
+                      : ''
+                  }`}
+                  type="button"
+                  onClick={() => setVistaActual(VISTA_CAJA)}
+                  aria-current={
+                    vistaActual === VISTA_CAJA ? 'page' : undefined
+                  }
+                >
+                  <IconoInterfaz nombre="caja" className="icono-navegacion" />
+                  Caja
                 </button>
               </li>
             )}
@@ -565,6 +591,13 @@ function App() {
                 alConsumirVentaInicial={() => setVentaInicialId(null)}
                 alRefrescarAutorizacion={refrescarAutorizacion}
               />
+            ) : vistaActual === VISTA_CAJA ? (
+              <Caja
+                key={autorizacion?.perfil?.id ?? 'sin-usuario'}
+                permisos={permisos}
+                usuarioActualId={autorizacion?.perfil?.id ?? null}
+                alRefrescarAutorizacion={refrescarAutorizacion}
+              />
             ) : vistaActual === VISTA_CLIENTES ? (
               <Clientes
                 permisos={permisos}
@@ -654,6 +687,23 @@ function App() {
                         <span>
                           <strong>Ventas</strong>
                           <small>Atiende el punto de venta y consulta operaciones.</small>
+                        </span>
+                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
+                      </button>
+                    )}
+
+                    {(tienePermiso('caja.operar') || tienePermiso('caja.ver')) && (
+                      <button
+                        className="acceso-inicio"
+                        type="button"
+                        onClick={() => setVistaActual(VISTA_CAJA)}
+                      >
+                        <span className="icono-acceso-inicio" aria-hidden="true">
+                          <IconoInterfaz nombre="caja" />
+                        </span>
+                        <span>
+                          <strong>Caja</strong>
+                          <small>Abre, consulta y cierra turnos de efectivo.</small>
                         </span>
                         <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
                       </button>

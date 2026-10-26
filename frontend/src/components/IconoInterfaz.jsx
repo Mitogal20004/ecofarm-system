@@ -13,6 +13,15 @@ const TRAZOS_ICONOS = {
       <circle cx="17" cy="19" r="1.25" />
     </>
   ),
+  caja: (
+    <>
+      <path d="M4 7h16v12H4V7Z" />
+      <path d="M6 7V5h10l2 2" />
+      <path d="M4 11h16" />
+      <path d="M15 14h5v3h-5a1.5 1.5 0 0 1 0-3Z" />
+      <path d="M7 15h3" />
+    </>
+  ),
   inventario: (
     <>
       <path d="m4 7 8-4 8 4-8 4-8-4Z" />
