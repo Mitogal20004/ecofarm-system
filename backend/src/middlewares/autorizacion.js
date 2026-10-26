@@ -77,3 +77,40 @@ export function requerirPermiso(codigoPermiso) {
     return next()
   }
 }
+
+export function requerirAlgunPermiso(...codigosPermiso) {
+  if (
+    codigosPermiso.length < 1 ||
+    codigosPermiso.some(
+      (codigo) =>
+        typeof codigo !== 'string' ||
+        !codigo ||
+        codigo.trim() !== codigo,
+    )
+  ) {
+    throw new TypeError('Se requiere al menos un código de permiso válido.')
+  }
+
+  const codigosUnicos = new Set(codigosPermiso)
+
+  return function verificarAlgunoDeLosPermisos(req, res, next) {
+    if (!req.autorizacion) {
+      return responderAutorizacionNoCargada(res)
+    }
+
+    const tienePermiso =
+      Array.isArray(req.autorizacion.permisos) &&
+      req.autorizacion.permisos.some((permiso) =>
+        codigosUnicos.has(permiso?.codigo),
+      )
+
+    if (!tienePermiso) {
+      return res.status(403).json({
+        ok: false,
+        message: 'No tiene permiso para realizar esta acción',
+      })
+    }
+
+    return next()
+  }
+}

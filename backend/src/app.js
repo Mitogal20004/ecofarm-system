@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
+import cajaRoutes from './routes/caja.routes.js'
 import clientesRoutes from './routes/clientes.routes.js'
 import cotizacionesRoutes from './routes/cotizaciones.routes.js'
 import facturasFelRoutes from './routes/facturas-fel.routes.js'
@@ -38,6 +39,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/caja', cajaRoutes)
 app.use('/api/clientes', clientesRoutes)
 app.use('/api/cotizaciones', cotizacionesRoutes)
 app.use('/api/facturas-fel', facturasFelRoutes)
