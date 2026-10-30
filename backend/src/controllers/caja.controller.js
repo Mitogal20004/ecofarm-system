@@ -5,7 +5,9 @@ import {
   listarCajas as listarCajasServicio,
   obtenerCaja as obtenerCajaServicio,
   obtenerCajaActual as obtenerCajaActualServicio,
+  obtenerEstadoDevolucionVenta as obtenerEstadoDevolucionVentaServicio,
   obtenerResumenCajaActual as obtenerResumenCajaActualServicio,
+  registrarDevolucionVenta as registrarDevolucionVentaServicio,
 } from '../services/caja.service.js'
 
 const MENSAJE_SOLICITUD_INVALIDA = 'La solicitud contiene datos inválidos'
@@ -17,6 +19,7 @@ const MAXIMO_MONTO_CENTAVOS = 99999999999999n
 const ESTADOS = new Set(['abierta', 'cerrada'])
 const CAMPOS_APERTURA = new Set(['fondo_inicial'])
 const CAMPOS_CIERRE = new Set(['efectivo_contado', 'observaciones'])
+const CAMPOS_DEVOLUCION = new Set(['motivo'])
 const CAMPOS_LISTADO = new Set([
   'pagina',
   'limite',
@@ -133,6 +136,21 @@ const crearDatosCierre = (body) => {
   }
 }
 
+const crearDatosDevolucion = (body) => {
+  validarCampos(body, CAMPOS_DEVOLUCION, CAMPOS_DEVOLUCION)
+
+  if (typeof body.motivo !== 'string') {
+    throw new ErrorSolicitudInvalida()
+  }
+
+  const motivo = normalizarEspacios(body.motivo)
+  if (!motivo || motivo.length > 500) {
+    throw new ErrorSolicitudInvalida()
+  }
+
+  return { motivo }
+}
+
 const crearOpcionesListado = (query) => {
   validarCampos(query, CAMPOS_LISTADO, new Set())
   const opciones = {}
@@ -181,6 +199,39 @@ const mensajesSegurosSupabase = new Map([
     'No tiene permiso para consultar la caja de otro usuario.',
     'No tiene permiso para consultar la caja de otro usuario.',
   ],
+  ['La Venta solicitada no existe.', 'La venta solicitada no existe.'],
+  [
+    'La clave de idempotencia ya fue utilizada.',
+    'La clave de idempotencia ya fue utilizada.',
+  ],
+  [
+    'La Venta ya tiene una devolucion de efectivo registrada.',
+    'La venta ya tiene una devolución de efectivo registrada.',
+  ],
+  [
+    'El usuario no tiene una caja abierta para registrar la devolucion.',
+    'Debes abrir tu caja antes de registrar la devolución.',
+  ],
+  [
+    'La Venta debe estar anulada antes de registrar la devolucion.',
+    'La venta debe estar anulada antes de registrar la devolución.',
+  ],
+  [
+    'La Venta no tiene un importe de efectivo que devolver.',
+    'La venta no tiene un importe de efectivo que devolver.',
+  ],
+  [
+    'La Venta no tiene un ingreso de Caja valido para devolver.',
+    'La venta no tiene un ingreso de Caja válido para devolver.',
+  ],
+  [
+    'La caja abierta no tiene suficiente efectivo esperado para registrar la devolucion.',
+    'La caja abierta no tiene suficiente efectivo esperado para registrar la devolución.',
+  ],
+  [
+    'Debe resolver el documento FEL asociado antes de registrar la devolucion.',
+    'Debe resolver el documento FEL asociado antes de registrar la devolución.',
+  ],
 ])
 
 const respuestasPorCodigo = {
@@ -226,6 +277,8 @@ const serviciosPredeterminados = Object.freeze({
   cerrarCaja: cerrarCajaServicio,
   listarCajas: listarCajasServicio,
   obtenerCaja: obtenerCajaServicio,
+  obtenerEstadoDevolucionVenta: obtenerEstadoDevolucionVentaServicio,
+  registrarDevolucionVenta: registrarDevolucionVentaServicio,
 })
 
 export function crearControladoresCaja(servicios = serviciosPredeterminados) {
@@ -308,6 +361,36 @@ export function crearControladoresCaja(servicios = serviciosPredeterminados) {
         return responderError(res, error)
       }
     },
+
+    async obtenerEstadoDevolucionVenta(req, res) {
+      try {
+        const ventaId = validarUuid(req.params.ventaId)
+        const resultado = await servicios.obtenerEstadoDevolucionVenta(
+          req.autenticacion?.token,
+          ventaId,
+        )
+        return res.status(200).json(resultado)
+      } catch (error) {
+        return responderError(res, error)
+      }
+    },
+
+    async registrarDevolucionVenta(req, res) {
+      try {
+        const ventaId = validarUuid(req.params.ventaId)
+        const claveIdempotencia = validarUuid(req.get('Idempotency-Key'))
+        const { motivo } = crearDatosDevolucion(req.body)
+        const resultado = await servicios.registrarDevolucionVenta(
+          req.autenticacion?.token,
+          ventaId,
+          claveIdempotencia,
+          motivo,
+        )
+        return res.status(resultado.cambio ? 201 : 200).json(resultado)
+      } catch (error) {
+        return responderError(res, error)
+      }
+    },
   })
 }
 
@@ -315,6 +398,7 @@ export const validadoresCaja = Object.freeze({
   validarUuid,
   crearDatosApertura,
   crearDatosCierre,
+  crearDatosDevolucion,
   crearOpcionesListado,
 })
 
@@ -327,3 +411,7 @@ export const obtenerResumenCajaActual =
 export const cerrarCaja = controladoresCaja.cerrarCaja
 export const listarCajas = controladoresCaja.listarCajas
 export const obtenerCaja = controladoresCaja.obtenerCaja
+export const obtenerEstadoDevolucionVenta =
+  controladoresCaja.obtenerEstadoDevolucionVenta
+export const registrarDevolucionVenta =
+  controladoresCaja.registrarDevolucionVenta

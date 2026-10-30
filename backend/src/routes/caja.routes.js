@@ -5,7 +5,9 @@ import {
   listarCajas,
   obtenerCaja,
   obtenerCajaActual,
+  obtenerEstadoDevolucionVenta,
   obtenerResumenCajaActual,
+  registrarDevolucionVenta,
 } from '../controllers/caja.controller.js'
 import { autenticarUsuario } from '../middlewares/autenticacion.js'
 import {
@@ -28,6 +30,13 @@ const operarOSupervisar = requerirAlgunPermiso(
   'caja.operar',
   'caja.supervisar',
 )
+const consultarDevolucion = requerirAlgunPermiso(
+  'venta.ver',
+  'caja.registrar_devolucion',
+)
+const registrarDevolucion = requerirPermiso(
+  'caja.registrar_devolucion',
+)
 
 router.post('/abrir', ...proteger(operarCaja), abrirCaja)
 router.get(
@@ -40,6 +49,19 @@ router.post(
   '/:cajaId/cerrar',
   ...proteger(operarOSupervisar),
   cerrarCaja,
+)
+router.get(
+  '/ventas/:ventaId/devolucion',
+  ...proteger(consultarDevolucion),
+  obtenerEstadoDevolucionVenta,
+)
+router.post(
+  '/ventas/:ventaId/devolucion',
+  autenticarUsuario,
+  cargarAutorizacion,
+  registrarDevolucion,
+  operarCaja,
+  registrarDevolucionVenta,
 )
 router.get('/', ...proteger(operarOConsultar), listarCajas)
 router.get('/:cajaId', ...proteger(operarOConsultar), obtenerCaja)

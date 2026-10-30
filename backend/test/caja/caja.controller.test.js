@@ -15,6 +15,8 @@ const { ErrorServicioCaja } = await import(
 const CAJA_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const USUARIO_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 const CLAVE_IDEMPOTENCIA = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+const VENTA_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
+const DEVOLUCION_ID = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
 
 const crearRespuesta = () => ({
   estado: null,
@@ -224,4 +226,196 @@ test('traduce errores PostgreSQL seguros sin exponer detalles internos', async (
     JSON.stringify(respuestaInesperada.cuerpo),
     /secreto|stack/i,
   )
+})
+
+test('consulta y registra una devolución con los contratos exactos', async () => {
+  const llamadas = []
+  const controladores = crearControladoresCaja({
+    async obtenerEstadoDevolucionVenta(...argumentos) {
+      llamadas.push(['consultar', ...argumentos])
+      return {
+        venta_id: VENTA_ID,
+        estado_venta: 'anulada',
+        total: 50,
+        tiene_ingreso_caja: true,
+        devolucion_registrada: false,
+        devolucion: null,
+      }
+    },
+    async registrarDevolucionVenta(...argumentos) {
+      llamadas.push(['registrar', ...argumentos])
+      return {
+        cambio: true,
+        devolucion: { id: DEVOLUCION_ID, venta_id: VENTA_ID },
+      }
+    },
+  })
+  const respuestaConsulta = crearRespuesta()
+  const respuestaRegistro = crearRespuesta()
+
+  await controladores.obtenerEstadoDevolucionVenta(
+    {
+      autenticacion: { token: 'jwt' },
+      params: { ventaId: VENTA_ID },
+    },
+    respuestaConsulta,
+  )
+  await controladores.registrarDevolucionVenta(
+    {
+      autenticacion: { token: 'jwt' },
+      get: () => CLAVE_IDEMPOTENCIA,
+      params: { ventaId: VENTA_ID },
+      body: { motivo: '  Devolución   completa  ' },
+    },
+    respuestaRegistro,
+  )
+
+  assert.equal(respuestaConsulta.estado, 200)
+  assert.equal(respuestaRegistro.estado, 201)
+  assert.deepEqual(llamadas, [
+    ['consultar', 'jwt', VENTA_ID],
+    [
+      'registrar',
+      'jwt',
+      VENTA_ID,
+      CLAVE_IDEMPOTENCIA,
+      'Devolución completa',
+    ],
+  ])
+})
+
+test('un reintento idempotente de devolución responde 200', async () => {
+  const controladores = crearControladoresCaja({
+    registrarDevolucionVenta: async () => ({
+      cambio: false,
+      devolucion: { id: DEVOLUCION_ID },
+    }),
+  })
+  const respuesta = crearRespuesta()
+
+  await controladores.registrarDevolucionVenta(
+    {
+      autenticacion: { token: 'jwt' },
+      get: () => CLAVE_IDEMPOTENCIA,
+      params: { ventaId: VENTA_ID },
+      body: { motivo: 'Devolución completa' },
+    },
+    respuesta,
+  )
+
+  assert.equal(respuesta.estado, 200)
+})
+
+test('un contrato RPC de devolución inválido nunca responde con éxito', async () => {
+  const controladores = crearControladoresCaja({
+    registrarDevolucionVenta: async () => {
+      throw new ErrorServicioCaja(
+        'Supabase devolvió una respuesta de caja con formato inválido.',
+      )
+    },
+  })
+  const respuesta = crearRespuesta()
+
+  await controladores.registrarDevolucionVenta(
+    {
+      autenticacion: { token: 'jwt' },
+      get: () => CLAVE_IDEMPOTENCIA,
+      params: { ventaId: VENTA_ID },
+      body: { motivo: 'Devolución completa' },
+    },
+    respuesta,
+  )
+
+  assert.equal(respuesta.estado, 500)
+  assert.equal(respuesta.cuerpo.ok, false)
+})
+
+test('rechaza UUID, clave, campos e importe enviados por el cliente', async () => {
+  let llamadas = 0
+  const controladores = crearControladoresCaja({
+    registrarDevolucionVenta: async () => {
+      llamadas += 1
+    },
+  })
+
+  const solicitudes = [
+    {
+      get: () => CLAVE_IDEMPOTENCIA,
+      params: { ventaId: 'venta-inválida' },
+      body: { motivo: 'Devolución completa' },
+    },
+    {
+      get: () => 'clave-inválida',
+      params: { ventaId: VENTA_ID },
+      body: { motivo: 'Devolución completa' },
+    },
+    {
+      get: () => CLAVE_IDEMPOTENCIA,
+      params: { ventaId: VENTA_ID },
+      body: { motivo: 'Devolución completa', monto: '50.00' },
+    },
+    {
+      get: () => CLAVE_IDEMPOTENCIA,
+      params: { ventaId: VENTA_ID },
+      body: { motivo: ' '.repeat(10) },
+    },
+    {
+      get: () => CLAVE_IDEMPOTENCIA,
+      params: { ventaId: VENTA_ID },
+      body: { motivo: 'x'.repeat(501) },
+    },
+  ]
+
+  for (const solicitud of solicitudes) {
+    const respuesta = crearRespuesta()
+    await controladores.registrarDevolucionVenta(
+      { autenticacion: { token: 'jwt' }, ...solicitud },
+      respuesta,
+    )
+    assert.equal(respuesta.estado, 400)
+  }
+
+  assert.equal(llamadas, 0)
+})
+
+test('traduce duplicados y reglas de negocio sin filtrar errores internos', async () => {
+  const errorDuplicado = new ErrorServicioCaja('fallo', {
+    code: '23505',
+    message: 'La Venta ya tiene una devolucion de efectivo registrada.',
+  })
+  const errorEfectivo = new ErrorServicioCaja('fallo', {
+    code: '23514',
+    message: 'La caja abierta no tiene suficiente efectivo esperado para registrar la devolucion.',
+  })
+  const errorSupabase = new ErrorServicioCaja('fallo', {
+    code: 'XX000',
+    message: 'detalle interno sensible',
+  })
+  const respuestas = []
+
+  for (const error of [errorDuplicado, errorEfectivo, errorSupabase]) {
+    const controladores = crearControladoresCaja({
+      registrarDevolucionVenta: async () => {
+        throw error
+      },
+    })
+    const respuesta = crearRespuesta()
+    await controladores.registrarDevolucionVenta(
+      {
+        autenticacion: { token: 'jwt' },
+        get: () => CLAVE_IDEMPOTENCIA,
+        params: { ventaId: VENTA_ID },
+        body: { motivo: 'Devolución completa' },
+      },
+      respuesta,
+    )
+    respuestas.push(respuesta)
+  }
+
+  assert.equal(respuestas[0].estado, 409)
+  assert.match(respuestas[0].cuerpo.message, /ya tiene una devolución/)
+  assert.equal(respuestas[1].estado, 409)
+  assert.match(respuestas[1].cuerpo.message, /suficiente efectivo/)
+  assert.equal(respuestas[2].estado, 500)
+  assert.doesNotMatch(JSON.stringify(respuestas[2].cuerpo), /sensible|XX000/)
 })

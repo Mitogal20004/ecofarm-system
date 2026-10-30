@@ -3,6 +3,22 @@ import { crearClienteSupabaseAutenticado } from '../lib/supabase.js'
 const esObjeto = (valor) =>
   Boolean(valor) && typeof valor === 'object' && !Array.isArray(valor)
 
+const PATRON_UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const PATRON_DECIMAL = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/
+
+const esUuid = (valor) => typeof valor === 'string' && PATRON_UUID.test(valor)
+
+const esDecimalSerializado = (valor) =>
+  (typeof valor === 'number' && Number.isFinite(valor)) ||
+  (typeof valor === 'string' && PATRON_DECIMAL.test(valor))
+
+const esTextoNoVacio = (valor) =>
+  typeof valor === 'string' && valor.trim().length > 0
+
+const esFechaHora = (valor) =>
+  typeof valor === 'string' && !Number.isNaN(Date.parse(valor))
+
 export class ErrorServicioCaja extends Error {
   constructor(mensaje, causa) {
     super(mensaje, { cause: causa })
@@ -23,6 +39,43 @@ const validarPaginacion = (paginacion) =>
   Number.isInteger(paginacion.limite) &&
   Number.isInteger(paginacion.total) &&
   Number.isInteger(paginacion.total_paginas)
+
+const validarDetalleEstadoDevolucion = (devolucion) =>
+  esObjeto(devolucion) &&
+  esUuid(devolucion.id) &&
+  esUuid(devolucion.caja_turno_id) &&
+  esDecimalSerializado(devolucion.importe_devuelto) &&
+  esUuid(devolucion.usuario_id) &&
+  esTextoNoVacio(devolucion.motivo) &&
+  esFechaHora(devolucion.fecha_movimiento)
+
+const validarDetalleRegistroDevolucion = (devolucion, ventaId) =>
+  esObjeto(devolucion) &&
+  esUuid(devolucion.id) &&
+  devolucion.venta_id === ventaId &&
+  esUuid(devolucion.caja_turno_id) &&
+  esDecimalSerializado(devolucion.importe_devuelto) &&
+  esDecimalSerializado(devolucion.variacion_efectivo) &&
+  esUuid(devolucion.usuario_id) &&
+  esTextoNoVacio(devolucion.motivo) &&
+  esFechaHora(devolucion.fecha_movimiento)
+
+const validarEstadoDevolucion = (data, ventaId) => {
+  const sinDevolucion =
+    data?.devolucion_registrada === false && data?.devolucion === null
+  const conDevolucion =
+    data?.devolucion_registrada === true &&
+    validarDetalleEstadoDevolucion(data?.devolucion)
+
+  return (
+    esObjeto(data) &&
+    data.venta_id === ventaId &&
+    ['confirmada', 'anulada'].includes(data.estado_venta) &&
+    esDecimalSerializado(data.total) &&
+    typeof data.tiene_ingreso_caja === 'boolean' &&
+    (sinDevolucion || conDevolucion)
+  )
+}
 
 export function crearServicioCaja({
   crearCliente = crearClienteSupabaseAutenticado,
@@ -164,6 +217,41 @@ export function crearServicioCaja({
     return data
   }
 
+  async function obtenerEstadoDevolucionVenta(token, ventaId) {
+    const data = await ejecutarRpc(token, 'obtener_estado_devolucion_venta', {
+      p_venta_id: ventaId,
+    })
+
+    if (!validarEstadoDevolucion(data, ventaId)) {
+      throw crearErrorFormato()
+    }
+
+    return data
+  }
+
+  async function registrarDevolucionVenta(
+    token,
+    ventaId,
+    claveIdempotencia,
+    motivo,
+  ) {
+    const data = await ejecutarRpc(token, 'registrar_devolucion_venta', {
+      p_venta_id: ventaId,
+      p_clave_idempotencia: claveIdempotencia,
+      p_motivo: motivo,
+    })
+
+    if (
+      !esObjeto(data) ||
+      typeof data.cambio !== 'boolean' ||
+      !validarDetalleRegistroDevolucion(data.devolucion, ventaId)
+    ) {
+      throw crearErrorFormato()
+    }
+
+    return data
+  }
+
   return Object.freeze({
     abrirCaja,
     obtenerCajaActual,
@@ -171,6 +259,8 @@ export function crearServicioCaja({
     cerrarCaja,
     listarCajas,
     obtenerCaja,
+    obtenerEstadoDevolucionVenta,
+    registrarDevolucionVenta,
   })
 }
 
@@ -183,3 +273,7 @@ export const obtenerResumenCajaActual =
 export const cerrarCaja = servicioCaja.cerrarCaja
 export const listarCajas = servicioCaja.listarCajas
 export const obtenerCaja = servicioCaja.obtenerCaja
+export const obtenerEstadoDevolucionVenta =
+  servicioCaja.obtenerEstadoDevolucionVenta
+export const registrarDevolucionVenta =
+  servicioCaja.registrarDevolucionVenta

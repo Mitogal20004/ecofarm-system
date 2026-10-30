@@ -26,7 +26,7 @@ const permisos = (...codigos) => ({
   },
 })
 
-test('expone las seis rutas REST con autenticación y autorización', () => {
+test('expone las ocho rutas REST con autenticación y autorización', () => {
   const rutas = router.stack.filter((capa) => capa.route)
   const contratos = rutas.map((capa) => ({
     ruta: capa.route.path,
@@ -38,6 +38,8 @@ test('expone las seis rutas REST con autenticación y autorización', () => {
     { ruta: '/actual/resumen', metodo: 'get' },
     { ruta: '/actual', metodo: 'get' },
     { ruta: '/:cajaId/cerrar', metodo: 'post' },
+    { ruta: '/ventas/:ventaId/devolucion', metodo: 'get' },
+    { ruta: '/ventas/:ventaId/devolucion', metodo: 'post' },
     { ruta: '/', metodo: 'get' },
     { ruta: '/:cajaId', metodo: 'get' },
   ])
@@ -113,6 +115,74 @@ test('cerrar acepta caja.operar o caja.supervisar', () => {
   assert.equal(accesoOperador, true)
   assert.equal(accesoSupervisor, true)
   assert.equal(denegada.estado, 403)
+})
+
+test('consultar devolución exige venta.ver o caja.registrar_devolucion', () => {
+  const ruta = router.stack.find(
+    (capa) =>
+      capa.route?.path === '/ventas/:ventaId/devolucion' &&
+      capa.route.methods.get,
+  )
+  const autorizar = ruta.route.stack[2].handle
+  let accesoVenta = false
+  let accesoDevolucion = false
+  const denegada = crearRespuesta()
+
+  autorizar(permisos('venta.ver'), crearRespuesta(), () => {
+    accesoVenta = true
+  })
+  autorizar(
+    permisos('caja.registrar_devolucion'),
+    crearRespuesta(),
+    () => {
+      accesoDevolucion = true
+    },
+  )
+  autorizar(permisos('caja.operar'), denegada, () => {})
+
+  assert.equal(accesoVenta, true)
+  assert.equal(accesoDevolucion, true)
+  assert.equal(denegada.estado, 403)
+})
+
+test('registrar devolución exige permiso específico y caja.operar', () => {
+  const ruta = router.stack.find(
+    (capa) =>
+      capa.route?.path === '/ventas/:ventaId/devolucion' &&
+      capa.route.methods.post,
+  )
+  const autorizarDevolucion = ruta.route.stack[2].handle
+  const autorizarOperacion = ruta.route.stack[3].handle
+  const autorizada = permisos(
+    'caja.registrar_devolucion',
+    'caja.operar',
+  )
+  const sinOperacion = crearRespuesta()
+  const soloSupervisor = crearRespuesta()
+  let pasoPermisoDevolucion = false
+  let pasoPermisoOperacion = false
+
+  autorizarDevolucion(autorizada, crearRespuesta(), () => {
+    pasoPermisoDevolucion = true
+  })
+  autorizarOperacion(autorizada, crearRespuesta(), () => {
+    pasoPermisoOperacion = true
+  })
+  autorizarOperacion(
+    permisos('caja.registrar_devolucion'),
+    sinOperacion,
+    () => {},
+  )
+  autorizarDevolucion(
+    permisos('caja.supervisar'),
+    soloSupervisor,
+    () => {},
+  )
+
+  assert.equal(pasoPermisoDevolucion, true)
+  assert.equal(pasoPermisoOperacion, true)
+  assert.equal(sinOperacion.estado, 403)
+  assert.equal(soloSupervisor.estado, 403)
 })
 
 test('la ausencia del Bearer token responde 401 antes del controlador', () => {
