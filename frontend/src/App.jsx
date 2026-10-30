@@ -586,7 +586,9 @@ function App() {
           <div className="contenido-panel">
             {vistaActual === VISTA_VENTAS ? (
               <Ventas
+                key={autorizacion?.perfil?.id ?? 'sin-usuario'}
                 permisos={permisos}
+                usuarioActualId={autorizacion?.perfil?.id ?? null}
                 ventaInicialId={ventaInicialId}
                 alConsumirVentaInicial={() => setVentaInicialId(null)}
                 alRefrescarAutorizacion={refrescarAutorizacion}

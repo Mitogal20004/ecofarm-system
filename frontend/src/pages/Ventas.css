@@ -1236,6 +1236,106 @@
   margin: 5px 0;
 }
 
+.estado-devolucion-venta {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--color-borde);
+  border-left: 4px solid var(--color-oliva);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.encabezado-devolucion-venta,
+.devolucion-pendiente-venta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.encabezado-devolucion-venta h2 {
+  margin: 2px 0 0;
+  font-size: 18px;
+}
+
+.encabezado-devolucion-venta > div > span {
+  color: var(--color-texto-secundario);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.insignia-devolucion-registrada {
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: var(--color-exito);
+  background: var(--color-verde-suave);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.estado-consulta-devolucion,
+.error-consulta-devolucion p,
+.devolucion-pendiente-venta p {
+  margin: 0;
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+}
+
+.error-consulta-devolucion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--color-error-borde);
+  border-radius: 6px;
+  background: var(--color-error-fondo);
+}
+
+.datos-devolucion-venta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.datos-devolucion-venta > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  background: var(--color-superficie-secundaria);
+}
+
+.datos-devolucion-venta dt {
+  color: var(--color-texto-secundario);
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.datos-devolucion-venta dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.devolucion-pendiente-venta > div {
+  display: grid;
+  gap: 4px;
+}
+
+.devolucion-pendiente-venta b {
+  color: var(--color-texto);
+}
+
 .auditoria-inventario-venta {
   padding: 15px 18px;
 }
@@ -1331,6 +1431,75 @@
   border-top: 1px solid var(--color-borde);
 }
 
+.dialogo-devolucion-ventas form {
+  display: grid;
+}
+
+.contenido-devolucion-ventas > label {
+  color: #34473b;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.contenido-devolucion-ventas textarea {
+  width: 100%;
+  min-height: 104px;
+  padding: 10px 11px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+  color: var(--color-texto);
+  background: #fff;
+  resize: vertical;
+}
+
+.importe-devolucion-ventas {
+  display: grid;
+  gap: 4px;
+  padding: 15px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  background: var(--color-beige-suave);
+}
+
+.importe-devolucion-ventas > span,
+.importe-devolucion-ventas > small {
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+}
+
+.importe-devolucion-ventas > strong {
+  color: var(--color-verde-profundo);
+  font-size: 26px;
+}
+
+.advertencia-devolucion-ventas,
+.aviso-reintento-devolucion {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.advertencia-devolucion-ventas {
+  border: 1px solid var(--color-advertencia-borde);
+  color: var(--color-advertencia);
+  background: var(--color-advertencia-fondo);
+}
+
+.aviso-reintento-devolucion {
+  border: 1px solid var(--color-borde);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie-secundaria);
+}
+
+.acciones-dialogo-devolucion {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 20px;
+  border-top: 1px solid var(--color-borde);
+}
+
 @media (max-width: 1100px) {
   .filtros-ventas {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1392,6 +1561,10 @@
   .panel-anulacion-venta > div:last-child {
     grid-column: 1;
   }
+
+  .datos-devolucion-venta {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 700px) {
@@ -1423,6 +1596,18 @@
 
   .acciones-emision-ventas {
     grid-template-columns: 1fr;
+  }
+
+  .encabezado-devolucion-venta,
+  .devolucion-pendiente-venta,
+  .error-consulta-devolucion {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .devolucion-pendiente-venta > button,
+  .error-consulta-devolucion > button {
+    width: 100%;
   }
 
   .vista-previa-venta dl {
@@ -1561,6 +1746,14 @@
   .acciones-resultado-venta > button,
   .panel-anulacion-venta > div:last-child > button {
     flex: 1 1 auto;
+  }
+
+  .acciones-dialogo-devolucion {
+    flex-direction: column-reverse;
+  }
+
+  .acciones-dialogo-devolucion > button {
+    width: 100%;
   }
 
   .vista-previa-venta dl {

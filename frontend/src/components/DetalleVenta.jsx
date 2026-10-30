@@ -5,7 +5,16 @@ import {
   generarReciboVenta,
   obtenerVenta,
 } from '../services/ventas'
+import {
+  crearContextoDevolucion,
+  crearClaveIdempotencia,
+  obtenerEstadoDevolucionVenta,
+} from '../services/caja'
 import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
+
+const PREFIJO_DEVOLUCION_PENDIENTE = 'efarm:caja:devolucion-pendiente'
+const PATRON_UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const formatoMoneda = new Intl.NumberFormat('es-GT', {
   style: 'currency',
@@ -21,10 +30,60 @@ const formatoFechaHora = new Intl.DateTimeFormat('es-GT', {
 const mostrarFecha = (valor) =>
   valor ? formatoFechaHora.format(new Date(valor)) : '—'
 
+const crearClaveAlmacenamientoDevolucion = (usuarioId, ventaId) =>
+  PATRON_UUID.test(usuarioId ?? '') && PATRON_UUID.test(ventaId ?? '')
+    ? `${PREFIJO_DEVOLUCION_PENDIENTE}:${usuarioId}:${ventaId}`
+    : null
+
+const leerDevolucionPendiente = (clave, usuarioId, ventaId) => {
+  if (!clave) return null
+
+  try {
+    const valor = window.sessionStorage.getItem(clave)
+    if (!valor) return null
+    const operacion = JSON.parse(valor)
+    const valida =
+      operacion?.usuarioId === usuarioId &&
+      operacion?.ventaId === ventaId &&
+      PATRON_UUID.test(operacion?.clave ?? '') &&
+      typeof operacion?.motivo === 'string' &&
+      operacion.motivo.length > 0 &&
+      operacion.motivo.length <= 500
+
+    if (valida) return operacion
+    window.sessionStorage.removeItem(clave)
+  } catch {
+    try {
+      window.sessionStorage.removeItem(clave)
+    } catch {
+      // El intento se descarta si el almacenamiento no está disponible.
+    }
+  }
+
+  return null
+}
+
+const guardarDevolucionPendiente = (clave, operacion) => {
+  if (!clave) return
+
+  try {
+    if (operacion) {
+      window.sessionStorage.setItem(clave, JSON.stringify(operacion))
+    } else {
+      window.sessionStorage.removeItem(clave)
+    }
+  } catch {
+    // El intento permanece protegido en memoria si sessionStorage falla.
+  }
+}
+
 function DetalleVenta({
   ventaId,
   puedeAnular,
   puedeCrear,
+  puedeConsultarDevolucion,
+  puedeRegistrarDevolucion,
+  usuarioActualId,
   documentoImpresionInicial = null,
   anularAlAbrir = false,
   alVolver,
@@ -38,8 +97,37 @@ function DetalleVenta({
   const [motivo, setMotivo] = useState('')
   const [error, setError] = useState('')
   const [documentoImpresion, setDocumentoImpresion] = useState(null)
+  const claveAlmacenamientoDevolucion = crearClaveAlmacenamientoDevolucion(
+    usuarioActualId,
+    ventaId,
+  )
+  const [operacionDevolucion, setOperacionDevolucion] = useState(() =>
+    leerDevolucionPendiente(
+      crearClaveAlmacenamientoDevolucion(usuarioActualId, ventaId),
+      usuarioActualId,
+      ventaId,
+    ),
+  )
+  const [estadoDevolucion, setEstadoDevolucion] = useState(null)
+  const [cargandoDevolucion, setCargandoDevolucion] = useState(false)
+  const [errorConsultaDevolucion, setErrorConsultaDevolucion] = useState('')
+  const [versionDevolucion, setVersionDevolucion] = useState(0)
+  const [mostrarDevolucion, setMostrarDevolucion] = useState(false)
+  const [motivoDevolucion, setMotivoDevolucion] = useState(
+    operacionDevolucion?.motivo ?? '',
+  )
+  const [registrandoDevolucion, setRegistrandoDevolucion] = useState(false)
+  const [errorDevolucion, setErrorDevolucion] = useState('')
+  const [mensajeDevolucion, setMensajeDevolucion] = useState('')
   const impresionSolicitadaRef = useRef(documentoImpresionInicial)
   const procesandoRef = useRef(false)
+  const registrandoDevolucionRef = useRef(false)
+  const dialogoDevolucionRef = useRef(null)
+  const activadorDevolucionRef = useRef(null)
+  const estadoDevolucionRef = useRef(null)
+  const componenteActivoRef = useRef(false)
+  const generacionDevolucionRef = useRef(0)
+  const controladorDevolucionRef = useRef(null)
 
   const imprimirDocumento = useCallback((tipoDocumento) => {
     setDocumentoImpresion(tipoDocumento)
@@ -69,6 +157,184 @@ function DetalleVenta({
     const temporizador = window.setTimeout(cargarDetalle, 0)
     return () => window.clearTimeout(temporizador)
   }, [cargarDetalle])
+
+  const actualizarOperacionDevolucion = useCallback(
+    (operacion) => {
+      const operacionPropia = operacion
+        ? { ...operacion, usuarioId: usuarioActualId, ventaId }
+        : null
+      setOperacionDevolucion(operacionPropia)
+      guardarDevolucionPendiente(
+        claveAlmacenamientoDevolucion,
+        operacionPropia,
+      )
+    },
+    [claveAlmacenamientoDevolucion, usuarioActualId, ventaId],
+  )
+
+  const contextoDevolucionVigente = useCallback(
+    (contexto) =>
+      componenteActivoRef.current &&
+      !contexto.controlador.signal.aborted &&
+      generacionDevolucionRef.current === contexto.generacion &&
+      contexto.usuarioId === usuarioActualId &&
+      contexto.ventaId === ventaId,
+    [usuarioActualId, ventaId],
+  )
+
+  useEffect(() => {
+    componenteActivoRef.current = true
+
+    return () => {
+      componenteActivoRef.current = false
+      generacionDevolucionRef.current += 1
+      controladorDevolucionRef.current?.abort()
+      controladorDevolucionRef.current = null
+      registrandoDevolucionRef.current = false
+    }
+  }, [usuarioActualId, ventaId])
+
+  const restaurarFocoDevolucion = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      const activador = activadorDevolucionRef.current
+      const destino =
+        activador?.isConnected && !activador.disabled
+          ? activador
+          : estadoDevolucionRef.current
+      destino?.focus({ preventScroll: true })
+      activadorDevolucionRef.current = null
+    })
+  }, [])
+
+  const cerrarDialogoDevolucion = useCallback(() => {
+    if (registrandoDevolucionRef.current) return
+    setMostrarDevolucion(false)
+    setErrorDevolucion('')
+    if (!operacionDevolucion) setMotivoDevolucion('')
+    restaurarFocoDevolucion()
+  }, [operacionDevolucion, restaurarFocoDevolucion])
+
+  const abrirDialogoDevolucion = (elementoActivador) => {
+    activadorDevolucionRef.current = elementoActivador
+    setMotivoDevolucion(operacionDevolucion?.motivo ?? '')
+    setErrorDevolucion('')
+    setMostrarDevolucion(true)
+  }
+
+  useEffect(() => {
+    if (!mostrarDevolucion) return undefined
+
+    window.requestAnimationFrame(() => {
+      const dialogo = dialogoDevolucionRef.current
+      const campoMotivo = dialogo?.querySelector('textarea:not(:disabled)')
+      const primerControl = dialogo?.querySelector(
+        'button:not(:disabled), input:not(:disabled), select:not(:disabled)',
+      )
+      const destinoFoco = campoMotivo ?? primerControl ?? dialogo
+      destinoFoco?.focus({ preventScroll: true })
+    })
+
+    const manejarTeclado = (evento) => {
+      if (evento.key === 'Escape' && !registrandoDevolucionRef.current) {
+        cerrarDialogoDevolucion()
+        return
+      }
+
+      if (evento.key !== 'Tab') return
+
+      const dialogo = dialogoDevolucionRef.current
+      const controles = Array.from(
+        dialogo?.querySelectorAll(
+          'button:not(:disabled), textarea:not(:disabled), input:not(:disabled), select:not(:disabled), [href], [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((elemento) => !elemento.hasAttribute('hidden'))
+
+      if (controles.length === 0) {
+        evento.preventDefault()
+        dialogo?.focus({ preventScroll: true })
+        return
+      }
+
+      const primero = controles[0]
+      const ultimo = controles[controles.length - 1]
+      if (!dialogo?.contains(document.activeElement)) {
+        evento.preventDefault()
+        const destino = evento.shiftKey ? ultimo : primero
+        destino.focus()
+      } else if (evento.shiftKey && document.activeElement === primero) {
+        evento.preventDefault()
+        ultimo.focus()
+      } else if (!evento.shiftKey && document.activeElement === ultimo) {
+        evento.preventDefault()
+        primero.focus()
+      }
+    }
+    document.addEventListener('keydown', manejarTeclado)
+    return () => document.removeEventListener('keydown', manejarTeclado)
+  }, [cerrarDialogoDevolucion, mostrarDevolucion])
+
+  useEffect(() => {
+    if (
+      !puedeConsultarDevolucion ||
+      detalle?.venta?.estado !== 'anulada'
+    ) {
+      return undefined
+    }
+
+    const controlador = new AbortController()
+    let vigente = true
+
+    const cargarEstado = async () => {
+      setCargandoDevolucion(true)
+      setErrorConsultaDevolucion('')
+
+      try {
+        const resultado = await obtenerEstadoDevolucionVenta(ventaId, {
+          signal: controlador.signal,
+          usuarioEsperadoId: usuarioActualId,
+        })
+        if (vigente) {
+          setEstadoDevolucion(resultado)
+          if (resultado.devolucion_registrada && operacionDevolucion) {
+            actualizarOperacionDevolucion(null)
+            setMensajeDevolucion(
+              'La devolución de efectivo ya está registrada.',
+            )
+            setMostrarDevolucion(false)
+            restaurarFocoDevolucion()
+          }
+        }
+      } catch (errorCarga) {
+        if (!vigente || errorCarga?.name === 'AbortError') return
+        setEstadoDevolucion(null)
+        setErrorConsultaDevolucion(
+          errorCarga?.message ||
+            'No fue posible consultar el estado de la devolución.',
+        )
+        if ([401, 403].includes(errorCarga?.status)) {
+          alRefrescarAutorizacion?.()
+        }
+      } finally {
+        if (vigente) setCargandoDevolucion(false)
+      }
+    }
+
+    cargarEstado()
+    return () => {
+      vigente = false
+      controlador.abort()
+    }
+  }, [
+    alRefrescarAutorizacion,
+    actualizarOperacionDevolucion,
+    detalle?.venta?.estado,
+    operacionDevolucion,
+    puedeConsultarDevolucion,
+    restaurarFocoDevolucion,
+    usuarioActualId,
+    ventaId,
+    versionDevolucion,
+  ])
 
   useEffect(() => {
     const tipoDocumento = impresionSolicitadaRef.current
@@ -139,6 +405,166 @@ function DetalleVenta({
     }
   }
 
+  const confirmarDevolucion = async (evento) => {
+    evento.preventDefault()
+    if (registrandoDevolucionRef.current) return
+
+    const motivoNormalizado = motivoDevolucion.trim().replace(/\s+/g, ' ')
+    if (!motivoNormalizado || motivoNormalizado.length > 500) {
+      setErrorDevolucion(
+        'Ingresa un motivo de devolución de hasta 500 caracteres.',
+      )
+      return
+    }
+
+    let operacion
+    try {
+      operacion =
+        operacionDevolucion ?? {
+          clave: crearClaveIdempotencia(),
+          ventaId,
+          motivo: motivoNormalizado,
+        }
+    } catch (errorClave) {
+      setErrorDevolucion(
+        errorClave?.message || 'No fue posible preparar una clave segura.',
+      )
+      return
+    }
+
+    if (
+      operacion.ventaId !== ventaId ||
+      operacion.motivo !== motivoNormalizado
+    ) {
+      setErrorDevolucion(
+        'El reintento debe conservar exactamente el motivo original.',
+      )
+      return
+    }
+
+    registrandoDevolucionRef.current = true
+    controladorDevolucionRef.current?.abort()
+    const controlador = new AbortController()
+    const contexto = {
+      controlador,
+      generacion: generacionDevolucionRef.current + 1,
+      usuarioId: usuarioActualId,
+      ventaId,
+    }
+    generacionDevolucionRef.current = contexto.generacion
+    controladorDevolucionRef.current = controlador
+    setRegistrandoDevolucion(true)
+    setErrorDevolucion('')
+    setMensajeDevolucion('')
+    let seEnvioDevolucion = false
+
+    try {
+      const clienteDevolucion = await crearContextoDevolucion(
+        contexto.usuarioId,
+        { signal: controlador.signal },
+      )
+      if (!contextoDevolucionVigente(contexto)) return
+      const estadoActual = await clienteDevolucion.obtenerEstado(ventaId, {
+        signal: controlador.signal,
+      })
+      if (!contextoDevolucionVigente(contexto)) return
+      setEstadoDevolucion(estadoActual)
+
+      if (estadoActual.estado_venta !== 'anulada') {
+        if (contextoDevolucionVigente(contexto)) {
+          actualizarOperacionDevolucion(null)
+        }
+        throw new Error('La venta debe estar anulada antes de devolver efectivo.')
+      }
+      if (estadoActual.devolucion_registrada) {
+        if (!contextoDevolucionVigente(contexto)) return
+        actualizarOperacionDevolucion(null)
+        setMensajeDevolucion('La devolución de efectivo ya está registrada.')
+        setMostrarDevolucion(false)
+        setMotivoDevolucion('')
+        restaurarFocoDevolucion()
+        return
+      }
+      if (!estadoActual.tiene_ingreso_caja) {
+        if (contextoDevolucionVigente(contexto)) {
+          actualizarOperacionDevolucion(null)
+        }
+        throw new Error(
+          'La venta no tiene un ingreso de Caja válido para devolver.',
+        )
+      }
+
+      const resultado = await clienteDevolucion.registrar(
+        ventaId,
+        operacion.motivo,
+        operacion.clave,
+        {
+          signal: controlador.signal,
+          antesDeEnviar: () => {
+            if (!contextoDevolucionVigente(contexto)) {
+              controlador.abort()
+              return
+            }
+            actualizarOperacionDevolucion(operacion)
+            seEnvioDevolucion = true
+          },
+        },
+      )
+      if (!contextoDevolucionVigente(contexto)) return
+      actualizarOperacionDevolucion(null)
+      setEstadoDevolucion({
+        ...estadoActual,
+        devolucion_registrada: true,
+        devolucion: {
+          id: resultado.devolucion.id,
+          caja_turno_id: resultado.devolucion.caja_turno_id,
+          importe_devuelto: resultado.devolucion.importe_devuelto,
+          usuario_id: resultado.devolucion.usuario_id,
+          motivo: resultado.devolucion.motivo,
+          fecha_movimiento: resultado.devolucion.fecha_movimiento,
+        },
+      })
+      setMensajeDevolucion(
+        resultado.cambio
+          ? 'La devolución de efectivo se registró correctamente.'
+          : 'La devolución ya había sido procesada.',
+      )
+      setMostrarDevolucion(false)
+      setMotivoDevolucion('')
+      restaurarFocoDevolucion()
+      await alActualizar?.()
+    } catch (errorRegistro) {
+      if (!contextoDevolucionVigente(contexto)) return
+      const conservarReintentoPendiente =
+        (!seEnvioDevolucion && Boolean(operacionDevolucion)) ||
+        (seEnvioDevolucion && errorRegistro?.resultadoIncierto)
+      if (!conservarReintentoPendiente) {
+        actualizarOperacionDevolucion(null)
+      }
+      setErrorDevolucion(
+        errorRegistro?.resultadoIncierto
+          ? 'No se pudo confirmar el resultado. Se conservaron la clave y el motivo para reintentar la misma devolución.'
+          : errorRegistro?.message ||
+              'No fue posible registrar la devolución de efectivo.',
+      )
+      if (errorRegistro?.status === 409) {
+        setVersionDevolucion((version) => version + 1)
+      }
+      if ([401, 403].includes(errorRegistro?.status)) {
+        alRefrescarAutorizacion?.()
+      }
+    } finally {
+      if (
+        componenteActivoRef.current &&
+        generacionDevolucionRef.current === contexto.generacion
+      ) {
+        controladorDevolucionRef.current = null
+        registrandoDevolucionRef.current = false
+        setRegistrandoDevolucion(false)
+      }
+    }
+  }
+
   if (cargando && !detalle) {
     return <section className="estado-ventas" aria-live="polite">Cargando venta...</section>
   }
@@ -164,6 +590,13 @@ function DetalleVenta({
     venta.monto_recibido !== undefined &&
     venta.cambio !== null &&
     venta.cambio !== undefined
+  const devolucionRegistrada =
+    estadoDevolucion?.devolucion_registrada === true
+  const puedePrepararDevolucion =
+    puedeRegistrarDevolucion &&
+    estadoDevolucion?.estado_venta === 'anulada' &&
+    estadoDevolucion?.tiene_ingreso_caja === true &&
+    !devolucionRegistrada
 
   return (
     <article
@@ -389,6 +822,99 @@ function DetalleVenta({
         </section>
       )}
 
+      {venta.estado === 'anulada' && puedeConsultarDevolucion && (
+        <section
+          ref={estadoDevolucionRef}
+          className="estado-devolucion-venta no-imprimir-ventas"
+          tabIndex={-1}
+        >
+          <div className="encabezado-devolucion-venta">
+            <div>
+              <span>Operación independiente</span>
+              <h2>Devolución monetaria</h2>
+            </div>
+            {devolucionRegistrada && (
+              <span className="insignia-devolucion-registrada">
+                Efectivo devuelto
+              </span>
+            )}
+          </div>
+
+          {mensajeDevolucion && (
+            <p className="mensaje-ventas mensaje-exito-ventas" role="status">
+              {mensajeDevolucion}
+            </p>
+          )}
+
+          {cargandoDevolucion ? (
+            <p className="estado-consulta-devolucion" aria-live="polite">
+              Consultando estado de devolución...
+            </p>
+          ) : errorConsultaDevolucion ? (
+            <div className="error-consulta-devolucion" role="alert">
+              <p>{errorConsultaDevolucion}</p>
+              <button
+                className="boton-secundario-ventas"
+                type="button"
+                onClick={() =>
+                  setVersionDevolucion((version) => version + 1)
+                }
+              >
+                Reintentar consulta
+              </button>
+            </div>
+          ) : devolucionRegistrada ? (
+            <dl className="datos-devolucion-venta">
+              <div>
+                <dt>Importe devuelto</dt>
+                <dd>
+                  {formatoMoneda.format(
+                    Number(estadoDevolucion.devolucion.importe_devuelto),
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Fecha</dt>
+                <dd>
+                  {mostrarFecha(estadoDevolucion.devolucion.fecha_movimiento)}
+                </dd>
+              </div>
+              <div>
+                <dt>Motivo</dt>
+                <dd>{estadoDevolucion.devolucion.motivo}</dd>
+              </div>
+            </dl>
+          ) : estadoDevolucion?.tiene_ingreso_caja === false ? (
+            <p className="estado-consulta-devolucion">
+              Esta venta no registró un ingreso de efectivo válido en Caja.
+            </p>
+          ) : estadoDevolucion ? (
+            <div className="devolucion-pendiente-venta">
+              <div>
+                <strong>La anulación no devuelve dinero automáticamente.</strong>
+                <p>
+                  Importe pendiente de devolución:{' '}
+                  <b>{formatoMoneda.format(Number(estadoDevolucion.total))}</b>
+                </p>
+              </div>
+              {puedePrepararDevolucion && (
+                <button
+                  className="boton-peligro-ventas"
+                  type="button"
+                  onClick={(evento) =>
+                    abrirDialogoDevolucion(evento.currentTarget)
+                  }
+                >
+                  {operacionDevolucion
+                    ? 'Reintentar devolución'
+                    : 'Registrar devolución'}
+                </button>
+              )}
+            </div>
+          ) : null}
+        </section>
+      )}
+
       <details className="auditoria-inventario-venta no-imprimir-ventas">
         <summary>Ver movimientos de inventario ({movimientos.length})</summary>
         <ul>
@@ -400,6 +926,121 @@ function DetalleVenta({
           ))}
         </ul>
       </details>
+
+      {mostrarDevolucion && estadoDevolucion && (
+        <div
+          className="fondo-dialogo-ventas no-imprimir-ventas"
+          role="presentation"
+          onMouseDown={(evento) => {
+            if (
+              evento.target === evento.currentTarget &&
+              !registrandoDevolucion
+            ) {
+              cerrarDialogoDevolucion()
+            }
+          }}
+        >
+          <section
+            ref={dialogoDevolucionRef}
+            className="dialogo-des-ventas dialogo-devolucion-ventas"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-devolucion-venta"
+            aria-describedby="descripcion-devolucion-venta"
+            tabIndex={-1}
+          >
+            <header>
+              <div>
+                <h2 id="titulo-devolucion-venta">Registrar devolución</h2>
+                <p id="descripcion-devolucion-venta">
+                  Venta {venta.numero} · El efectivo se entregará desde tu
+                  caja abierta.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Cancelar devolución"
+                disabled={registrandoDevolucion}
+                onClick={cerrarDialogoDevolucion}
+              >
+                ×
+              </button>
+            </header>
+            <form onSubmit={confirmarDevolucion}>
+              <div className="contenido-des-ventas contenido-devolucion-ventas">
+                <div className="importe-devolucion-ventas">
+                  <span>Importe que se devolverá en efectivo</span>
+                  <strong>
+                    {formatoMoneda.format(Number(estadoDevolucion.total))}
+                  </strong>
+                  <small>
+                    El importe proviene de la venta y no puede modificarse.
+                  </small>
+                </div>
+                <label htmlFor="motivo-devolucion-venta">
+                  Motivo de la devolución *
+                </label>
+                <textarea
+                  id="motivo-devolucion-venta"
+                  value={motivoDevolucion}
+                  onChange={(evento) =>
+                    setMotivoDevolucion(evento.target.value)
+                  }
+                  maxLength={500}
+                  rows={4}
+                  disabled={
+                    registrandoDevolucion ||
+                    cargandoDevolucion ||
+                    devolucionRegistrada ||
+                    Boolean(operacionDevolucion)
+                  }
+                  required
+                />
+                <p className="advertencia-devolucion-ventas">
+                  Confirma solamente cuando el dinero vaya a entregarse
+                  físicamente al comprador.
+                </p>
+                {operacionDevolucion && !registrandoDevolucion && (
+                  <p className="aviso-reintento-devolucion">
+                    Reintento protegido: se conservarán la clave y el motivo
+                    originales.
+                  </p>
+                )}
+                {errorDevolucion && (
+                  <p className="mensaje-ventas mensaje-error-ventas" role="alert">
+                    {errorDevolucion}
+                  </p>
+                )}
+              </div>
+              <footer className="acciones-dialogo-devolucion">
+                <button
+                  className="boton-secundario-ventas"
+                  type="button"
+                  onClick={cerrarDialogoDevolucion}
+                  disabled={registrandoDevolucion}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="boton-peligro-ventas"
+                  type="submit"
+                  disabled={
+                    registrandoDevolucion ||
+                    cargandoDevolucion ||
+                    devolucionRegistrada
+                  }
+                >
+                  {registrandoDevolucion
+                    ? 'Registrando...'
+                    : operacionDevolucion
+                      ? 'Reintentar devolución'
+                      : 'Confirmar devolución'}
+                </button>
+              </footer>
+            </form>
+          </section>
+        </div>
+      )}
     </article>
   )
 }

@@ -78,6 +78,7 @@ function IconoAccionVenta({ tipo }) {
 
 function Ventas({
   permisos = [],
+  usuarioActualId,
   ventaInicialId = null,
   alConsumirVentaInicial,
   alRefrescarAutorizacion,
@@ -85,6 +86,12 @@ function Ventas({
   const puedeVer = permisos.includes('venta.ver')
   const puedeCrear = permisos.includes('venta.crear')
   const puedeAnular = permisos.includes('venta.anular')
+  const puedeConsultarDevolucion =
+    puedeVer || permisos.includes('caja.registrar_devolucion')
+  const puedeRegistrarDevolucion =
+    Boolean(usuarioActualId) &&
+    permisos.includes('caja.registrar_devolucion') &&
+    permisos.includes('caja.operar')
   const [vista, setVista] = useState(
     ventaInicialId && puedeVer ? 'detalle' : puedeCrear ? 'pos' : 'historial',
   )
@@ -192,10 +199,13 @@ function Ventas({
   if (vista === 'detalle' && ventaId) {
     return (
       <DetalleVenta
-        key={`${ventaId}-${documentoImpresionInicial}-${anularAlAbrir}`}
+        key={`${usuarioActualId}-${ventaId}-${documentoImpresionInicial}-${anularAlAbrir}`}
         ventaId={ventaId}
         puedeAnular={puedeAnular}
         puedeCrear={puedeCrear}
+        puedeConsultarDevolucion={puedeConsultarDevolucion}
+        puedeRegistrarDevolucion={puedeRegistrarDevolucion}
+        usuarioActualId={usuarioActualId}
         documentoImpresionInicial={documentoImpresionInicial}
         anularAlAbrir={anularAlAbrir}
         alVolver={volverDesdeDetalle}
