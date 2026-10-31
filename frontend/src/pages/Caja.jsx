@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import IconoInterfaz from '../components/IconoInterfaz'
 import {
   abrirCaja,
@@ -890,9 +891,9 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
         <div>
           <h1>Caja</h1>
           {cajaActual && (
-            <span className="estado-turno-caja estado-turno-abierta">
+            <EstadoEtiqueta tono="positivo">
               Turno abierto
-            </span>
+            </EstadoEtiqueta>
           )}
         </div>
         <button
@@ -1027,7 +1028,7 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
                     <td data-label="Fondo inicial">{formatearMoneda(turno.fondo_inicial)}</td>
                     <td data-label="Ventas"><strong>{formatearMoneda(turno.ventas_efectivo)}</strong><small>Devoluciones: {formatearMoneda(turno.devoluciones_efectivo)}</small></td>
                     <td data-label="Esperado"><strong>{formatearMoneda(turno.efectivo_esperado)}</strong></td>
-                    <td data-label="Estado"><span className={`estado-turno-caja estado-turno-${turno.estado}`}>{turno.estado === 'abierta' ? 'Abierta' : 'Cerrada'}</span></td>
+                    <td data-label="Estado"><EstadoEtiqueta tono={turno.estado === 'abierta' ? 'positivo' : 'neutro'}>{turno.estado === 'abierta' ? 'Abierta' : 'Cerrada'}</EstadoEtiqueta></td>
                     <td data-label="Cierre / diferencia"><strong>{formatearFechaHora(turno.fecha_cierre)}</strong>{turno.estado === 'cerrada' && <small>Diferencia: {formatearMoneda(turno.diferencia)}</small>}</td>
                     <td data-label="Acciones"><div className="acciones-fila-caja"><button className="boton-secundario-caja" type="button" onClick={(evento) => mostrarDetalle(turno.id, evento.currentTarget)}>Ver detalle</button>{puedeCerrarTurno(turno) && <button className="boton-peligro-texto-caja" type="button" onClick={(evento) => prepararCierre(turno, evento.currentTarget)}>Cerrar</button>}</div></td>
                   </tr>
@@ -1046,7 +1047,7 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
           <section ref={dialogoDetalleRef} className="dialogo-caja" role="dialog" aria-modal="true" aria-labelledby="titulo-detalle-caja" tabIndex={-1}>
             <header><div><p className="etiqueta-caja">Turno de caja</p><h2 id="titulo-detalle-caja">Detalle del turno</h2></div><button type="button" aria-label="Cerrar detalle" onClick={cerrarDetalle}>×</button></header>
             <div className="contenido-dialogo-caja">
-              {cargandoDetalle ? <p className="estado-caja">Consultando turno...</p> : errorDetalle ? <p className="estado-caja estado-error-caja" role="alert">{errorDetalle}</p> : detalle && <><dl className="datos-detalle-caja"><div><dt>Responsable</dt><dd>{detalle.caja.usuario_responsable?.nombre_completo}</dd></div><div><dt>Estado</dt><dd><span className={`estado-turno-caja estado-turno-${detalle.caja.estado}`}>{detalle.caja.estado === 'abierta' ? 'Abierta' : 'Cerrada'}</span></dd></div><div><dt>Apertura</dt><dd>{formatearFechaHora(detalle.caja.fecha_apertura)}</dd></div><div><dt>Cierre</dt><dd>{formatearFechaHora(detalle.caja.fecha_cierre)}</dd></div><div><dt>Fondo inicial</dt><dd>{formatearMoneda(detalle.caja.fondo_inicial)}</dd></div><div><dt>Efectivo esperado</dt><dd>{formatearMoneda(detalle.caja.efectivo_esperado_cierre ?? detalle.resumen.efectivo_esperado)}</dd></div><div><dt>Efectivo contado</dt><dd>{detalle.caja.efectivo_contado === null ? '—' : formatearMoneda(detalle.caja.efectivo_contado)}</dd></div><div><dt>Diferencia</dt><dd>{detalle.caja.diferencia === null ? '—' : formatearMoneda(detalle.caja.diferencia)}</dd></div></dl>{detalle.caja.observaciones && <div className="observaciones-detalle-caja"><strong>Observaciones</strong><p>{detalle.caja.observaciones}</p></div>}</>}
+              {cargandoDetalle ? <p className="estado-caja">Consultando turno...</p> : errorDetalle ? <p className="estado-caja estado-error-caja" role="alert">{errorDetalle}</p> : detalle && <><dl className="datos-detalle-caja"><div><dt>Responsable</dt><dd>{detalle.caja.usuario_responsable?.nombre_completo}</dd></div><div><dt>Estado</dt><dd><EstadoEtiqueta tono={detalle.caja.estado === 'abierta' ? 'positivo' : 'neutro'}>{detalle.caja.estado === 'abierta' ? 'Abierta' : 'Cerrada'}</EstadoEtiqueta></dd></div><div><dt>Apertura</dt><dd>{formatearFechaHora(detalle.caja.fecha_apertura)}</dd></div><div><dt>Cierre</dt><dd>{formatearFechaHora(detalle.caja.fecha_cierre)}</dd></div><div><dt>Fondo inicial</dt><dd>{formatearMoneda(detalle.caja.fondo_inicial)}</dd></div><div><dt>Efectivo esperado</dt><dd>{formatearMoneda(detalle.caja.efectivo_esperado_cierre ?? detalle.resumen.efectivo_esperado)}</dd></div><div><dt>Efectivo contado</dt><dd>{detalle.caja.efectivo_contado === null ? '—' : formatearMoneda(detalle.caja.efectivo_contado)}</dd></div><div><dt>Diferencia</dt><dd>{detalle.caja.diferencia === null ? '—' : formatearMoneda(detalle.caja.diferencia)}</dd></div></dl>{detalle.caja.observaciones && <div className="observaciones-detalle-caja"><strong>Observaciones</strong><p>{detalle.caja.observaciones}</p></div>}</>}
             </div>
             <footer><button className="boton-secundario-caja" type="button" onClick={cerrarDetalle}>Cerrar</button></footer>
           </section>

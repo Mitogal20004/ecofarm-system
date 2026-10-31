@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import DetalleVarianteDialog from '../components/DetalleVarianteDialog'
+import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import VarianteProductoDialog from '../components/VarianteProductoDialog'
 import { listarPresentaciones, listarVariantes } from '../services/productos'
 import './Productos.css'
@@ -301,13 +302,11 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
                         </small>
                       </td>
                       <td data-label="Estado">
-                        <span className={`estado-producto ${
-                          variante.activo
-                            ? 'estado-producto-activo'
-                            : 'estado-producto-inactivo'
-                        }`}>
+                        <EstadoEtiqueta
+                          tono={variante.activo ? 'positivo' : 'peligro'}
+                        >
                           {variante.activo ? 'Activo' : 'Inactivo'}
-                        </span>
+                        </EstadoEtiqueta>
                       </td>
                       {presentaciones.map((presentacion) => {
                         const precio = preciosPorPresentacion.get(presentacion.id)

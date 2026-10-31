@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import logoEfarm from '../assets/logo-efarm-brand.png'
+import EstadoEtiqueta from './EstadoEtiqueta'
 import {
   cambiarEstadoCotizacion,
   obtenerCotizacion,
@@ -11,6 +12,13 @@ const formatoMoneda = new Intl.NumberFormat('es-GT', {
   style: 'currency',
   currency: 'GTQ',
 })
+
+const tonosEstado = {
+  borrador: 'neutro',
+  emitida: 'advertencia',
+  convertida: 'positivo',
+  anulada: 'peligro',
+}
 
 const formatoFechaHora = new Intl.DateTimeFormat('es-GT', {
   dateStyle: 'medium',
@@ -179,9 +187,11 @@ function DetalleCotizacion({
           <p className="etiqueta-seccion-cotizaciones">Detalle de cotización</p>
           <div className="titulo-documento-cotizacion">
             <h1>{cotizacion.numero}</h1>
-            <span className={`estado-cotizacion estado-cotizacion-${cotizacion.estado}`}>
+            <EstadoEtiqueta
+              tono={tonosEstado[cotizacion.estado] ?? 'neutro'}
+            >
               {etiquetasEstado[cotizacion.estado] ?? cotizacion.estado}
-            </span>
+            </EstadoEtiqueta>
           </div>
           <p>Creada el {mostrarFecha(cotizacion.fecha_creacion)}</p>
         </div>

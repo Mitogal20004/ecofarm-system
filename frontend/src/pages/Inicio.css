@@ -1,0 +1,77 @@
+.seccion-resumen-inicio { display: grid; gap: 17px; }
+
+.encabezado-resumen-inicio h2,
+.encabezado-actividad-inicio h2 {
+  margin: 0;
+  color: var(--color-texto);
+  font-size: 21px;
+}
+
+.cuadricula-indicadores-inicio {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.indicador-inicio {
+  --acento-indicador: var(--color-verde-principal);
+  --fondo-icono-indicador: var(--color-verde-suave);
+  --color-icono-indicador: var(--color-verde-secundario);
+  position: relative;
+  min-width: 0;
+  min-height: 142px;
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  overflow: hidden;
+  padding: 20px;
+  border: 1px solid var(--color-borde);
+  border-radius: 9px;
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-superficie);
+}
+
+.indicador-inicio::before {
+  position: absolute;
+  top: 0;
+  left: 20px;
+  width: 40px;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: var(--acento-indicador);
+  content: '';
+}
+
+.cabecera-indicador-inicio { display: flex; align-items: center; gap: 10px; color: var(--color-texto-secundario); font-size: 12px; font-weight: 750; }
+.icono-indicador-inicio { width: 38px; height: 38px; display: grid; flex: 0 0 38px; place-items: center; border-radius: 50%; color: var(--color-icono-indicador); background: var(--fondo-icono-indicador); }
+.icono-indicador-inicio .icono-interfaz { width: 19px; height: 19px; }
+.indicador-inicio > strong { color: var(--color-verde-profundo); font-size: clamp(26px, 3vw, 34px); line-height: 1.05; }
+.indicador-inicio > small { color: var(--color-texto-secundario); font-size: 12px; line-height: 1.4; }
+.indicador-inicio-petroleo { --acento-indicador: var(--color-verde-oscuro); --fondo-icono-indicador: #e8eeec; --color-icono-indicador: var(--color-verde-oscuro); }
+.indicador-inicio-verde { --acento-indicador: var(--color-verde-secundario); }
+.indicador-inicio-oliva { --acento-indicador: var(--color-oliva); --fondo-icono-indicador: #eef1e9; --color-icono-indicador: var(--color-oliva); }
+.indicador-inicio-dorado { --acento-indicador: var(--color-acento-calido); --fondo-icono-indicador: #f6f0dc; --color-icono-indicador: var(--color-oliva); }
+.carga-indicador-inicio, .error-indicador-inicio { align-self: center; color: var(--color-texto-secundario); font-size: 13px; }
+.error-indicador-inicio { color: var(--color-error); }
+
+.actividad-reciente-inicio { overflow: hidden; border: 1px solid var(--color-borde); border-radius: 9px; background: var(--color-superficie); box-shadow: var(--sombra-superficie); }
+.encabezado-actividad-inicio { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 20px 22px; border-bottom: 1px solid var(--color-borde); }
+.encabezado-actividad-inicio > span { color: var(--color-texto-secundario); font-size: 12px; }
+.lista-actividad-inicio { margin: 0; padding: 0; list-style: none; }
+.lista-actividad-inicio li { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(145px, auto) auto; align-items: center; gap: 18px; padding: 15px 22px; border-bottom: 1px solid var(--color-borde); }
+.lista-actividad-inicio li:last-child { border-bottom: 0; }
+.lista-actividad-inicio li > div { min-width: 0; display: grid; gap: 4px; }
+.lista-actividad-inicio li strong { overflow: hidden; color: var(--color-texto); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.lista-actividad-inicio li > div span { overflow: hidden; color: var(--color-texto-secundario); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.importe-actividad-inicio { text-align: right; }
+.estado-venta-inicio { justify-self: end; }
+.estado-actividad-inicio, .estado-vacio-inicio { margin: 0; padding: 22px; color: var(--color-texto-secundario); font-size: 14px; text-align: center; }
+.estado-vacio-inicio { border: 1px dashed var(--color-borde); border-radius: 9px; background: var(--color-superficie); }
+.estado-error-inicio { color: var(--color-error); background: var(--color-error-fondo); }
+
+@media (max-width: 680px) {
+  .cuadricula-indicadores-inicio { grid-template-columns: minmax(0, 1fr); }
+  .encabezado-actividad-inicio { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .lista-actividad-inicio li { grid-template-columns: minmax(0, 1fr) auto; gap: 10px 14px; padding: 14px 18px; }
+  .estado-venta-inicio { grid-column: 1 / -1; justify-self: start; }
+}

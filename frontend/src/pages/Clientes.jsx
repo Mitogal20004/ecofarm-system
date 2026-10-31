@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import './Clientes.css'
 import ClienteDialog from '../components/ClienteDialog'
+import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import { listarClientes } from '../services/clientes'
 
 const LIMITE_CLIENTES = 10
@@ -262,15 +263,11 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
                       <small>{cliente.correo_electronico || 'Sin correo'}</small>
                     </td>
                     <td data-label="Estado">
-                      <span
-                        className={`estado-cliente ${
-                          cliente.activo
-                            ? 'estado-cliente-activo'
-                            : 'estado-cliente-inactivo'
-                        }`}
+                      <EstadoEtiqueta
+                        tono={cliente.activo ? 'positivo' : 'peligro'}
                       >
                         {cliente.activo ? 'Activo' : 'Inactivo'}
-                      </span>
+                      </EstadoEtiqueta>
                     </td>
                     {puedeEditar && (
                       <td className="celda-acciones-clientes" data-label="Acciones">

@@ -9,6 +9,7 @@ import RestablecerPassword from './pages/RestablecerPassword'
 import Clientes from './pages/Clientes'
 import Cotizaciones from './pages/Cotizaciones'
 import Inventario from './pages/Inventario'
+import Inicio from './pages/Inicio'
 import Productos from './pages/Productos'
 import Reportes from './pages/Reportes'
 import Usuarios from './pages/Usuarios'
@@ -633,188 +634,12 @@ function App() {
                 alRefrescarAutorizacion={refrescarAutorizacion}
               />
             ) : (
-              <div className="inicio-panel">
-                <section
-                  className="encabezado-panel inicio-bienvenida"
-                  aria-labelledby="titulo-panel"
-                >
-                  <div>
-                    <p className="etiqueta-seccion">Panel administrativo</p>
-                    <h1 id="titulo-panel">Resumen de operaciones internas</h1>
-                    <p className="descripcion-panel">
-                      Gestiona la actividad diaria de E-farm desde un espacio
-                      claro, ordenado y conectado con el trabajo del campo.
-                    </p>
-                  </div>
-                  <div className="estado-inicio" aria-label="Estado de la sesión">
-                    <span aria-hidden="true" />
-                    Sesión activa
-                  </div>
-                </section>
-
-                {errorSesion && (
-                  <p className="mensaje-error-sesion" role="alert">
-                    {errorSesion}
-                  </p>
-                )}
-
-                {errorAutorizacion && (
-                  <p className="mensaje-error-sesion" role="alert">
-                    {errorAutorizacion}
-                  </p>
-                )}
-
-                <section className="seccion-accesos-inicio" aria-labelledby="titulo-accesos">
-                  <div className="encabezado-accesos-inicio">
-                    <div>
-                      <p className="etiqueta-seccion">Área de trabajo</p>
-                      <h2 id="titulo-accesos">Accesos disponibles</h2>
-                    </div>
-                    <p>Las opciones se muestran según tus permisos actuales.</p>
-                  </div>
-
-                  <div className="cuadricula-accesos-inicio">
-                    {(tienePermiso('venta.ver') || tienePermiso('venta.crear')) && (
-                      <button
-                        className="acceso-inicio"
-                        type="button"
-                        onClick={() => {
-                          setVentaInicialId(null)
-                          setVistaActual(VISTA_VENTAS)
-                        }}
-                      >
-                        <span className="icono-acceso-inicio" aria-hidden="true">
-                          <IconoInterfaz nombre="ventas" />
-                        </span>
-                        <span>
-                          <strong>Ventas</strong>
-                          <small>Atiende el punto de venta y consulta operaciones.</small>
-                        </span>
-                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
-                      </button>
-                    )}
-
-                    {(tienePermiso('caja.operar') || tienePermiso('caja.ver')) && (
-                      <button
-                        className="acceso-inicio"
-                        type="button"
-                        onClick={() => setVistaActual(VISTA_CAJA)}
-                      >
-                        <span className="icono-acceso-inicio" aria-hidden="true">
-                          <IconoInterfaz nombre="caja" />
-                        </span>
-                        <span>
-                          <strong>Caja</strong>
-                          <small>Abre, consulta y cierra turnos de efectivo.</small>
-                        </span>
-                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
-                      </button>
-                    )}
-
-                    {tienePermiso('inventario.ver') && (
-                      <button
-                        className="acceso-inicio"
-                        type="button"
-                        onClick={() => setVistaActual(VISTA_INVENTARIO)}
-                      >
-                        <span className="icono-acceso-inicio" aria-hidden="true">
-                          <IconoInterfaz nombre="inventario" />
-                        </span>
-                        <span>
-                          <strong>Inventario</strong>
-                          <small>Revisa existencias, alertas y movimientos.</small>
-                        </span>
-                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
-                      </button>
-                    )}
-
-                    {tienePermiso('producto.ver') && (
-                      <button
-                        className="acceso-inicio"
-                        type="button"
-                        onClick={() => setVistaActual(VISTA_PRODUCTOS)}
-                      >
-                        <span className="icono-acceso-inicio" aria-hidden="true">
-                          <IconoInterfaz nombre="productos" />
-                        </span>
-                        <span>
-                          <strong>Productos</strong>
-                          <small>Consulta variantes, presentaciones y precios.</small>
-                        </span>
-                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
-                      </button>
-                    )}
-
-                    {tienePermiso('cliente.ver') && (
-                      <button
-                        className="acceso-inicio"
-                        type="button"
-                        onClick={() => setVistaActual(VISTA_CLIENTES)}
-                      >
-                        <span className="icono-acceso-inicio" aria-hidden="true">
-                          <IconoInterfaz nombre="clientes" />
-                        </span>
-                        <span>
-                          <strong>Clientes</strong>
-                          <small>Administra la información comercial de clientes.</small>
-                        </span>
-                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
-                      </button>
-                    )}
-
-                    {tienePermiso('cotizacion.ver') && (
-                      <button
-                        className="acceso-inicio"
-                        type="button"
-                        onClick={() => setVistaActual(VISTA_COTIZACIONES)}
-                      >
-                        <span className="icono-acceso-inicio" aria-hidden="true">
-                          <IconoInterfaz nombre="cotizaciones" />
-                        </span>
-                        <span>
-                          <strong>Cotizaciones</strong>
-                          <small>Prepara y consulta propuestas comerciales.</small>
-                        </span>
-                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
-                      </button>
-                    )}
-
-                    {tienePermiso('reporte.ver') && (
-                      <button
-                        className="acceso-inicio"
-                        type="button"
-                        onClick={() => setVistaActual(VISTA_REPORTES)}
-                      >
-                        <span className="icono-acceso-inicio" aria-hidden="true">
-                          <IconoInterfaz nombre="reportes" />
-                        </span>
-                        <span>
-                          <strong>Reportes</strong>
-                          <small>Analiza ventas, productos, inventario y cotizaciones.</small>
-                        </span>
-                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
-                      </button>
-                    )}
-
-                    {tienePermiso('usuario.ver') && (
-                      <button
-                        className="acceso-inicio"
-                        type="button"
-                        onClick={() => setVistaActual(VISTA_USUARIOS)}
-                      >
-                        <span className="icono-acceso-inicio" aria-hidden="true">
-                          <IconoInterfaz nombre="usuarios" />
-                        </span>
-                        <span>
-                          <strong>Usuarios</strong>
-                          <small>Consulta cuentas, roles y estados de acceso.</small>
-                        </span>
-                        <span className="flecha-acceso-inicio" aria-hidden="true">→</span>
-                      </button>
-                    )}
-                  </div>
-                </section>
-              </div>
+              <Inicio
+                permisos={permisos}
+                errorSesion={errorSesion}
+                errorAutorizacion={errorAutorizacion}
+                alRefrescarAutorizacion={refrescarAutorizacion}
+              />
             )}
           </div>
         </main>

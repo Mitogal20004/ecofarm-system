@@ -1,0 +1,64 @@
+.estado-etiqueta {
+  --color-estado: var(--color-texto-secundario);
+  --fondo-estado: #f4f5f2;
+  --borde-estado: #d9ddd7;
+  min-height: 27px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px 4px 8px;
+  border: 1px solid var(--borde-estado);
+  border-left: 3px solid var(--color-estado);
+  border-radius: 4px;
+  color: var(--color-estado);
+  background: var(--fondo-estado);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.estado-etiqueta::before {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 1px;
+  background: currentcolor;
+  content: '';
+}
+
+.estado-etiqueta-positivo {
+  --color-estado: #42623a;
+  --fondo-estado: #f2f6f0;
+  --borde-estado: #d4dfd0;
+}
+
+.estado-etiqueta-peligro {
+  --color-estado: #8f2922;
+  --fondo-estado: #fcf3f2;
+  --borde-estado: #edd3d0;
+}
+
+.estado-etiqueta-advertencia {
+  --color-estado: #756a25;
+  --fondo-estado: #faf7e9;
+  --borde-estado: #e8dfb9;
+}
+
+.estado-etiqueta-neutro {
+  --color-estado: #59625e;
+  --fondo-estado: #f3f5f3;
+  --borde-estado: #d9dedb;
+}
+
+.estado-etiqueta-informativo {
+  --color-estado: var(--color-verde-profundo);
+  --fondo-estado: #f0f4f3;
+  --borde-estado: #d2dedb;
+}
+
+@media (max-width: 560px) {
+  .estado-etiqueta {
+    max-width: 100%;
+  }
+}

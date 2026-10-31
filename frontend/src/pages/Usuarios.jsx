@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './Usuarios.css'
 import EditarUsuarioDialog from '../components/EditarUsuarioDialog'
+import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import NuevoUsuarioDialog from '../components/NuevoUsuarioDialog'
 import {
   listarUsuarios,
@@ -323,15 +324,11 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
                       </div>
                     </td>
                     <td data-label="Estado">
-                      <span
-                        className={`etiqueta-estado-usuario ${
-                          usuario.activo
-                            ? 'estado-usuario-activo'
-                            : 'estado-usuario-inactivo'
-                        }`}
+                      <EstadoEtiqueta
+                        tono={usuario.activo ? 'positivo' : 'peligro'}
                       >
                         {usuario.activo ? 'Activo' : 'Inactivo'}
-                      </span>
+                      </EstadoEtiqueta>
                     </td>
                     {puedeAdministrarUsuarios && (
                       <td

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import HistorialInventarioDialog from '../components/HistorialInventarioDialog'
 import IconoInterfaz from '../components/IconoInterfaz'
 import MovimientoInventarioDialog from '../components/MovimientoInventarioDialog'
@@ -30,6 +31,12 @@ const nombreEstado = {
   disponible: 'Disponible',
   stock_bajo: 'Stock bajo',
   sin_stock: 'Sin stock',
+}
+
+const tonoEstadoStock = {
+  disponible: 'positivo',
+  stock_bajo: 'advertencia',
+  sin_stock: 'peligro',
 }
 
 const obtenerMensajeConsulta = (error) => {
@@ -443,9 +450,11 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
                   </div>
                   <div className="estado-alerta-inventario">
                     <strong>{item.stock_manojos} manojos</strong>
-                    <span className={`estado-stock estado-stock-${item.estado_stock}`}>
+                    <EstadoEtiqueta
+                      tono={tonoEstadoStock[item.estado_stock] ?? 'neutro'}
+                    >
                       {nombreEstado[item.estado_stock]}
-                    </span>
+                    </EstadoEtiqueta>
                   </div>
                 </li>
               ))}
@@ -593,9 +602,12 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
                         {item.longitud_cm} cm ·{' '}
                         {nombreClasificacion[item.clasificacion]}
                       </small>
-                      <span className="estado-variante-inventario">
+                      <EstadoEtiqueta
+                        tono={item.activo ? 'positivo' : 'peligro'}
+                        className="estado-variante-tabla"
+                      >
                         {item.activo ? 'Activa' : 'Inactiva'}
-                      </span>
+                      </EstadoEtiqueta>
                     </td>
                     <td className="stock-actual-inventario" data-label="Stock">
                       <strong>{item.stock_manojos} manojos</strong>
@@ -626,9 +638,11 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
                       {item.stock_minimo_manojos} manojos
                     </td>
                     <td className="estado-inventario" data-label="Estado">
-                      <span className={`estado-stock estado-stock-${item.estado_stock}`}>
+                      <EstadoEtiqueta
+                        tono={tonoEstadoStock[item.estado_stock] ?? 'neutro'}
+                      >
                         {nombreEstado[item.estado_stock]}
-                      </span>
+                      </EstadoEtiqueta>
                     </td>
                     <td className="celda-acciones-inventario" data-label="Acciones">
                       <div className="acciones-inventario">

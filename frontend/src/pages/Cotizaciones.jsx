@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import CotizacionFormulario from '../components/CotizacionFormulario'
 import DetalleCotizacion from '../components/DetalleCotizacion'
+import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import { listarCotizaciones } from '../services/cotizaciones'
 import './Cotizaciones.css'
 
 const LIMITE_COTIZACIONES = 10
+const tonosEstado = {
+  borrador: 'neutro',
+  emitida: 'advertencia',
+  convertida: 'positivo',
+  anulada: 'peligro',
+}
 const FILTROS_INICIALES = {
   busqueda: '',
   estado: '',
@@ -301,9 +308,11 @@ function Cotizaciones({
                         <strong>{formatoMoneda.format(Number(cotizacion.total))}</strong>
                       </td>
                       <td data-label="Estado">
-                        <span className={`estado-cotizacion estado-cotizacion-${cotizacion.estado}`}>
+                        <EstadoEtiqueta
+                          tono={tonosEstado[cotizacion.estado] ?? 'neutro'}
+                        >
                           {etiquetasEstado[cotizacion.estado] ?? cotizacion.estado}
-                        </span>
+                        </EstadoEtiqueta>
                       </td>
                       <td data-label="Acciones">
                         <div className="acciones-fila-cotizaciones">

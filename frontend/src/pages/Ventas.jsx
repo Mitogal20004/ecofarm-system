@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import DetalleVenta from '../components/DetalleVenta'
+import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import VentaPos from '../components/VentaPos'
 import { listarVentas } from '../services/ventas'
 import './Ventas.css'
@@ -337,7 +338,7 @@ function Ventas({
                           <td data-label="Cliente"><strong>{venta.comprador_nombre}</strong><small>NIT {venta.comprador_nit}</small></td>
                           <td data-label="Serie / usuario"><strong>{venta.serie_usuario_snapshot}</strong><small>{venta.usuario_creador?.nombre_completo ?? '—'}</small></td>
                           <td data-label="Total"><strong>{formatoMoneda.format(Number(venta.total))}</strong></td>
-                          <td data-label="Estado"><span className={`estado-venta estado-venta-${venta.estado}`}>{venta.estado === 'confirmada' ? 'Confirmada' : 'Anulada'}</span></td>
+                          <td data-label="Estado"><EstadoEtiqueta tono={venta.estado === 'confirmada' ? 'positivo' : 'peligro'}>{venta.estado === 'confirmada' ? 'Confirmada' : 'Anulada'}</EstadoEtiqueta></td>
                           <td data-label="Acciones">
                             <div className="acciones-fila-ventas">
                               <button

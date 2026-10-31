@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import logoEfarm from '../assets/logo-efarm-brand.png'
+import EstadoEtiqueta from './EstadoEtiqueta'
 import {
   anularVenta,
   generarReciboVenta,
@@ -613,9 +614,9 @@ function DetalleVenta({
           <p className="etiqueta-seccion-ventas">Detalle de venta</p>
           <div className="titulo-documento-venta">
             <h1>{venta.numero}</h1>
-            <span className={`estado-venta estado-venta-${venta.estado}`}>
+            <EstadoEtiqueta tono={estaConfirmada ? 'positivo' : 'peligro'}>
               {estaConfirmada ? 'Confirmada' : 'Anulada'}
-            </span>
+            </EstadoEtiqueta>
           </div>
           <p>Confirmada el {mostrarFecha(venta.fecha_confirmacion)}</p>
         </div>

@@ -406,6 +406,10 @@
   text-transform: uppercase;
 }
 
+.estado-variante-tabla {
+  margin-top: 7px;
+}
+
 .stock-actual-inventario > strong {
   white-space: nowrap;
 }

@@ -445,105 +445,6 @@
   font-size: 14px;
 }
 
-.seccion-accesos-inicio {
-  display: grid;
-  gap: 17px;
-}
-
-.encabezado-accesos-inicio {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-}
-
-.encabezado-accesos-inicio h2 {
-  margin: 0;
-  color: var(--color-texto);
-  font-size: 21px;
-}
-
-.encabezado-accesos-inicio > p {
-  margin: 0;
-  color: var(--color-texto-secundario);
-  font-size: 12px;
-}
-
-.cuadricula-accesos-inicio {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.acceso-inicio {
-  min-width: 0;
-  min-height: 118px;
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 15px;
-  padding: 19px;
-  border: 1px solid var(--color-borde);
-  border-radius: 9px;
-  color: var(--color-texto);
-  background: var(--color-superficie);
-  box-shadow: var(--sombra-superficie);
-  text-align: left;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
-}
-
-.acceso-inicio:hover {
-  border-color: #ccd5ca;
-  box-shadow: var(--sombra-superficie-elevada);
-  transform: translateY(-2px);
-}
-
-.acceso-inicio:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.icono-acceso-inicio {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--color-verde-secundario);
-  background: var(--color-verde-suave);
-}
-
-.icono-acceso-inicio .icono-interfaz {
-  width: 21px;
-  height: 21px;
-}
-
-.acceso-inicio > span:nth-child(2) {
-  min-width: 0;
-  display: grid;
-  gap: 6px;
-}
-
-.acceso-inicio strong {
-  color: var(--color-verde-oscuro);
-  font-size: 15px;
-}
-
-.acceso-inicio small {
-  color: var(--color-texto-secundario);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.flecha-acceso-inicio {
-  color: var(--color-acento-calido);
-  font-size: 18px;
-  font-weight: 800;
-}
-
 .tarjeta-kpi {
   position: relative;
   min-width: 0;
@@ -724,7 +625,6 @@
   }
 
   .boton-cerrar-sesion,
-  .acceso-inicio,
   .tarjeta-kpi {
     transition: none;
   }
@@ -739,9 +639,6 @@
     padding-inline: 13px;
   }
 
-  .cuadricula-accesos-inicio {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 760px) {
@@ -862,17 +759,4 @@
     font-size: clamp(28px, 10vw, 36px);
   }
 
-  .encabezado-accesos-inicio {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .cuadricula-accesos-inicio {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .acceso-inicio {
-    min-height: 102px;
-  }
 }
