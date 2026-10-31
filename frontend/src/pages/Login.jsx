@@ -105,16 +105,13 @@ function Login({ alIniciarSesion }) {
   }
 
   return (
-    <main className="pagina-login">
-      <PanelIdentidad />
+    <main className="pagina-login pagina-login-principal">
+      <PanelIdentidad soloMarca />
 
       <section className="panel-acceso">
         <div className="contenedor-formulario">
           <p className="etiqueta-bienvenida">Acceso interno</p>
-          <h2>Bienvenido</h2>
-          <p className="instruccion-login">
-            Ingresa tus credenciales para continuar en E-farm.
-          </p>
+          <h1>Bienvenido</h1>
 
           <form className="formulario-login" onSubmit={manejarEnvio} noValidate>
             <div className="grupo-campo">
