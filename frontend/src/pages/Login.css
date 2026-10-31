@@ -468,8 +468,6 @@
   stroke-linejoin: round;
 }
 
-/* La portada de acceso utiliza únicamente recursos corporativos verificados.
-   La fotografía floral se incorporará cuando exista un archivo autorizado. */
 .pagina-login-principal {
   grid-template-columns: minmax(0, 1.08fr) minmax(440px, 0.92fr);
   background: #f5f6f2;
@@ -479,23 +477,25 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 18% 20%, rgb(255 255 255 / 14%), transparent 29%),
-    radial-gradient(circle at 82% 78%, rgb(199 164 90 / 18%), transparent 27%),
-    linear-gradient(145deg, #163f31 0%, #24553e 52%, #17392e 100%);
+  background-color: #17392e;
+  background-image:
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgb(8 35 26 / 24%) 0%,
+      rgb(8 35 26 / 9%) 34%,
+      transparent 60%
+    ),
+    url('/images/efarm-snapdragon-horizontal.jpg');
+  background-position: center, 32% 50%;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .pagina-login-principal .panel-identidad-acceso::before {
   position: absolute;
   inset: 0;
   z-index: -2;
-  background:
-    linear-gradient(120deg, transparent 0 54%, rgb(255 255 255 / 5%) 54% 55%, transparent 55%),
-    repeating-linear-gradient(
-      135deg,
-      transparent 0 54px,
-      rgb(255 255 255 / 3%) 54px 55px
-    );
+  background: linear-gradient(180deg, transparent 68%, rgb(9 34 25 / 5%));
   content: '';
 }
 
@@ -504,84 +504,78 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 7px;
+  width: 2px;
   z-index: -1;
-  background: linear-gradient(180deg, #b42318, #d33b2d 48%, #08713f 48%);
+  background: #08713f;
   content: '';
 }
 
 .pagina-login-principal .contenido-identidad {
   position: relative;
-  justify-content: center;
-  padding: clamp(36px, 7vw, 92px);
-}
-
-.pagina-login-principal .contenido-identidad::before,
-.pagina-login-principal .contenido-identidad::after {
-  position: absolute;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 50%;
-  content: '';
-}
-
-.pagina-login-principal .contenido-identidad::before {
-  width: min(44vw, 520px);
-  aspect-ratio: 1;
-  top: -20%;
-  left: -22%;
-}
-
-.pagina-login-principal .contenido-identidad::after {
-  width: min(32vw, 380px);
-  aspect-ratio: 1;
-  right: -15%;
-  bottom: -18%;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: clamp(34px, 4.5vw, 64px);
 }
 
 .pagina-login-principal .marca-ecofarm {
-  width: min(100%, 500px);
+  width: min(46%, 360px);
   position: relative;
   z-index: 1;
-  padding: clamp(28px, 4vw, 48px);
-  border: 1px solid rgb(255 255 255 / 38%);
-  border-radius: 30px;
-  background: rgb(255 255 255 / 93%);
-  box-shadow:
-    0 28px 64px rgb(5 24 17 / 28%),
-    inset 0 1px 0 rgb(255 255 255 / 80%);
-  backdrop-filter: blur(12px);
+  isolation: isolate;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   animation: elevar-marca-login 0.7s ease-out both;
+}
+
+.pagina-login-principal .marca-ecofarm .logo-login {
+  opacity: 1;
+  filter: none;
 }
 
 .pagina-login-principal .panel-acceso {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   padding: clamp(32px, 5vw, 72px);
-  background:
-    radial-gradient(circle at 100% 0%, rgb(95 122 80 / 10%), transparent 32%),
-    linear-gradient(180deg, #fafaf7 0%, #f5f6f2 100%);
+  background: #faf8f2;
+}
+
+.pagina-login-principal .panel-acceso::before,
+.pagina-login-principal .panel-acceso::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: '';
+  pointer-events: none;
 }
 
 .pagina-login-principal .panel-acceso::before {
-  position: absolute;
-  width: 250px;
-  height: 250px;
-  right: -145px;
-  bottom: -125px;
-  border: 42px solid rgb(180 35 24 / 5%);
-  border-radius: 50%;
-  content: '';
+  background-image: url('/images/efarm-snapdragon-horizontal.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(24px) saturate(0.9);
+  opacity: 0.52;
+  transform: scale(1.08);
+}
+
+.pagina-login-principal .panel-acceso::after {
+  background: rgb(250 248 242 / 64%);
 }
 
 .pagina-login-principal .contenedor-formulario {
-  width: min(100%, 470px);
+  width: min(100%, 420px);
   position: relative;
   z-index: 1;
   overflow: hidden;
-  padding: clamp(32px, 4vw, 48px);
-  border-color: rgb(31 58 61 / 11%);
-  border-radius: 24px;
-  box-shadow: 0 24px 60px rgb(31 58 61 / 13%);
+  padding: clamp(30px, 3.5vw, 42px);
+  border: 0;
+  border-radius: 22px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 14px 38px rgb(31 58 61 / 8%);
   animation: aparecer-formulario-login 0.55s ease-out both;
 }
 
@@ -695,12 +689,15 @@
   }
 
   .pagina-login-principal .contenido-identidad {
-    padding: 38px;
+    padding: 34px;
+  }
+
+  .pagina-login-principal .panel-identidad-acceso {
+    background-position: center, 20% 50%;
   }
 
   .pagina-login-principal .marca-ecofarm {
-    padding: 28px;
-    border-radius: 24px;
+    width: min(58%, 310px);
   }
 }
 
@@ -718,10 +715,12 @@
     padding: 32px 24px;
   }
 
+  .pagina-login-principal .panel-identidad-acceso {
+    background-position: center, 50% 56%;
+  }
+
   .pagina-login-principal .marca-ecofarm {
-    width: min(100%, 350px);
-    padding: 22px 28px;
-    border-radius: 20px;
+    width: min(45%, 270px);
   }
 
   .pagina-login-principal .panel-identidad-acceso::after {
@@ -730,8 +729,8 @@
     bottom: 0;
     left: 0;
     width: auto;
-    height: 5px;
-    background: linear-gradient(90deg, #08713f 0 68%, #b42318 68% 100%);
+    height: 2px;
+    background: #08713f;
   }
 
   .pagina-login-principal .panel-acceso {
@@ -750,15 +749,25 @@
     padding: 24px 20px;
   }
 
+  .pagina-login-principal .panel-identidad-acceso {
+    background-position: center, 50% 58%;
+  }
+
   .pagina-login-principal .marca-ecofarm {
-    width: min(100%, 285px);
-    padding: 18px 22px;
-    border-radius: 17px;
+    width: min(55%, 210px);
   }
 
   .pagina-login-principal .panel-acceso {
     min-height: calc(100svh - 172px);
     padding: 28px 14px 36px;
+  }
+
+  .pagina-login-principal .panel-acceso::before {
+    opacity: 0.45;
+  }
+
+  .pagina-login-principal .panel-acceso::after {
+    background: rgb(250 248 242 / 72%);
   }
 
   .pagina-login-principal .contenedor-formulario {
