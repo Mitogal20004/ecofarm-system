@@ -235,6 +235,10 @@ const crearDatosPago = (body) => {
 
 const mensajesSegurosSupabase = new Map([
   [
+    'Debes abrir Caja antes de confirmar una venta.',
+    'Debes abrir Caja antes de confirmar una venta.',
+  ],
+  [
     'El monto recibido es insuficiente para completar la Venta.',
     'El monto recibido es insuficiente para completar la venta.',
   ],
