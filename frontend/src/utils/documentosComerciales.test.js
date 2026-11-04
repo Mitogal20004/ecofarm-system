@@ -1,0 +1,91 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {
+  crearDocumentoVenta,
+  crearDocumentoCotizacion,
+  construirLineasTicket,
+  generarPDFTicket,
+} from './documentosComerciales.js'
+
+const venta = {
+  venta: {
+    numero: 'VTA-10',
+    estado: 'confirmada',
+    fecha_confirmacion: '2026-11-03T20:00:00Z',
+    comprador_nombre: 'María López',
+    comprador_nit: 'CF',
+    subtotal: '36.50',
+    total: '36.50',
+    monto_recibido: '40.00',
+    cambio: '3.50',
+  },
+  recibo: { numero: 'REC-10', serie_usuario_snapshot: 'A' },
+  detalles: [{
+    producto_nombre: 'Flores',
+    color: 'Rosado',
+    presentacion_nombre: 'Manojo',
+    cantidad_presentaciones: 2,
+    precio_unitario: '18.25',
+    subtotal: '36.50',
+  }],
+}
+const cotizacion = {
+  cotizacion: {
+    numero: 'COT-10',
+    estado: 'emitida',
+    fecha_creacion: '2026-11-03T20:00:00Z',
+    comprador_nombre: 'Cliente de prueba',
+    comprador_nit: 'CF',
+    subtotal: '36.50',
+    total: '36.50',
+  },
+  detalles: venta.detalles,
+}
+
+test('recibo refleja pago y cambio originales sin mutar la venta', () => {
+  const original = structuredClone(venta)
+  const documento = crearDocumentoVenta(venta)
+  const texto = construirLineasTicket(documento).map((item) => item.texto).join('\n')
+  assert.match(texto, /REC-10/)
+  assert.match(texto, /María López/)
+  assert.match(texto, /Cambio/)
+  assert.match(texto, /3\.50/)
+  assert.deepEqual(venta, original)
+})
+
+test('factura de prueba no se presenta como FEL ni duplica cobros', () => {
+  const documento = crearDocumentoVenta(venta, 'factura-demostracion')
+  assert.match(documento.aviso, /SIN VALIDEZ FISCAL/)
+  assert.match(documento.aviso, /No es una factura FEL certificada/)
+  assert.equal(documento.recibido, null)
+  assert.equal(documento.cambio, null)
+})
+
+test('sin recibo no se permite producir comprobante tipo recibo', () => {
+  assert.throws(() => crearDocumentoVenta({ ...venta, recibo: null }), /emitirse el recibo/)
+})
+
+test('cotización no confirma ventas ni se confunde con factura', () => {
+  const documento = crearDocumentoCotizacion(cotizacion)
+  assert.match(documento.aviso, /No es una factura/)
+  assert.equal(documento.numero, 'COT-10')
+  assert.equal(documento.recibido, null)
+})
+
+test('PDF es un documento PDF descargable con texto español', async () => {
+  const pdf = generarPDFTicket(crearDocumentoVenta(venta))
+  assert.equal(pdf.type, 'application/pdf')
+  const bytes = new Uint8Array(await pdf.arrayBuffer())
+  assert.deepEqual(Array.from(bytes.slice(0, 5)), Array.from(new TextEncoder().encode('%PDF-')))
+  assert.ok(bytes.byteLength > 800)
+})
+
+test('números extensos no bloquean el formato ticket', () => {
+  const documento = crearDocumentoVenta({
+    ...venta,
+    venta: { ...venta.venta, comprador_nombre: 'Comercializadora Agrícola de Flores y Semillas Internacionales' },
+  })
+  const lineas = construirLineasTicket(documento)
+  assert.ok(lineas.length > 10)
+  assert.ok(lineas.every((linea) => linea.texto.length <= 80))
+})
