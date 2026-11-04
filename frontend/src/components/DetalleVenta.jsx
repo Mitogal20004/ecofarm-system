@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import logoEfarm from '../assets/logo-efarm-brand.png'
 import EstadoEtiqueta from './EstadoEtiqueta'
 import {
+  crearDocumentoVenta,
+  descargarPDFTicket,
+  imprimirTicket,
+} from '../utils/documentosComerciales'
+import {
   anularVenta,
   generarReciboVenta,
   obtenerVenta,
@@ -137,6 +142,24 @@ function DetalleVenta({
       setDocumentoImpresion(null)
     }, 150)
   }, [])
+
+  const descargarDocumento = (tipo) => {
+    try {
+      descargarPDFTicket(crearDocumentoVenta(detalle, tipo))
+      setError('')
+    } catch (errorDescarga) {
+      setError(errorDescarga?.message || 'No fue posible descargar el PDF.')
+    }
+  }
+
+  const imprimirTicketDocumento = (tipo) => {
+    try {
+      imprimirTicket(crearDocumentoVenta(detalle, tipo))
+      setError('')
+    } catch (errorImpresion) {
+      setError(errorImpresion?.message || 'No fue posible imprimir el documento.')
+    }
+  }
 
   const cargarDetalle = useCallback(async () => {
     setCargando(true)
@@ -625,16 +648,26 @@ function DetalleVenta({
             Volver
           </button>
           {recibo && (
-            <button className="boton-documento-ventas boton-recibo-ventas" type="button" onClick={() => imprimirDocumento('recibo')}>
-              Imprimir / PDF
-            </button>
+            <>
+              <button className="boton-documento-ventas boton-recibo-ventas" type="button" onClick={() => descargarDocumento('recibo')}>
+                Descargar recibo PDF
+              </button>
+              <button className="boton-documento-ventas boton-recibo-ventas" type="button" onClick={() => imprimirTicketDocumento('recibo')}>
+                Imprimir recibo 80 mm
+              </button>
+              <button className="boton-secundario-ventas" type="button" onClick={() => imprimirDocumento('recibo')}>
+                Imprimir recibo carta
+              </button>
+            </>
           )}
-          <button
-            className="boton-documento-ventas boton-factura-ventas"
-            type="button"
-            onClick={() => imprimirDocumento('factura-demostracion')}
-          >
-            Imprimir factura
+          <button className="boton-documento-ventas boton-factura-ventas" type="button" onClick={() => descargarDocumento('factura-demostracion')}>
+            Descargar factura PDF
+          </button>
+          <button className="boton-documento-ventas boton-factura-ventas" type="button" onClick={() => imprimirTicketDocumento('factura-demostracion')}>
+            Imprimir factura 80 mm
+          </button>
+          <button className="boton-secundario-ventas" type="button" onClick={() => imprimirDocumento('factura-demostracion')}>
+            Imprimir factura carta
           </button>
           {!recibo && puedeCrear && estaConfirmada && (
             <button className="boton-primario-ventas" type="button" onClick={emitirRecibo} disabled={procesando}>
