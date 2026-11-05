@@ -8,33 +8,34 @@ const TRAZOS_ICONOS = {
   ),
   ventas: (
     <>
-      <path d="M3 4h2l2.2 10.2h10.6l2-7.2H6" />
-      <circle cx="9" cy="19" r="1.25" />
-      <circle cx="17" cy="19" r="1.25" />
+      <path d="M6 3.5h12v17H6z" />
+      <path d="M9 7.5h6M9 11h6M9 14.5h3" />
+      <path d="m13.5 17 1.5 1.5 3-3" />
     </>
   ),
   caja: (
     <>
-      <path d="M4 7h16v12H4V7Z" />
-      <path d="M6 7V5h10l2 2" />
-      <path d="M4 11h16" />
-      <path d="M15 14h5v3h-5a1.5 1.5 0 0 1 0-3Z" />
-      <path d="M7 15h3" />
+      <path d="M4 8h16v12H4z" />
+      <path d="M6 8V5h12v3" />
+      <path d="M4 12h16" />
+      <path d="M8 16h5" />
+      <path d="M16.5 15.5h.01" />
     </>
   ),
   inventario: (
     <>
-      <path d="m4 7 8-4 8 4-8 4-8-4Z" />
-      <path d="M4 7v10l8 4 8-4V7" />
-      <path d="M12 11v10" />
-      <path d="m8 5 8 4" />
+      <rect x="3.5" y="4" width="7" height="7" rx=".7" />
+      <rect x="13.5" y="4" width="7" height="7" rx=".7" />
+      <rect x="3.5" y="14" width="7" height="7" rx=".7" />
+      <rect x="13.5" y="14" width="7" height="7" rx=".7" />
+      <path d="M7 7.5h.01M17 7.5h.01M7 17.5h.01M17 17.5h.01" />
     </>
   ),
   productos: (
     <>
-      <path d="M12 21V10" />
-      <path d="M12 14c-4.5 0-7-2.4-7-6 4.5 0 7 2.4 7 6Z" />
-      <path d="M12 11c0-4.4 2.4-7 6-7 0 4.4-2.4 7-6 7Z" />
+      <path d="M5 20h14M8 20v-7M16 20v-7M12 20V6" />
+      <path d="M12 11C8 11 6 9 6 5c4 0 6 2 6 6Z" />
+      <path d="M12 8c0-3 2-5 6-5 0 3-2 5-6 5Z" />
     </>
   ),
   clientes: (
@@ -129,7 +130,7 @@ function IconoInterfaz({ nombre, className = '' }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
