@@ -1,0 +1,129 @@
+/*
+ * E-farm | Herramientas de documentos comerciales.
+ * Vista previa y descarga en PDF de 80 mm, impresion termica
+ * y alternativa de impresion en carta.
+ * No modifica la composicion de pagina al imprimir.
+ */
+@media screen {
+  .aplicacion-administrativa .panel-documentos-efarm {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 13px 16px;
+    margin: 0;
+    padding: 15px 18px;
+    border: 1px solid #dbe4d9;
+    border-radius: 5px;
+    background: #f2f2e9;
+  }
+
+  .aplicacion-administrativa .selector-documento-efarm {
+    display: grid;
+    gap: 5px;
+    min-width: 175px;
+  }
+
+  .aplicacion-administrativa .selector-documento-efarm > label {
+    color: #445848;
+    font-size: 11px;
+    font-weight: 680;
+  }
+
+  .aplicacion-administrativa .selector-documento-efarm > select {
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 1px solid #bfcfbf;
+    border-radius: 4px;
+    background: #fff;
+    color: #2f4535;
+    font-size: 12px;
+  }
+
+  .aplicacion-administrativa .acciones-documentos-efarm {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .aplicacion-administrativa .panel-documentos-efarm button,
+  .aplicacion-administrativa .acciones-encabezado-cotizacion button {
+    min-height: 38px;
+    padding: 8px 13px;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .nota-documentos-efarm {
+    flex: 1 0 100%;
+    margin: 0;
+    color: #66776a;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm {
+    position: relative;
+    align-self: center;
+    margin: 0;
+    color: #446550;
+    font-size: 11px;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm > summary {
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-weight: 610;
+    white-space: nowrap;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm > summary:hover {
+    background: #e5ece1;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm[open] {
+    background: #fff;
+    border: 1px solid #dce5d7;
+    border-radius: 4px;
+    padding-bottom: 7px;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm > button {
+    margin: 0 7px;
+    display: block;
+  }
+
+  .aplicacion-administrativa .acciones-encabezado-cotizacion {
+    gap: 7px;
+  }
+
+  .aplicacion-administrativa .acciones-encabezado-cotizacion .opciones-documentos-efarm {
+    margin-left: 3px;
+  }
+
+  .aplicacion-administrativa .boton-primario-ventas,
+  .aplicacion-administrativa .boton-primario-cotizaciones {
+    background: #2d5947;
+    border-color: #2d5947;
+  }
+}
+
+@media screen and (max-width: 650px) {
+  .aplicacion-administrativa .panel-documentos-efarm {
+    align-items: stretch;
+    padding: 14px;
+  }
+
+  .aplicacion-administrativa .selector-documento-efarm,
+  .aplicacion-administrativa .acciones-documentos-efarm {
+    flex: 1 1 100%;
+  }
+
+  .aplicacion-administrativa .acciones-documentos-efarm > button {
+    flex: 1 1 auto;
+  }
+}
