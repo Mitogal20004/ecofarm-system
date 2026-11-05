@@ -345,13 +345,8 @@ function App() {
     <div className="aplicacion-administrativa">
       <header className="barra-superior">
         <div className="marca-panel">
-          <span className="simbolo-panel" aria-hidden="true">
-            <img src={logoEfarm} alt="" />
-          </span>
-          <span className="nombre-marca-panel">
-            <strong>E-farm</strong>
-            <small>Gestión agrícola</small>
-          </span>
+          <img className="logotipo-panel" src={logoEfarm} alt="E-farm" />
+          <span className="descripcion-marca-panel">Gestión agrícola</span>
         </div>
         <div className="acciones-barra-superior">
           <div className="identidad-usuario">
