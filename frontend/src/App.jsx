@@ -343,14 +343,23 @@ function App() {
   return (
     <div className="aplicacion-administrativa">
       <header className="barra-superior">
+        <div className="marca-panel">
+          <span className="simbolo-panel" aria-hidden="true">
+            <img src={logoEfarm} alt="" />
+          </span>
+          <span className="nombre-marca-panel">
+            <strong>E-farm</strong>
+            <small>Gestión agrícola</small>
+          </span>
+        </div>
         <div className="contexto-barra-superior" aria-hidden="true">
-          <span>ECOFARM S.A. / OPERACIONES</span>
-          <strong>Centro de trabajo</strong>
+          <span>Plataforma interna</span>
+          <strong>Control comercial y agrícola</strong>
         </div>
 
         <div className="acciones-barra-superior">
           <div className="identidad-usuario">
-            <span className="etiqueta-usuario">Usuario actual</span>
+            <span className="etiqueta-usuario">Sesión de trabajo</span>
             <strong className="nombre-usuario">
               {autorizacion?.perfil?.nombre_completo || 'Cuenta E-farm'}
             </strong>
@@ -377,15 +386,6 @@ function App() {
       </header>
 
       <aside className="barra-lateral">
-        <div className="marca-panel">
-          <span className="simbolo-panel" aria-hidden="true">
-            <img src={logoEfarm} alt="" />
-          </span>
-          <span className="nombre-marca-panel">
-            <strong>E-farm</strong>
-            <small>Gestión agrícola</small>
-          </span>
-        </div>
 
         <nav className="navegacion-principal" aria-label="Navegación principal">
           <p className="titulo-navegacion">General</p>
