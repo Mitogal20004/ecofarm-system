@@ -761,3 +761,69 @@
     color: #203d32;
   }
 }
+
+
+/* Microinteracciones propias de E-farm: cambio de módulo sin efectos exagerados. */
+@media screen {
+  .aplicacion-administrativa .opcion-navegacion {
+    transition:
+      background-color 170ms ease,
+      color 170ms ease,
+      box-shadow 170ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion .icono-navegacion {
+    flex-shrink: 0;
+    transition: color 170ms ease, transform 200ms ease;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion:hover:not(.opcion-navegacion-activa) .icono-navegacion {
+    color: #f0f5e9;
+    transform: translateY(-1px);
+  }
+
+  .aplicacion-administrativa .opcion-navegacion:active .icono-navegacion {
+    transform: scale(.91);
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa {
+    background: #345b43;
+    color: #fff;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa::after {
+    animation: efarm-subrayado-activo 230ms cubic-bezier(.2, .75, .25, 1) both;
+  }
+
+  .aplicacion-administrativa .contenido-panel {
+    animation: efarm-aparecer-modulo 235ms cubic-bezier(.2, .7, .2, 1) both;
+  }
+
+  .aplicacion-administrativa .boton-cerrar-sesion > svg {
+    width: 18px;
+    height: 18px;
+    color: #28503d;
+  }
+}
+
+@keyframes efarm-subrayado-activo {
+  from { opacity: .5; transform: scaleX(.35); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes efarm-aparecer-modulo {
+  from { opacity: .25; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aplicacion-administrativa .opcion-navegacion,
+  .aplicacion-administrativa .opcion-navegacion .icono-navegacion {
+    transition: none !important;
+  }
+  .aplicacion-administrativa .opcion-navegacion-activa::after,
+  .aplicacion-administrativa .contenido-panel {
+    animation: none !important;
+  }
+}
