@@ -284,6 +284,28 @@ export function generarPDFTicket(documento) {
   return new Blob([Uint8Array.from(salida)], { type: 'application/pdf' })
 }
 
+
+/**
+ * Abre el PDF de ticket de 80 mm en el visor nativo del navegador.
+ * No genera una nueva venta ni modifica registros del servidor.
+ */
+export function verPDFTicket(documento) {
+  const ventana = window.open('', '_blank')
+  if (!ventana) {
+    throw new Error('El navegador bloqueó la vista previa. Permite ventanas emergentes para E-farm.')
+  }
+
+  try {
+    const url = URL.createObjectURL(generarPDFTicket(documento))
+    ventana.location.replace(url)
+    // Tiempo suficiente para que el usuario pueda ver, imprimir o guardar el PDF.
+    window.setTimeout(() => URL.revokeObjectURL(url), 600000)
+  } catch (error) {
+    ventana.close()
+    throw error
+  }
+}
+
 export function descargarPDFTicket(documento) {
   const pdf = generarPDFTicket(documento)
   const enlace = document.createElement('a')
