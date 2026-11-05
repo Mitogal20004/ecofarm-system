@@ -10,12 +10,12 @@ Los atajos **solo están disponibles después de confirmar la venta** y requiere
 
 Desde **Ventas → Historial → Ver detalle** se puede elegir entre **Recibo** (si ya fue emitido) y **Factura de prueba**. Las acciones disponibles son:
 
-- **Vista previa:** abre el PDF de 80 mm en una pestaña nueva.
-- **Descargar PDF:** guarda el documento de 80 mm.
+- **Vista previa:** abre el PDF formal tamaño carta con logo, datos del cliente, detalle de productos y totales.
+- **Descargar PDF:** guarda ese mismo PDF formal tamaño carta, listo para enviar o archivar.
 - **Imprimir:** abre el diálogo de impresión del navegador con diseño de ticket de 80 mm.
 - **Más opciones → Imprimir en carta:** usa el formato existente para papel carta.
 
-Desde **Cotizaciones → Ver detalle** están disponibles Vista previa, Descargar PDF, Imprimir y la opción de hoja carta.
+Desde **Cotizaciones → Ver detalle** están disponibles Vista previa y Descargar PDF en formato comercial carta, además de Imprimir en ticket de 80 mm y la opción de hoja carta.
 
 ## Configuración sugerida de impresora térmica de 80 mm
 
@@ -44,7 +44,7 @@ Desde la carpeta `frontend`:
 npm.cmd install
 npm.cmd run lint
 npm.cmd run build
-node --test src/utils/documentosComerciales.test.js
+node --test src/utils/documentosComerciales.test.js src/utils/documentosFormales.test.js
 $env:VITE_API_URL = "http://localhost:5173"
 npm.cmd run dev
 ```
@@ -52,3 +52,10 @@ npm.cmd run dev
 Después iniciar sesión, entrar a **Ventas → Historial → Ver detalle** y revisar las acciones con una venta registrada. También probar **Cotizaciones → Ver detalle**. Comprobar un documento largo y una venta anulada.
 
 Esta rama contiene la integración de PDF junto con el nuevo frontend. **No se debe fusionar en producción sin validar el resultado.**
+
+## Separación de diseños
+
+- **Vista previa / Descargar PDF:** documento formal **carta**, como los comprobantes de archivo de E-farm. Recibo y factura de demostración incluyen logo, comprador, documento, tabla y totales; cotizaciones siguen el mismo diseño.
+- **Imprimir:** ticket **térmico 80 mm**, con altura adaptada a la cantidad de renglones.
+- **Más opciones → Imprimir en carta:** conserva la impresión HTML existente desde el navegador.
+- El PDF formal se construye con texto vectorial y el logotipo integrado. No necesita una dependencia npm adicional.
