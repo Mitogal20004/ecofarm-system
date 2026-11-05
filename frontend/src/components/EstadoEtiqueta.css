@@ -5,7 +5,7 @@
   min-height: 27px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   padding: 4px 9px 4px 8px;
   border: 1px solid var(--borde-estado);
   border-left: 3px solid var(--color-estado);
@@ -18,13 +18,12 @@
   white-space: nowrap;
 }
 
-.estado-etiqueta::before {
-  width: 5px;
-  height: 5px;
-  flex: 0 0 5px;
-  border-radius: 1px;
-  background: currentcolor;
-  content: '';
+.estado-etiqueta-icono {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+  display: block;
+  color: currentColor;
 }
 
 .estado-etiqueta-positivo {
