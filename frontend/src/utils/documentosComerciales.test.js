@@ -116,3 +116,66 @@ test('PDF de ticket largo reparte páginas sin truncar la venta', async () => {
   const contenido = new TextDecoder('latin1').decode(await pdf.arrayBuffer())
   assert.match(contenido, /\/Type \/Pages \/Count [2-9]/)
 })
+
+
+test('los tres tickets usan TOTAL unico sin Importe ni Subtotal', () => {
+  const casos = [
+    crearDocumentoVenta(venta, 'recibo'),
+    crearDocumentoVenta(venta, 'factura-demostracion'),
+    crearDocumentoCotizacion(cotizacion),
+  ]
+  for (const documento of casos) {
+    const lineas = construirLineasTicket(documento)
+    const totales = lineas.filter((linea) => linea.tipo === 'total')
+    assert.equal(totales.length, 1)
+    assert.equal(totales[0].etiqueta, 'TOTAL')
+    assert.equal(totales[0].negrita, true)
+    assert.ok(lineas.every((linea) => !/^(?:Importe|Subtotal)\b/i.test(linea.texto)))
+    assert.ok(lineas.some((linea) => linea.tipo === 'marca'))
+    assert.ok(lineas.some((linea) => linea.tipo === 'titulo'))
+  }
+})
+
+test('impresion termica incluye logo monocromo y TOTAL grande', async () => {
+  const { imprimirTicket } = await import('./documentosComerciales.js')
+  const previo = globalThis.window
+  let pagina = ''
+  let impresiones = 0
+  let logoOcultoEnTexto = false
+  const ventana = {
+    closed: false,
+    document: {
+      open() {},
+      write(texto) { pagina = texto },
+      close() {},
+      getElementById() { return { complete: true, naturalWidth: 200 } },
+      querySelector() {
+        return { classList: { add(nombre) { if (nombre === 'con-logo') logoOcultoEnTexto = true } } }
+      },
+    },
+    focus() {},
+    setTimeout(cb) { cb() },
+    print() { impresiones += 1 },
+  }
+  globalThis.window = { open() { return ventana } }
+  try {
+    imprimirTicket(crearDocumentoVenta(venta), '/assets/logo-efarm.png')
+  } finally {
+    if (previo === undefined) delete globalThis.window
+    else globalThis.window = previo
+  }
+  assert.equal(impresiones, 1)
+  assert.equal(logoOcultoEnTexto, true)
+  assert.match(pagina, /logo-ticket-efarm/)
+  assert.match(pagina, /grayscale\(1\) contrast\(6\)/)
+  assert.match(pagina, /importe-ticket total/)
+  assert.match(pagina, /font-size:15px;font-weight:900/)
+  assert.doesNotMatch(pagina, /class="importe-ticket importe"/)
+})
+
+test('en la cotizacion no se imprimen recibido ni cambio', () => {
+  const documento = crearDocumentoCotizacion(cotizacion)
+  const lineas = construirLineasTicket(documento)
+  assert.equal(lineas.filter((linea) => linea.tipo === 'total').length, 1)
+  assert.ok(!lineas.some((linea) => ['recibido', 'cambio'].includes(linea.tipo)))
+})
