@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import '../styles/ventas-efarm.css'
 import { listarClientes } from '../services/clientes'
 import { listarInventario } from '../services/inventario'
 import { listarVariantes } from '../services/productos'
@@ -670,9 +669,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       <div className="rejilla-captura-ventas">
         <section className="tarjeta-pos-ventas producto-ventas" aria-labelledby="producto-venta">
           <div className="titulo-paso-ventas">
-            <div>
             <h2 id="producto-venta">Seleccionar producto</h2>
-            </div>
           </div>
           <div className="campo-ventas">
             <label htmlFor="buscar-producto-venta">Buscar variante</label>
@@ -778,9 +775,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
           onKeyDown={manejarTecladoCalculadora}
         >
           <div className="titulo-paso-ventas">
-            <div>
             <h2 id="cantidad-venta">Cantidad</h2>
-            </div>
           </div>
           <label htmlFor="pantalla-cantidad-venta">Cantidad</label>
           <input
@@ -839,11 +834,9 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       </div>
 
       <section className="tarjeta-pos-ventas comprador-ventas" aria-labelledby="comprador-venta">
-        <div className="titulo-paso-ventas">
-          <div>
+          <div className="titulo-paso-ventas">
             <h2 id="comprador-venta">Cliente</h2>
           </div>
-        </div>
         <div className="buscador-cliente-ventas">
           {clienteSeleccionado ? (
             <div className="cliente-seleccionado-ventas">
