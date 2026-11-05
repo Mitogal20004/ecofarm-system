@@ -406,3 +406,31 @@
     font-size: 18px;
   }
 }
+
+
+/* Ajuste visual final: el carrito gana espacio al no reservar una ficha vacía. */
+@media screen {
+  .aplicacion-administrativa .pos-ventas .producto-ventas .vista-previa-vacia {
+    display: none;
+  }
+  .aplicacion-administrativa .pos-ventas .rejilla-captura-ventas {
+    align-items: start;
+  }
+  .aplicacion-administrativa .pos-ventas .producto-ventas,
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas {
+    padding-top: 15px;
+    padding-bottom: 15px;
+  }
+  .aplicacion-administrativa .pos-ventas .comprador-ventas {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .aplicacion-administrativa .pos-ventas .producto-ventas .vista-previa-venta dl {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media screen and (max-width: 700px) {
+  .aplicacion-administrativa .pos-ventas .producto-ventas .vista-previa-venta dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
