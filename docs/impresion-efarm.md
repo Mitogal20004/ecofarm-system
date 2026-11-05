@@ -59,3 +59,9 @@ Esta rama contiene la integración de PDF junto con el nuevo frontend. **No se d
 - **Imprimir:** ticket **térmico 80 mm**, con altura adaptada a la cantidad de renglones.
 - **Más opciones → Imprimir en carta:** conserva la impresión HTML existente desde el navegador.
 - El PDF formal se construye con texto vectorial y el logotipo integrado. No necesita una dependencia npm adicional.
+
+## Diseño actualizado del ticket térmico
+
+Los **tres tickets térmicos (recibo, factura de prueba y cotización)** incluyen el logotipo E-farm **centrado en blanco y negro**, título destacado y productos ordenados. Se eliminan las etiquetas **«Importe»** y **«Subtotal»** del ticket y se muestra un solo **TOTAL**, de mayor tamaño y en negrita, al cerrar la lista de productos. Los comprobantes de venta mantienen **Recibido** y **Cambio**; las cotizaciones no muestran cobros. Se conservan avisos de demostración/no validez fiscal y el mensaje de cotización comercial. El logotipo se convierte visualmente a monocromo mediante CSS; algunas impresoras térmicas requieren ajustar contraste o densidad desde su controlador.
+
+**Importante:** este cambio solo afecta a **Imprimir** (ticket térmico). **Vista previa** y **Descargar PDF** siguen generando los documentos formales tamaño carta a color.
