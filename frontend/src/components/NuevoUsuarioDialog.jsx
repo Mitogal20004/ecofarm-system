@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Check, Circle } from 'lucide-react'
 import { crearUsuario } from '../services/usuarios'
 import { listarRolesActivos } from '../services/roles'
 
@@ -480,7 +481,7 @@ function NuevoUsuarioDialog({
                   className={requisito.cumple ? 'requisito-cumplido' : ''}
                   key={requisito.id}
                 >
-                  <span aria-hidden="true">{requisito.cumple ? '✓' : '•'}</span>
+                  <span aria-hidden="true">{requisito.cumple ? <Check size={14} strokeWidth={2.2} /> : <Circle size={10} strokeWidth={1.5} />}</span>
                   {requisito.texto}
                 </li>
               ))}

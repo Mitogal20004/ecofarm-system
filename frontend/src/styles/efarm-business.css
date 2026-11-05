@@ -1,0 +1,949 @@
+/*
+ * E-FARM | Consola de operaciones
+ * Identidad visual para el entorno administrativo.
+ * El acceso/login queda deliberadamente fuera de estos estilos.
+ * Los estilos de impresión no se modifican.
+ */
+@media screen {
+  .aplicacion-administrativa {
+    --color-verde-oscuro: #203d32;
+    --color-verde-profundo: #203d32;
+    --color-verde-principal: #2d5947;
+    --color-verde-hover: #1b3c30;
+    --color-verde-secundario: #506a4f;
+    --color-verde-suave: #edf2eb;
+    --color-positivo: #39724d;
+    --color-positivo-hover: #2d6040;
+    --color-oliva: #64704c;
+    --color-beige-suave: #f2f0e9;
+    --color-acento-calido: #a58853;
+    --color-fondo: #f7f7f4;
+    --color-panel-lateral: #203a30;
+    --color-superficie: #ffffff;
+    --color-superficie-secundaria: #f4f5f1;
+    --color-texto: #26332b;
+    --color-texto-secundario: #647068;
+    --color-texto-suave: #778179;
+    --color-borde: #e2e7e1;
+    --color-borde-fuerte: #ccd6cd;
+    --color-focus: rgb(60 108 78 / 25%);
+    --sombra-superficie: none;
+    --sombra-superficie-elevada: 0 2px 12px rgb(22 40 28 / 6%);
+    grid-template-columns: 228px minmax(0, 1fr);
+    grid-template-rows: 60px minmax(calc(100svh - 60px), auto);
+    grid-template-areas:
+      'sidebar topbar'
+      'sidebar content';
+    background: var(--color-fondo);
+  }
+
+  /* Navegación permanente: la única zona oscura del ERP. */
+  .aplicacion-administrativa .barra-lateral {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    grid-area: sidebar;
+    padding: 25px 13px 22px;
+    border-right: 1px solid #173228;
+    background: #203a30;
+    color: #e7eee8;
+    scrollbar-color: #567062 transparent;
+  }
+
+  .aplicacion-administrativa .marca-panel {
+    gap: 10px;
+    margin: 0 7px 24px;
+    padding: 2px 0 22px;
+    border-bottom: 1px solid rgb(255 255 255 / 14%);
+  }
+
+  .aplicacion-administrativa .simbolo-panel {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    flex: 0 0 40px;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 6px;
+    background: #fff;
+  }
+
+  .aplicacion-administrativa .simbolo-panel img {
+    height: 37px;
+  }
+
+  .aplicacion-administrativa .nombre-marca-panel strong {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 750;
+    letter-spacing: -0.015em;
+  }
+
+  .aplicacion-administrativa .nombre-marca-panel small {
+    color: #b5c5b9;
+    font-size: 10.5px;
+    letter-spacing: 0.015em;
+  }
+
+  .aplicacion-administrativa .navegacion-principal {
+    margin-top: 0;
+  }
+
+  .aplicacion-administrativa .titulo-navegacion {
+    margin: 0 14px 9px;
+    color: #a8b9ac;
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.09em;
+  }
+
+  .aplicacion-administrativa .icono-titulo-navegacion {
+    display: none;
+  }
+
+  .aplicacion-administrativa .lista-navegacion-principal {
+    gap: 2px;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion {
+    min-height: 39px;
+    gap: 11px;
+    padding: 9px 12px 9px 15px;
+    border-radius: 5px;
+    color: #d2ded4;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+  }
+
+  .aplicacion-administrativa .icono-navegacion {
+    width: 17px;
+    height: 17px;
+    color: #adc2b3;
+    stroke-width: 1.65;
+  }
+
+  .aplicacion-administrativa .boton-navegacion:hover:not(.opcion-navegacion-activa) {
+    color: #fff;
+    background: rgb(255 255 255 / 8%);
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa {
+    color: #fff;
+    background: rgb(255 255 255 / 12%);
+    font-weight: 650;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa .icono-navegacion {
+    color: #e6f5e7;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa::after {
+    inset: 8px auto 8px 0;
+    width: 2px;
+    height: auto;
+    border-radius: 1px;
+    background: #c7dda7;
+  }
+
+  .aplicacion-administrativa .seccion-navegacion-administracion {
+    margin-top: 21px;
+    padding-top: 21px;
+    border-top: 1px solid rgb(255 255 255 / 14%);
+  }
+
+  .aplicacion-administrativa .estado-navegacion {
+    color: #c3d0c5;
+  }
+
+  /* Barra superior clara y funcional, sin tratamiento de "hero". */
+  .aplicacion-administrativa .barra-superior {
+    position: sticky;
+    top: 0;
+    grid-area: topbar;
+    min-height: 60px;
+    gap: 18px;
+    padding: 10px 30px;
+    border-bottom: 1px solid var(--color-borde);
+    color: var(--color-texto);
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .contexto-barra-superior span {
+    color: #718075;
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.07em;
+  }
+
+  .aplicacion-administrativa .contexto-barra-superior strong {
+    color: var(--color-texto);
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .aplicacion-administrativa .etiqueta-usuario {
+    color: #79847c;
+    font-size: 10px;
+    letter-spacing: 0.025em;
+    text-transform: none;
+  }
+
+  .aplicacion-administrativa .nombre-usuario {
+    color: var(--color-texto);
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .aplicacion-administrativa .correo-usuario {
+    color: #778179;
+    font-size: 10.5px;
+  }
+
+  .aplicacion-administrativa .boton-cerrar-sesion {
+    width: 35px;
+    height: 35px;
+    min-height: 35px;
+    border: 1px solid var(--color-borde);
+    border-radius: 5px;
+    box-shadow: none;
+    background: #fff;
+  }
+
+  .aplicacion-administrativa .boton-cerrar-sesion:hover:not(:disabled) {
+    border-color: var(--color-borde-fuerte);
+    background: #f1f4ef;
+    transform: none;
+  }
+
+  .aplicacion-administrativa .boton-cerrar-sesion:focus-visible,
+  .aplicacion-administrativa .boton-navegacion:focus-visible {
+    outline: 2px solid #8ba991;
+    outline-offset: 2px;
+  }
+
+  /* Más espacio para tablas, menos superficie desperdiciada. */
+  .aplicacion-administrativa .area-principal {
+    padding: clamp(22px, 2.65vw, 38px);
+    background: var(--color-fondo);
+  }
+
+  .aplicacion-administrativa .contenido-panel {
+    width: min(100%, 1460px);
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .encabezado-ventas,
+    .encabezado-caja,
+    .encabezado-inventario,
+    .encabezado-productos,
+    .encabezado-clientes,
+    .encabezado-cotizaciones,
+    .encabezado-reportes,
+    .encabezado-usuarios
+  ) {
+    margin-bottom: 19px;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .encabezado-ventas,
+    .encabezado-caja,
+    .encabezado-inventario,
+    .encabezado-productos,
+    .encabezado-clientes,
+    .encabezado-cotizaciones,
+    .encabezado-reportes,
+    .encabezado-usuarios
+  ) h1 {
+    color: var(--color-texto);
+    font-size: clamp(23px, 2vw, 28px);
+    font-weight: 720;
+    line-height: 1.25;
+    letter-spacing: -0.035em;
+  }
+
+  /* Tarjetas únicamente funcionales: panel plano, sin iconos decorativos. */
+  .aplicacion-administrativa .contenido-panel :is(
+    .tarjeta-kpi,
+    .tarjeta-caja,
+    .tarjeta-resumen-reporte,
+    .resumen-inventario article,
+    .tarjeta-precio-producto
+  ) {
+    min-height: 0;
+    padding: 15px 17px;
+    border: 1px solid var(--color-borde);
+    border-radius: 5px;
+    background: #fff;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .tarjeta-kpi,
+    .tarjeta-caja,
+    .tarjeta-resumen-reporte
+  )::before {
+    display: none;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .icono-tarjeta-kpi,
+    .icono-resumen-reporte
+  ) {
+    display: none;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .valor-tarjeta-kpi,
+    .valor-resumen-reporte
+  ) {
+    color: var(--color-texto);
+    font-size: clamp(21px, 2vw, 29px);
+    font-weight: 690;
+    letter-spacing: -0.035em;
+  }
+
+  /* Filtros y tablas tienen prioridad visual sobre adornos. */
+  .aplicacion-administrativa .contenido-panel :is(
+    .filtros-inventario,
+    .filtros-historial-inventario,
+    .filtros-productos,
+    .filtros-clientes,
+    .filtros-usuarios,
+    .filtros-cotizaciones,
+    .filtros-ventas,
+    .filtros-reportes,
+    .filtros-caja
+  ) {
+    border: 1px solid var(--color-borde);
+    border-radius: 5px;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .contenedor-listado-inventario,
+    .contenedor-historial-inventario,
+    .contenedor-listado-productos,
+    .contenedor-listado-clientes,
+    .contenedor-listado-usuarios,
+    .contenedor-tabla-cotizaciones,
+    .seccion-historial-ventas,
+    .panel-reporte,
+    .tarjeta-pos-ventas
+  ) {
+    border-color: var(--color-borde);
+    border-radius: 5px;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    input:not([type='checkbox']):not([type='radio']),
+    select,
+    textarea
+  ) {
+    border-radius: 5px;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    input:not([type='checkbox']):not([type='radio']),
+    select,
+    textarea
+  ):focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .boton-primario-ventas,
+    .boton-primario-caja,
+    .boton-primario-inventario,
+    .boton-primario-producto,
+    .boton-primario-cliente,
+    .boton-primario-cotizaciones,
+    .boton-primario-reporte,
+    .boton-primario-usuario,
+    .boton-nuevo-producto,
+    .boton-nuevo-cliente,
+    .boton-nuevo-usuario
+  ) {
+    border-radius: 5px;
+    box-shadow: none;
+    font-size: 13px;
+    font-weight: 630;
+    transform: none;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .boton-secundario-ventas,
+    .boton-secundario-caja,
+    .boton-secundario-inventario,
+    .boton-secundario-producto,
+    .boton-secundario-cliente,
+    .boton-secundario-cotizaciones,
+    .boton-secundario-reporte,
+    .boton-secundario-usuario
+  ) {
+    border-radius: 5px;
+    box-shadow: none;
+    font-size: 13px;
+    font-weight: 550;
+    transform: none;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .tabla-inventario,
+    .tabla-historial-inventario,
+    .tabla-productos,
+    .tabla-clientes,
+    .tabla-usuarios,
+    .tabla-cotizaciones,
+    .tabla-ventas,
+    .tabla-reportes,
+    .tabla-caja
+  ) {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12.5px;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .tabla-inventario,
+    .tabla-historial-inventario,
+    .tabla-productos,
+    .tabla-clientes,
+    .tabla-usuarios,
+    .tabla-cotizaciones,
+    .tabla-ventas,
+    .tabla-reportes,
+    .tabla-caja
+  ) thead th {
+    color: #56635b;
+    background: #f4f6f2;
+    font-size: 11px;
+    font-weight: 680;
+    letter-spacing: 0.02em;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .tabla-inventario,
+    .tabla-historial-inventario,
+    .tabla-productos,
+    .tabla-clientes,
+    .tabla-usuarios,
+    .tabla-cotizaciones,
+    .tabla-ventas,
+    .tabla-reportes,
+    .tabla-caja
+  ) tbody tr:hover {
+    background: #f5f8f4;
+  }
+
+  .aplicacion-administrativa .contenido-panel :is(
+    .contenedor-tabla-cotizaciones,
+    .contenedor-listado-inventario,
+    .contenedor-listado-productos,
+    .contenedor-listado-clientes,
+    .contenedor-listado-usuarios
+  ) {
+    scrollbar-color: #c1cec2 transparent;
+  }
+
+  /* Inicio: resumen editorial de operaciones, no un tablero de tarjetas. */
+  .aplicacion-administrativa .inicio-panel {
+    gap: 21px;
+  }
+
+  .aplicacion-administrativa .inicio-bienvenida {
+    min-height: 0;
+    align-items: center;
+    padding: 5px 0 22px;
+    border: 0;
+    border-bottom: 1px solid var(--color-borde);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .inicio-bienvenida::before,
+  .aplicacion-administrativa .inicio-bienvenida::after {
+    display: none;
+  }
+
+  .aplicacion-administrativa .etiqueta-seccion {
+    color: #5a735d;
+    font-size: 10px;
+    font-weight: 680;
+    letter-spacing: 0.08em;
+  }
+
+  .aplicacion-administrativa .encabezado-panel h1 {
+    max-width: 950px;
+    color: #22332a;
+    font-size: clamp(25px, 3vw, 34px);
+    line-height: 1.18;
+    font-weight: 710;
+    letter-spacing: -0.04em;
+  }
+
+  .aplicacion-administrativa .descripcion-panel {
+    max-width: 620px;
+    margin-top: 8px;
+    color: #637168;
+    font-size: 13px;
+  }
+
+  .aplicacion-administrativa .estado-inicio {
+    padding: 6px 9px;
+    border-color: #dce7db;
+    border-radius: 4px;
+    background: #f1f5ee;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* Accesibilidad: mantener foco y contraste en navegación y controles. */
+  .aplicacion-administrativa button:focus-visible {
+    outline-offset: 2px;
+  }
+}
+
+@media screen and (max-width: 1100px) {
+  .aplicacion-administrativa {
+    grid-template-columns: 205px minmax(0, 1fr);
+  }
+
+  .aplicacion-administrativa .barra-superior {
+    padding-inline: 20px;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  .aplicacion-administrativa {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      'topbar'
+      'sidebar'
+      'content';
+  }
+
+  .aplicacion-administrativa .barra-superior {
+    grid-area: topbar;
+    min-height: 58px;
+    padding: 8px 16px;
+  }
+
+  .aplicacion-administrativa .barra-lateral {
+    position: static;
+    grid-area: sidebar;
+    width: 100%;
+    height: auto;
+    padding: 10px 14px;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid #193c2e;
+  }
+
+  .aplicacion-administrativa .marca-panel {
+    margin: 0;
+    padding: 0 0 10px;
+  }
+
+  .aplicacion-administrativa .navegacion-principal {
+    margin-top: 10px;
+  }
+
+  .aplicacion-administrativa .lista-navegacion-principal {
+    display: flex;
+    gap: 3px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion {
+    min-height: 35px;
+    flex: 0 0 auto;
+    padding: 8px 11px;
+    white-space: nowrap;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa::after {
+    inset: auto 8px 0;
+    width: auto;
+    height: 2px;
+  }
+
+  .aplicacion-administrativa .seccion-navegacion-administracion {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .aplicacion-administrativa .area-principal {
+    padding: 21px 15px;
+  }
+}
+
+@media screen and (max-width: 560px) {
+  .aplicacion-administrativa .barra-superior {
+    gap: 9px;
+  }
+
+  .aplicacion-administrativa .nombre-usuario,
+  .aplicacion-administrativa .correo-usuario {
+    max-width: min(72vw, 290px);
+  }
+
+  .aplicacion-administrativa .inicio-bienvenida {
+    align-items: flex-start;
+    gap: 10px;
+    padding-bottom: 17px;
+  }
+}
+
+
+/* V2 / Arquitectura horizontal: navega como un sistema comercial, no como SaaS. */
+@media screen and (min-width: 761px) {
+  .aplicacion-administrativa {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:72px 52px minmax(calc(100svh - 124px),auto);
+    grid-template-areas:'topbar' 'sidebar' 'content';
+    background:#f8f9f6;
+  }
+  .aplicacion-administrativa .barra-superior {
+    min-height:72px;
+    padding:12px clamp(25px,3.6vw,56px);
+    gap:24px;
+    border-bottom:1px solid #e0e7df;
+    background:#fff;
+  }
+  .aplicacion-administrativa .barra-superior .marca-panel {
+    display:flex;align-items:center;gap:10px;
+    margin:0 24px 0 0;padding:0 26px 0 0;
+    border:0;border-right:1px solid #e0e7df;
+  }
+  .aplicacion-administrativa .barra-superior .simbolo-panel {
+    width:42px;height:42px;flex-basis:42px;border-radius:4px;background:transparent;
+  }
+  .aplicacion-administrativa .barra-superior .nombre-marca-panel strong {
+    color:#204633;font-size:18px;
+  }
+  .aplicacion-administrativa .barra-superior .nombre-marca-panel small {
+    color:#667d6b;
+  }
+  .aplicacion-administrativa .contexto-barra-superior span {
+    font-size:9px;color:#859287;letter-spacing:.12em;
+  }
+  .aplicacion-administrativa .contexto-barra-superior strong {
+    font-size:13px;color:#4d6554;font-weight:600;
+  }
+  .aplicacion-administrativa .barra-lateral {
+    position:sticky;top:72px;height:52px;
+    display:flex;align-items:center;gap:0;
+    padding:0 clamp(22px,3.6vw,53px);
+    overflow-x:auto;overflow-y:hidden;
+    background:#244532;border:0;border-bottom:1px solid #193b28;
+    scrollbar-width:thin;
+  }
+  .aplicacion-administrativa .navegacion-principal {
+    display:flex;align-items:center;gap:22px;
+    flex:0 0 auto;margin:0;
+  }
+  .aplicacion-administrativa .titulo-navegacion { display:none; }
+  .aplicacion-administrativa .lista-navegacion-principal {
+    display:flex;align-items:center;flex-wrap:nowrap;gap:3px;margin:0;
+  }
+  .aplicacion-administrativa .opcion-navegacion {
+    min-height:52px;height:52px;padding:0 13px;
+    gap:8px;border-radius:0;
+    font-size:12px;color:#d7e4d9;white-space:nowrap;
+  }
+  .aplicacion-administrativa .icono-navegacion {
+    width:15px;height:15px;
+  }
+  .aplicacion-administrativa .opcion-navegacion-activa {
+    color:#fff;background:#345b43;
+  }
+  .aplicacion-administrativa .opcion-navegacion-activa::after {
+    inset:auto 12px 0;width:auto;height:3px;
+    border-radius:0;background:#bad1a3;
+  }
+  .aplicacion-administrativa .seccion-navegacion-administracion {
+    margin:0;padding:0;border:0;
+  }
+  .aplicacion-administrativa .area-principal {
+    padding:clamp(25px,3.5vw,55px);
+  }
+  .aplicacion-administrativa .contenido-panel {
+    max-width:1500px;
+  }
+}
+@media screen and (max-width:760px) {
+  .aplicacion-administrativa .barra-superior .marca-panel {
+    margin:0 auto 0 0;padding:0;border:0;
+    display:flex;align-items:center;gap:8px;
+  }
+  .aplicacion-administrativa .barra-superior .simbolo-panel {
+    width:37px;height:37px;flex-basis:37px;background:transparent;
+  }
+  .aplicacion-administrativa .barra-superior .nombre-marca-panel strong {
+    color:#244b36;font-size:17px;
+  }
+  .aplicacion-administrativa .barra-superior .nombre-marca-panel small {
+    display:none;
+  }
+  .aplicacion-administrativa .barra-superior {
+    display:flex;align-items:center;flex-wrap:nowrap;gap:8px;
+    padding:8px 15px;
+  }
+  .aplicacion-administrativa .barra-superior .contexto-barra-superior {display:none;}
+  .aplicacion-administrativa .acciones-barra-superior {width:auto;flex:0 1 auto;}
+  .aplicacion-administrativa .identidad-usuario {display:none;}
+  .aplicacion-administrativa .barra-lateral {
+    padding:3px 12px;display:flex;flex-wrap:nowrap;overflow-x:auto;
+  }
+  .aplicacion-administrativa .navegacion-principal {display:flex;align-items:center;gap:6px;}
+  .aplicacion-administrativa .titulo-navegacion {display:none;}
+  .aplicacion-administrativa .lista-navegacion-principal {display:flex;gap:2px;padding:0;}
+  .aplicacion-administrativa .opcion-navegacion {border-radius:0;min-height:39px;font-size:12px;}
+  .aplicacion-administrativa .seccion-navegacion-administracion {margin:0;padding:0;border:0;}
+  .aplicacion-administrativa .opcion-navegacion-activa::after {
+    inset:auto 8px 0;width:auto;height:2px;
+  }
+}
+
+
+/* Encabezados directos y paleta clásica verde + crema de ECOFARM. */
+@media screen {
+  .aplicacion-administrativa {
+    --color-fondo: #f8f6f0;
+    --color-superficie-secundaria: #f2eee4;
+    background: #f8f6f0;
+  }
+  .aplicacion-administrativa .area-principal {
+    background: #f8f6f0;
+  }
+  .aplicacion-administrativa .barra-superior {
+    background: #fffdf9;
+  }
+  .aplicacion-administrativa .contenido-panel :is(
+    .encabezado-ventas,
+    .encabezado-caja,
+    .encabezado-inventario,
+    .encabezado-productos,
+    .encabezado-clientes,
+    .encabezado-cotizaciones,
+    .encabezado-reportes,
+    .encabezado-usuarios
+  ) h1 {
+    font-size: clamp(22px, 2vw, 27px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -.025em;
+  }
+  .aplicacion-administrativa .inicio-cabecera {
+    display: block;
+    padding: 0 0 17px;
+    border-bottom: 1px solid #dadfd5;
+  }
+  .aplicacion-administrativa .inicio-cabecera h1 {
+    margin: 0;
+    font-size: clamp(22px, 2vw, 27px);
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -.025em;
+    color: #203d32;
+  }
+}
+
+
+/* Microinteracciones propias de E-farm: cambio de módulo sin efectos exagerados. */
+@media screen {
+  .aplicacion-administrativa .opcion-navegacion {
+    transition:
+      background-color 170ms ease,
+      color 170ms ease,
+      box-shadow 170ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion .icono-navegacion {
+    flex-shrink: 0;
+    transform-origin: center center;
+    transition: color 200ms ease, transform 260ms cubic-bezier(.2, .8, .2, 1);
+  }
+
+  .aplicacion-administrativa .opcion-navegacion:hover:not(.opcion-navegacion-activa) .icono-navegacion {
+    color: #f0f5e9;
+    transform: translateY(-2px) scale(1.14) rotate(-6deg);
+  }
+
+  .aplicacion-administrativa .opcion-navegacion:active .icono-navegacion {
+    transform: scale(.91);
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa {
+    background: #345b43;
+    color: #fff;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa .icono-navegacion {
+    color: #e9f7e4;
+    transform: translateY(-1px) scale(1.08);
+    animation: efarm-icono-activo 410ms cubic-bezier(.2, .75, .2, 1);
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa::after {
+    animation: efarm-subrayado-activo 230ms cubic-bezier(.2, .75, .25, 1) both;
+  }
+
+  .aplicacion-administrativa .contenido-panel {
+    /* Sin 'forwards': evitar que transform cree una capa permanente
+       que pueda interferir con cuadros de diálogo y ventanas modales. */
+    animation: efarm-aparecer-modulo 235ms cubic-bezier(.2, .7, .2, 1);
+  }
+
+  .aplicacion-administrativa .boton-cerrar-sesion > svg {
+    width: 18px;
+    height: 18px;
+    color: #28503d;
+  }
+}
+
+@keyframes efarm-icono-activo {
+  0%   { transform: translateY(2px) scale(.82) rotate(0deg); }
+  48%  { transform: translateY(-4px) scale(1.23) rotate(-8deg); }
+  75%  { transform: translateY(0) scale(1.04) rotate(3deg); }
+  100% { transform: translateY(-1px) scale(1.08) rotate(0deg); }
+}
+
+@keyframes efarm-subrayado-activo {
+  from { opacity: .5; transform: scaleX(.35); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes efarm-aparecer-modulo {
+  from { opacity: .25; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aplicacion-administrativa .opcion-navegacion,
+  .aplicacion-administrativa .opcion-navegacion .icono-navegacion {
+    transition: none !important;
+  }
+  .aplicacion-administrativa .opcion-navegacion-activa::after,
+  .aplicacion-administrativa .opcion-navegacion-activa .icono-navegacion,
+  .aplicacion-administrativa .contenido-panel {
+    animation: none !important;
+  }
+}
+
+
+/*
+ * Barra fija por encima del contenido al desplazarse.
+ * El encabezado tiene prioridad sobre la navegación, y ambos
+ * quedan por encima de paneles, tarjetas y tablas de los módulos.
+ * Los diálogos modales conservan su propio z-index (normalmente 60+).
+ */
+@media screen and (min-width: 761px) {
+  .aplicacion-administrativa .barra-superior {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  .aplicacion-administrativa .barra-lateral {
+    position: sticky;
+    top: 72px;
+    z-index: 30;
+    background-color: #244532;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  .aplicacion-administrativa .barra-superior {
+    z-index: 40;
+  }
+
+  .aplicacion-administrativa .barra-lateral {
+    position: static;
+    z-index: auto;
+  }
+}
+
+
+/* Ajuste de marca: encabezado crema y logotipo original sin recortes. */
+@media screen {
+  .aplicacion-administrativa .barra-superior {
+    background-color: #f8f6f0;
+    border-bottom: 1px solid #dedfd4;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .barra-superior .marca-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    flex: 0 0 auto;
+    min-width: 0;
+    margin: 0 20px 0 0;
+    padding: 0 22px 0 0;
+    border: 0;
+    border-right: 1px solid #d9ddd2;
+  }
+
+  .aplicacion-administrativa .barra-superior .logotipo-panel {
+    display: block;
+    width: 150px;
+    height: 50px;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left center;
+    transform: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .aplicacion-administrativa .barra-superior .descripcion-marca-panel {
+    display: block;
+    margin: -6px 0 0 51px;
+    color: #657662;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+}
+
+@media screen and (min-width: 761px) {
+  .aplicacion-administrativa .barra-superior {
+    padding-block: 6px;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  .aplicacion-administrativa .barra-superior .marca-panel {
+    margin: 0 auto 0 0;
+    padding: 0 10px 0 0;
+    border-right: 0;
+  }
+
+  .aplicacion-administrativa .barra-superior .logotipo-panel {
+    width: 120px;
+    height: 40px;
+  }
+
+  .aplicacion-administrativa .barra-superior .descripcion-marca-panel {
+    margin: -5px 0 0 41px;
+    font-size: 9px;
+  }
+}

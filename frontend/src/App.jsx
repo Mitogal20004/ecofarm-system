@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
-import iconoCerrarSesion from './assets/icono-cerrar-sesion.svg'
+import { LogOut } from 'lucide-react'
 import logoEfarm from './assets/logo-efarm-brand.png'
 import IconoInterfaz from './components/IconoInterfaz'
 import Login from './pages/Login'
@@ -15,6 +15,9 @@ import Reportes from './pages/Reportes'
 import Usuarios from './pages/Usuarios'
 import Ventas from './pages/Ventas'
 import Caja from './pages/Caja'
+import './styles/efarm-business.css'
+import './styles/ventas-efarm.css'
+import './styles/documentos-efarm.css'
 import { limpiarOperacionesPendientesCaja } from './services/caja'
 import {
   cerrarSesion,
@@ -342,14 +345,13 @@ function App() {
   return (
     <div className="aplicacion-administrativa">
       <header className="barra-superior">
-        <div className="contexto-barra-superior" aria-hidden="true">
-          <span>Gestión interna</span>
-          <strong>Operaciones E-farm</strong>
+        <div className="marca-panel">
+          <img className="logotipo-panel" src={logoEfarm} alt="E-farm" />
+          <span className="descripcion-marca-panel">Gestión agrícola</span>
         </div>
-
         <div className="acciones-barra-superior">
           <div className="identidad-usuario">
-            <span className="etiqueta-usuario">Usuario actual</span>
+            <span className="etiqueta-usuario">Sesión de trabajo</span>
             <strong className="nombre-usuario">
               {autorizacion?.perfil?.nombre_completo || 'Cuenta E-farm'}
             </strong>
@@ -369,22 +371,13 @@ function App() {
             {cerrandoSesion ? (
               <span className="spinner-cerrar-sesion" aria-hidden="true" />
             ) : (
-              <img src={iconoCerrarSesion} alt="" aria-hidden="true" />
+              <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
             )}
           </button>
         </div>
       </header>
 
       <aside className="barra-lateral">
-        <div className="marca-panel">
-          <span className="simbolo-panel" aria-hidden="true">
-            <img src={logoEfarm} alt="" />
-          </span>
-          <span className="nombre-marca-panel">
-            <strong>E-farm</strong>
-            <small>Sistema administrativo</small>
-          </span>
-        </div>
 
         <nav className="navegacion-principal" aria-label="Navegación principal">
           <p className="titulo-navegacion">General</p>
@@ -551,13 +544,7 @@ function App() {
 
           {tienePermiso('usuario.ver') && (
             <div className="seccion-navegacion-administracion">
-              <p className="titulo-navegacion titulo-navegacion-con-icono">
-                <IconoInterfaz
-                  nombre="administracion"
-                  className="icono-titulo-navegacion"
-                />
-                Administración
-              </p>
+              <p className="titulo-navegacion">Administración</p>
               <ul className="lista-navegacion-principal">
                 <li>
                   <button
@@ -584,7 +571,7 @@ function App() {
 
       <div className="contenido-aplicacion">
         <main className="area-principal">
-          <div className="contenido-panel">
+          <div className="contenido-panel" key={vistaActual}>
             {vistaActual === VISTA_VENTAS ? (
               <Ventas
                 key={autorizacion?.perfil?.id ?? 'sin-usuario'}

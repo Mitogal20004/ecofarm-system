@@ -1,0 +1,232 @@
+/*
+ * E-farm | Herramientas de documentos comerciales.
+ * Vista previa y descarga en PDF de 80 mm, impresion termica
+ * y alternativa de impresion en carta.
+ * No modifica la composicion de pagina al imprimir.
+ */
+@media screen {
+  .aplicacion-administrativa .panel-documentos-efarm {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 13px 16px;
+    margin: 0;
+    padding: 15px 18px;
+    border: 1px solid #dbe4d9;
+    border-radius: 5px;
+    background: #f2f2e9;
+  }
+
+  .aplicacion-administrativa .selector-documento-efarm {
+    display: grid;
+    gap: 5px;
+    min-width: 175px;
+  }
+
+  .aplicacion-administrativa .selector-documento-efarm > label {
+    color: #445848;
+    font-size: 11px;
+    font-weight: 680;
+  }
+
+  .aplicacion-administrativa .selector-documento-efarm > select {
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 1px solid #bfcfbf;
+    border-radius: 4px;
+    background: #fff;
+    color: #2f4535;
+    font-size: 12px;
+  }
+
+  .aplicacion-administrativa .acciones-documentos-efarm {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .aplicacion-administrativa .panel-documentos-efarm button,
+  .aplicacion-administrativa .acciones-encabezado-cotizacion button {
+    min-height: 38px;
+    padding: 8px 13px;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .nota-documentos-efarm {
+    flex: 1 0 100%;
+    margin: 0;
+    color: #66776a;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm {
+    position: relative;
+    align-self: center;
+    margin: 0;
+    color: #446550;
+    font-size: 11px;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm > summary {
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-weight: 610;
+    white-space: nowrap;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm > summary:hover {
+    background: #e5ece1;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm[open] {
+    background: #fff;
+    border: 1px solid #dce5d7;
+    border-radius: 4px;
+    padding-bottom: 7px;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm > button {
+    margin: 0 7px;
+    display: block;
+  }
+
+  .aplicacion-administrativa .acciones-encabezado-cotizacion {
+    gap: 7px;
+  }
+
+  .aplicacion-administrativa .acciones-encabezado-cotizacion .opciones-documentos-efarm {
+    margin-left: 3px;
+  }
+
+  .aplicacion-administrativa .boton-primario-ventas,
+  .aplicacion-administrativa .boton-primario-cotizaciones {
+    background: #2d5947;
+    border-color: #2d5947;
+  }
+}
+
+@media screen and (max-width: 650px) {
+  .aplicacion-administrativa .panel-documentos-efarm {
+    align-items: stretch;
+    padding: 14px;
+  }
+
+  .aplicacion-administrativa .selector-documento-efarm,
+  .aplicacion-administrativa .acciones-documentos-efarm {
+    flex: 1 1 100%;
+  }
+
+  .aplicacion-administrativa .acciones-documentos-efarm > button {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* Accesos rápidos después de confirmar una venta: sin tarjetas enormes. */
+@media screen {
+  .aplicacion-administrativa .resultado-venta-efarm {
+    width:min(100%,790px);max-width:790px;display:grid;justify-items:stretch;
+    gap:17px;margin:0 auto;padding:22px 24px;border:1px solid #dae3d7;
+    border-radius:5px;background:#fffdf9;box-shadow:none;text-align:left;
+  }
+  .aplicacion-administrativa .resultado-venta-titulo-efarm {
+    display:flex;align-items:center;gap:12px;color:#285740;
+  }
+  .aplicacion-administrativa .resultado-venta-titulo-efarm > svg {
+    flex:0 0 24px;color:#34704d;
+  }
+  .aplicacion-administrativa .resultado-venta-titulo-efarm h2 {
+    margin:0 0 3px;color:#244533;font-size:20px;font-weight:700;
+  }
+  .aplicacion-administrativa .resultado-venta-titulo-efarm p {
+    margin:0;color:#67766b;font-size:12px;
+  }
+  .aplicacion-administrativa .resultado-venta-efarm .resultado-venta-importes-efarm {
+    width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:0;margin:0;border:1px solid #dfe6dc;border-radius:4px;background:#f6f7f1;
+  }
+  .aplicacion-administrativa .resultado-venta-efarm .resultado-venta-importes-efarm > div {
+    display:grid;gap:5px;padding:12px 15px;border:0;border-right:1px solid #dfe6dc;
+    border-radius:0;background:transparent;
+  }
+  .aplicacion-administrativa .resultado-venta-efarm .resultado-venta-importes-efarm > div:last-child {
+    border-right:0;
+  }
+  .aplicacion-administrativa .resultado-venta-efarm .resultado-venta-importes-efarm dt {
+    color:#647669;font-size:11px;font-weight:550;
+  }
+  .aplicacion-administrativa .resultado-venta-efarm .resultado-venta-importes-efarm dd {
+    color:#214734;font-size:17px;font-weight:680;
+  }
+  .aplicacion-administrativa .documentos-resultado-efarm {
+    display:grid;gap:12px;padding:16px 17px;border:1px solid #dbe5d8;
+    border-radius:5px;background:#f2f3e9;
+  }
+  .aplicacion-administrativa .documentos-resultado-encabezado-efarm {
+    display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:10px;
+  }
+  .aplicacion-administrativa .documentos-resultado-encabezado-efarm > strong {
+    color:#2d4b37;font-size:14px;
+  }
+  .aplicacion-administrativa .documentos-resultado-encabezado-efarm > label {
+    display:flex;align-items:center;gap:10px;color:#627463;font-size:11px;
+  }
+  .aplicacion-administrativa .documentos-resultado-encabezado-efarm select {
+    min-width:155px;min-height:35px;padding:6px 10px;border:1px solid #c9d7c7;
+    border-radius:4px;background:#fff;color:#294938;font-size:12px;
+  }
+  .aplicacion-administrativa .acciones-documentos-resultado-efarm {
+    display:flex;flex-wrap:wrap;gap:8px;
+  }
+  .aplicacion-administrativa .acciones-documentos-resultado-efarm > button {
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    min-height:39px;padding:8px 12px;border-radius:4px;font-size:12px;font-weight:640;
+  }
+  .aplicacion-administrativa .acciones-documentos-resultado-efarm > button > svg {
+    flex:0 0 16px;stroke-width:1.8;
+  }
+  .aplicacion-administrativa .acciones-documentos-resultado-efarm > button:disabled {
+    opacity:.52;cursor:wait;
+  }
+  .aplicacion-administrativa .resultado-venta-efarm .nota-documentos-efarm,
+  .aplicacion-administrativa .estado-documento-rapido-efarm,
+  .aplicacion-administrativa .aviso-fiscal-rapido-efarm {
+    margin:0;color:#6b786d;font-size:11px;line-height:1.45;
+  }
+  .aplicacion-administrativa .aviso-fiscal-rapido-efarm {
+    color:#995e33;font-weight:700;
+  }
+  .aplicacion-administrativa .error-documento-rapido-efarm {
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;color:#8c3b30;
+  }
+  .aplicacion-administrativa .error-documento-rapido-efarm > p {
+    flex:1 1 300px;color:#8c3b30;font-size:12px;
+  }
+  .aplicacion-administrativa .acciones-resultado-efarm {
+    justify-content:flex-end;gap:8px;padding-top:5px;
+  }
+  .aplicacion-administrativa .acciones-resultado-efarm > button {
+    display:inline-flex;align-items:center;gap:8px;min-height:39px;
+    padding:8px 13px;border-radius:4px;font-size:12px;
+  }
+}
+@media screen and (max-width:650px) {
+  .aplicacion-administrativa .resultado-venta-efarm {padding:17px 14px;}
+  .aplicacion-administrativa .resultado-venta-efarm .resultado-venta-importes-efarm {
+    grid-template-columns:1fr;
+  }
+  .aplicacion-administrativa .resultado-venta-efarm .resultado-venta-importes-efarm > div {
+    border-right:0;border-bottom:1px solid #dfe6dc;
+  }
+  .aplicacion-administrativa .resultado-venta-efarm .resultado-venta-importes-efarm > div:last-child {
+    border-bottom:0;
+  }
+  .aplicacion-administrativa .acciones-documentos-resultado-efarm > button {flex:1 1 auto;}
+}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import DetalleVenta from '../components/DetalleVenta'
+import IconoInterfaz from '../components/IconoInterfaz'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import VentaPos from '../components/VentaPos'
 import { listarVentas } from '../services/ventas'
@@ -32,49 +33,8 @@ const formatoFecha = new Intl.DateTimeFormat('es-GT', {
 const mostrarFecha = (valor) =>
   valor ? formatoFecha.format(new Date(valor)) : '—'
 
-const trazosAccionVenta = {
-  ver: (
-    <>
-      <path d="M2.5 12s3.4-5 9.5-5 9.5 5 9.5 5-3.4 5-9.5 5-9.5-5-9.5-5Z" />
-      <circle cx="12" cy="12" r="2.5" />
-    </>
-  ),
-  anular: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="m9 9 6 6m0-6-6 6" />
-    </>
-  ),
-  recibo: (
-    <>
-      <path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21V3Z" />
-      <path d="M9 8h6m-6 4h6" />
-    </>
-  ),
-  factura: (
-    <>
-      <path d="M6 3h9l3 3v15H6V3Z" />
-      <path d="M15 3v4h3M9 11h6m-6 4h6" />
-    </>
-  ),
-}
-
 function IconoAccionVenta({ tipo }) {
-  return (
-    <svg
-      className="icono-accion-venta"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      {trazosAccionVenta[tipo]}
-    </svg>
-  )
+  return <IconoInterfaz nombre={tipo} className="icono-accion-venta" />
 }
 
 function Ventas({

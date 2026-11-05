@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import logoEfarm from '../assets/logo-efarm-brand.png'
 import EstadoEtiqueta from './EstadoEtiqueta'
 import {
+  crearDocumentoCotizacion,
+  imprimirTicket,
+} from '../utils/documentosComerciales'
+import { descargarPDFFormal, verPDFFormal } from '../utils/documentosFormales'
+import {
   cambiarEstadoCotizacion,
   obtenerCotizacion,
 } from '../services/cotizaciones'
@@ -177,6 +182,33 @@ function DetalleCotizacion({
   }
 
   const { cotizacion, detalles } = detalle
+  const verDocumento = async () => {
+    try {
+      await verPDFFormal(crearDocumentoCotizacion(detalle), logoEfarm)
+      setError('')
+    } catch (errorPrevia) {
+      setError(errorPrevia?.message || 'No fue posible abrir la vista previa.')
+    }
+  }
+
+  const descargarDocumento = async () => {
+    try {
+      await descargarPDFFormal(crearDocumentoCotizacion(detalle), logoEfarm)
+      setError('')
+    } catch (errorDescarga) {
+      setError(errorDescarga?.message || 'No fue posible descargar el PDF.')
+    }
+  }
+
+  const imprimirTicketDocumento = () => {
+    try {
+      imprimirTicket(crearDocumentoCotizacion(detalle), logoEfarm)
+      setError('')
+    } catch (errorImpresion) {
+      setError(errorImpresion?.message || 'No fue posible imprimir la cotización.')
+    }
+  }
+
   const esBorrador = cotizacion.estado === 'borrador'
   const puedeAnular = ['borrador', 'emitida'].includes(cotizacion.estado)
 
@@ -199,13 +231,21 @@ function DetalleCotizacion({
           <button className="boton-secundario-cotizaciones" type="button" onClick={alVolver}>
             Volver
           </button>
-          <button
-            className="boton-secundario-cotizaciones"
-            type="button"
-            onClick={() => window.print()}
-          >
-            Imprimir / PDF
+          <button className="boton-secundario-cotizaciones" type="button" onClick={verDocumento}>
+            Vista previa
           </button>
+          <button className="boton-secundario-cotizaciones" type="button" onClick={descargarDocumento}>
+            Descargar PDF
+          </button>
+          <button className="boton-primario-cotizaciones" type="button" onClick={imprimirTicketDocumento}>
+            Imprimir
+          </button>
+          <details className="opciones-documentos-efarm">
+            <summary>Más opciones</summary>
+            <button className="boton-secundario-cotizaciones" type="button" onClick={() => window.print()}>
+              Imprimir en carta
+            </button>
+          </details>
           {puedeEditar && esBorrador && (
             <button className="boton-secundario-cotizaciones" type="button" onClick={alEditar}>
               Editar

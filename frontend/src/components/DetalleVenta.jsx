@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import logoEfarm from '../assets/logo-efarm-brand.png'
 import EstadoEtiqueta from './EstadoEtiqueta'
 import {
+  crearDocumentoVenta,
+  imprimirTicket,
+} from '../utils/documentosComerciales'
+import { descargarPDFFormal, verPDFFormal } from '../utils/documentosFormales'
+import {
   anularVenta,
   generarReciboVenta,
   obtenerVenta,
@@ -98,6 +103,7 @@ function DetalleVenta({
   const [motivo, setMotivo] = useState('')
   const [error, setError] = useState('')
   const [documentoImpresion, setDocumentoImpresion] = useState(null)
+  const [tipoDocumentoSeleccionado, setTipoDocumentoSeleccionado] = useState('recibo')
   const claveAlmacenamientoDevolucion = crearClaveAlmacenamientoDevolucion(
     usuarioActualId,
     ventaId,
@@ -137,6 +143,33 @@ function DetalleVenta({
       setDocumentoImpresion(null)
     }, 150)
   }, [])
+
+  const descargarDocumento = async (tipo) => {
+    try {
+      await descargarPDFFormal(crearDocumentoVenta(detalle, tipo), logoEfarm)
+      setError('')
+    } catch (errorDescarga) {
+      setError(errorDescarga?.message || 'No fue posible descargar el PDF.')
+    }
+  }
+
+  const verDocumento = async (tipo) => {
+    try {
+      await verPDFFormal(crearDocumentoVenta(detalle, tipo), logoEfarm)
+      setError('')
+    } catch (errorPrevia) {
+      setError(errorPrevia?.message || 'No fue posible abrir la vista previa.')
+    }
+  }
+
+  const imprimirTicketDocumento = (tipo) => {
+    try {
+      imprimirTicket(crearDocumentoVenta(detalle, tipo), logoEfarm)
+      setError('')
+    } catch (errorImpresion) {
+      setError(errorImpresion?.message || 'No fue posible imprimir el documento.')
+    }
+  }
 
   const cargarDetalle = useCallback(async () => {
     setCargando(true)
@@ -583,6 +616,7 @@ function DetalleVenta({
 
   const { venta, recibo, detalles, movimientos_inventario: movimientos } = detalle
   const estaConfirmada = venta.estado === 'confirmada'
+  const tipoDocumentoActual = recibo ? tipoDocumentoSeleccionado : 'factura-demostracion'
   const esFacturaDemostracion =
     documentoImpresion === 'factura-demostracion'
   const esReciboImpreso = documentoImpresion === 'recibo'
@@ -624,18 +658,6 @@ function DetalleVenta({
           <button className="boton-secundario-ventas" type="button" onClick={alVolver}>
             Volver
           </button>
-          {recibo && (
-            <button className="boton-documento-ventas boton-recibo-ventas" type="button" onClick={() => imprimirDocumento('recibo')}>
-              Imprimir / PDF
-            </button>
-          )}
-          <button
-            className="boton-documento-ventas boton-factura-ventas"
-            type="button"
-            onClick={() => imprimirDocumento('factura-demostracion')}
-          >
-            Imprimir factura
-          </button>
           {!recibo && puedeCrear && estaConfirmada && (
             <button className="boton-primario-ventas" type="button" onClick={emitirRecibo} disabled={procesando}>
               {procesando ? 'Emitiendo...' : 'Emitir recibo'}
@@ -654,6 +676,42 @@ function DetalleVenta({
           )}
         </div>
       </header>
+
+      <section className="panel-documentos-efarm no-imprimir-ventas" aria-label="Documentos de venta">
+        <div className="selector-documento-efarm">
+          <label htmlFor="tipo-documento-efarm">Documento</label>
+          <select
+            id="tipo-documento-efarm"
+            value={tipoDocumentoActual}
+            onChange={(evento) => setTipoDocumentoSeleccionado(evento.target.value)}
+          >
+            {recibo && <option value="recibo">Recibo</option>}
+            <option value="factura-demostracion">Factura de prueba</option>
+          </select>
+        </div>
+        <div className="acciones-documentos-efarm">
+          <button type="button" className="boton-secundario-ventas" onClick={() => verDocumento(tipoDocumentoActual)}>
+            Vista previa
+          </button>
+          <button type="button" className="boton-secundario-ventas" onClick={() => descargarDocumento(tipoDocumentoActual)}>
+            Descargar PDF
+          </button>
+          <button type="button" className="boton-primario-ventas" onClick={() => imprimirTicketDocumento(tipoDocumentoActual)}>
+            Imprimir
+          </button>
+          <details className="opciones-documentos-efarm">
+            <summary>Más opciones</summary>
+            <button type="button" className="boton-secundario-ventas" onClick={() => imprimirDocumento(tipoDocumentoActual)}>
+              Imprimir en carta
+            </button>
+          </details>
+        </div>
+        <small className="nota-documentos-efarm">
+          {tipoDocumentoActual === 'factura-demostracion'
+            ? 'DOCUMENTO DE PRUEBA — SIN VALIDEZ FISCAL. PDF formal en carta; impresión térmica de 80 mm.'
+            : 'Vista previa y descarga en carta; impresión en ticket de 80 mm.'}
+        </small>
+      </section>
 
       {error && (
         <p className="mensaje-ventas mensaje-error-ventas no-imprimir-ventas" role="alert">

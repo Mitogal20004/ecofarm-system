@@ -5,7 +5,15 @@ import { listarVariantes } from '../services/productos'
 import {
   confirmarVenta,
   crearIntencionVenta,
+  obtenerVenta,
 } from '../services/ventas'
+import { CheckCircle2, Eye, FileDown, Printer, List } from 'lucide-react'
+import logoEfarm from '../assets/logo-efarm-brand.png'
+import {
+  crearDocumentoVenta,
+  imprimirTicket,
+} from '../utils/documentosComerciales'
+import { descargarPDFFormal, verPDFFormal } from '../utils/documentosFormales'
 import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
 
 const FORMULARIO_INICIAL = {
@@ -53,6 +61,12 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
   const [resultado, setResultado] = useState(null)
+  const [detalleConfirmado, setDetalleConfirmado] = useState(null)
+  const [documentosCargando, setDocumentosCargando] = useState(false)
+  const [documentosProcesando, setDocumentosProcesando] = useState(false)
+  const [documentosError, setDocumentosError] = useState('')
+  const [tipoDocumentoAcceso, setTipoDocumentoAcceso] = useState(DOCUMENTO_RECIBO)
+  const resultadoActivoRef = useRef(null)
   const confirmandoRef = useRef(false)
   const buscadorProductoRef = useRef(null)
 
@@ -437,7 +451,13 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       setPresentacionId('')
       setCantidad('1')
       setMontoRecibido('')
+      resultadoActivoRef.current = null
       setResultado(null)
+      setDetalleConfirmado(null)
+      setDocumentosError('')
+      setDocumentosCargando(false)
+      setDocumentosProcesando(false)
+      setTipoDocumentoAcceso(DOCUMENTO_RECIBO)
       setReintentoPendiente(false)
       setAviso('Nueva intención de venta preparada.')
       await cargarCatalogos()
@@ -523,19 +543,36 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
 
     try {
       const respuesta = await confirmarVenta(datos, claveIdempotencia)
+      resultadoActivoRef.current = respuesta.venta.id
+      setTipoDocumentoAcceso(tipoDocumento)
+      setDetalleConfirmado(null)
+      setDocumentosError('')
       setResultado(respuesta)
       setLineas([])
       setReintentoPendiente(false)
       setAviso('')
-      if (puedeVer && alVerVenta) {
-        alVerVenta(
-          respuesta.venta.id,
-          tipoDocumento === DOCUMENTO_RECIBO
-            ? true
-            : DOCUMENTO_FACTURA,
-        )
-      } else {
-        await cargarCatalogos()
+
+      // La venta YA fue confirmada. Consultar sus documentos es de solo lectura:
+      // si falla esta consulta, jamás volvemos a enviar el cobro.
+      if (puedeVer) {
+        setDocumentosCargando(true)
+        try {
+          const detalleGuardado = await obtenerVenta(respuesta.venta.id)
+          if (resultadoActivoRef.current === respuesta.venta.id) {
+            setDetalleConfirmado(detalleGuardado)
+          }
+        } catch (errorLectura) {
+          if (resultadoActivoRef.current === respuesta.venta.id) {
+            setDocumentosError(
+              errorLectura?.message ||
+                'La venta se guardó, pero no fue posible cargar el documento.',
+            )
+          }
+        } finally {
+          if (resultadoActivoRef.current === respuesta.venta.id) {
+            setDocumentosCargando(false)
+          }
+        }
       }
     } catch (errorConfirmacion) {
       setError(errorConfirmacion?.message || 'No fue posible confirmar la venta.')
@@ -550,6 +587,47 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
     }
   }
 
+  const recargarDocumentoConfirmado = async () => {
+    const ventaId = resultado?.venta?.id
+    if (!ventaId || !puedeVer || documentosCargando) return
+    setDocumentosCargando(true)
+    setDocumentosError('')
+    try {
+      const detalleGuardado = await obtenerVenta(ventaId)
+      if (resultadoActivoRef.current === ventaId) {
+        setDetalleConfirmado(detalleGuardado)
+      }
+    } catch (errorLectura) {
+      if (resultadoActivoRef.current === ventaId) {
+        setDocumentosError(
+          errorLectura?.message || 'No fue posible consultar el documento.',
+        )
+      }
+    } finally {
+      if (resultadoActivoRef.current === ventaId) {
+        setDocumentosCargando(false)
+      }
+    }
+  }
+
+  const ejecutarAccesoDocumento = async (accion) => {
+    if (!detalleConfirmado || documentosProcesando) return
+    setDocumentosProcesando(true)
+    try {
+      const documento = crearDocumentoVenta(detalleConfirmado, tipoDocumentoAcceso)
+      if (accion === 'vista') await verPDFFormal(documento, logoEfarm)
+      if (accion === 'descargar') await descargarPDFFormal(documento, logoEfarm)
+      if (accion === 'imprimir') imprimirTicket(documento, logoEfarm)
+      setDocumentosError('')
+    } catch (errorDocumento) {
+      setDocumentosError(
+        errorDocumento?.message || 'No fue posible preparar el documento.',
+      )
+    } finally {
+      setDocumentosProcesando(false)
+    }
+  }
+
   if (cargando && variantes.length === 0) {
     return (
       <section className="estado-ventas" aria-live="polite">
@@ -559,68 +637,88 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   }
 
   if (resultado) {
+    const documentosListos = puedeVer && Boolean(detalleConfirmado) && !documentosCargando && !documentosProcesando
+
     return (
-      <section className="resultado-venta" aria-labelledby="titulo-venta-exitosa">
-        <span className="icono-venta-exitosa" aria-hidden="true">✓</span>
-        <p className="etiqueta-seccion-ventas">Operación completada</p>
-        <h2 id="titulo-venta-exitosa">Venta confirmada</h2>
-        <p>
-          El inventario y el recibo fueron registrados en una sola operación.
-        </p>
-        <dl>
-          <div><dt>Venta</dt><dd>{resultado.venta.numero}</dd></div>
-          <div><dt>Recibo</dt><dd>{resultado.recibo.numero}</dd></div>
+      <section className="resultado-venta resultado-venta-efarm" aria-labelledby="titulo-venta-exitosa">
+        <div className="resultado-venta-titulo-efarm">
+          <CheckCircle2 size={24} strokeWidth={1.8} aria-hidden="true" />
           <div>
-            <dt>Total definitivo</dt>
-            <dd>{formatoMoneda.format(Number(resultado.venta.total))}</dd>
+            <h2 id="titulo-venta-exitosa">Venta confirmada</h2>
+            <p>Venta {resultado.venta.numero} · Recibo {resultado.recibo.numero}</p>
           </div>
-          <div>
-            <dt>Recibido</dt>
-            <dd>{formatoMoneda.format(Number(resultado.venta.monto_recibido))}</dd>
-          </div>
-          <div>
-            <dt>Cambio</dt>
-            <dd>{formatoMoneda.format(Number(resultado.venta.cambio))}</dd>
-          </div>
+        </div>
+
+        <dl className="resultado-venta-importes-efarm">
+          <div><dt>Total</dt><dd>{formatoMoneda.format(Number(resultado.venta.total))}</dd></div>
+          <div><dt>Recibido</dt><dd>{formatoMoneda.format(Number(resultado.venta.monto_recibido))}</dd></div>
+          <div><dt>Cambio</dt><dd>{formatoMoneda.format(Number(resultado.venta.cambio))}</dd></div>
         </dl>
+
         {!resultado.cambio && (
           <p className="aviso-idempotencia-ventas">
-            Este fue un reintento seguro: no se descontó inventario dos veces.
+            Reintento seguro: no se descontó inventario dos veces.
           </p>
         )}
-        <div className="acciones-resultado-venta">
+
+        {puedeVer ? (
+          <div className="documentos-resultado-efarm" aria-label="Documentos de esta venta">
+            <div className="documentos-resultado-encabezado-efarm">
+              <strong>Comprobante</strong>
+              <label htmlFor="documento-rapido-venta">
+                <span>Tipo</span>
+                <select
+                  id="documento-rapido-venta"
+                  value={tipoDocumentoAcceso}
+                  onChange={(evento) => setTipoDocumentoAcceso(evento.target.value)}
+                >
+                  <option value={DOCUMENTO_RECIBO}>Recibo</option>
+                  <option value={DOCUMENTO_FACTURA}>Factura de prueba</option>
+                </select>
+              </label>
+            </div>
+            <div className="acciones-documentos-resultado-efarm">
+              <button type="button" className="boton-secundario-ventas" disabled={!documentosListos} onClick={() => ejecutarAccesoDocumento('vista')}>
+                <Eye size={16} aria-hidden="true" />
+                Vista previa
+              </button>
+              <button type="button" className="boton-secundario-ventas" disabled={!documentosListos} onClick={() => ejecutarAccesoDocumento('descargar')}>
+                <FileDown size={16} aria-hidden="true" />
+                Descargar PDF
+              </button>
+              <button type="button" className="boton-primario-ventas" disabled={!documentosListos} onClick={() => ejecutarAccesoDocumento('imprimir')}>
+                <Printer size={16} aria-hidden="true" />
+                Imprimir
+              </button>
+            </div>
+            {documentosCargando && <p className="estado-documento-rapido-efarm" role="status">Preparando documento...</p>}
+            {documentosError && (
+              <div className="error-documento-rapido-efarm" role="alert">
+                <p>La venta sí quedó guardada. {documentosError}</p>
+                <button className="boton-secundario-ventas" type="button" disabled={documentosCargando} onClick={recargarDocumentoConfirmado}>
+                  Reintentar documento
+                </button>
+              </div>
+            )}
+            {tipoDocumentoAcceso === DOCUMENTO_FACTURA && (
+              <p className="aviso-fiscal-rapido-efarm">DOCUMENTO DE PRUEBA — SIN VALIDEZ FISCAL</p>
+            )}
+            <p className="nota-documentos-efarm">Vista previa y PDF en carta; Imprimir en ticket de 80 mm. Ninguna acción registra otra venta.</p>
+          </div>
+        ) : (
+          <p className="estado-documento-rapido-efarm">
+            La venta está guardada. Tu usuario necesita permiso de consulta para abrir sus documentos.
+          </p>
+        )}
+
+        <div className="acciones-resultado-venta acciones-resultado-efarm">
           {puedeVer && (
-            <>
-              <button
-                className="boton-secundario-ventas"
-                type="button"
-                onClick={() => alVerVenta(resultado.venta.id)}
-              >
-                Ver recibo
-              </button>
-              <button
-                className="boton-documento-ventas boton-recibo-ventas"
-                type="button"
-                onClick={() => alVerVenta(resultado.venta.id, true)}
-              >
-                Imprimir recibo
-              </button>
-              <button
-                className="boton-documento-ventas boton-factura-ventas"
-                type="button"
-                onClick={() =>
-                  alVerVenta(resultado.venta.id, 'factura-demostracion')
-                }
-              >
-                Imprimir factura
-              </button>
-            </>
+            <button className="boton-secundario-ventas" type="button" onClick={() => alVerVenta(resultado.venta.id)}>
+              <List size={16} aria-hidden="true" />
+              Ver detalle
+            </button>
           )}
-          <button
-            className="boton-primario-ventas"
-            type="button"
-            onClick={reiniciarVenta}
-          >
+          <button className="boton-primario-ventas" type="button" onClick={reiniciarVenta}>
             Nueva venta
           </button>
         </div>
@@ -667,12 +765,9 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       )}
 
       <section className="tarjeta-pos-ventas comprador-ventas" aria-labelledby="comprador-venta">
-        <div className="titulo-paso-ventas">
-          <span>1</span>
-          <div>
-            <h2 id="comprador-venta">Comprador</h2>
+          <div className="titulo-paso-ventas">
+            <h2 id="comprador-venta">Cliente</h2>
           </div>
-        </div>
         <div className="buscador-cliente-ventas">
           {clienteSeleccionado ? (
             <div className="cliente-seleccionado-ventas">
@@ -693,7 +788,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
           ) : (
             <>
               <div className="campo-ventas">
-                <label htmlFor="buscar-cliente-venta">Buscar cliente registrado</label>
+                <label htmlFor="buscar-cliente-venta">Buscar cliente</label>
                 <div className="control-con-boton-ventas">
                   <input
                     id="buscar-cliente-venta"
@@ -796,10 +891,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       <div className="rejilla-captura-ventas">
         <section className="tarjeta-pos-ventas producto-ventas" aria-labelledby="producto-venta">
           <div className="titulo-paso-ventas">
-            <span>2</span>
-            <div>
-              <h2 id="producto-venta">Producto y presentación</h2>
-            </div>
+            <h2 id="producto-venta">Seleccionar producto</h2>
           </div>
           <div className="campo-ventas">
             <label htmlFor="buscar-producto-venta">Buscar variante</label>
@@ -872,7 +964,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
             )}
           </div>
 
-          <div className={`vista-previa-venta${seleccionSinStock ? ' vista-previa-sin-stock' : ''}`}>
+          <div className={`vista-previa-venta${seleccionSinStock ? ' vista-previa-sin-stock' : ''}${!varianteSeleccionada ? ' vista-previa-vacia' : ''}`}>
             <dl>
               <div><dt>Producto</dt><dd>{varianteSeleccionada ? `${varianteSeleccionada.color} · ${varianteSeleccionada.longitud_cm} cm · ${varianteSeleccionada.clasificacion}` : '—'}</dd></div>
               <div><dt>Presentación</dt><dd>{precioSeleccionado?.presentacion ?? '—'}</dd></div>
@@ -905,10 +997,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
           onKeyDown={manejarTecladoCalculadora}
         >
           <div className="titulo-paso-ventas">
-            <span>3</span>
-            <div>
-              <h2 id="cantidad-venta">Cantidad</h2>
-            </div>
+            <h2 id="cantidad-venta">Cantidad</h2>
           </div>
           <label htmlFor="pantalla-cantidad-venta">Cantidad</label>
           <input
@@ -932,7 +1021,9 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
             }}
             disabled={reintentoPendiente}
           />
-          <div className="teclado-ventas" aria-label="Teclado numérico">
+          <details className="teclado-desplegable-ventas">
+            <summary>Teclado numérico</summary>
+            <div className="teclado-ventas" aria-label="Teclado numérico">
             {['7', '8', '9', '4', '5', '6', '1', '2', '3', 'C', '0', '←'].map((tecla) => (
               <button
                 key={tecla}
@@ -945,7 +1036,8 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
                 {tecla}
               </button>
             ))}
-          </div>
+            </div>
+          </details>
           <button
             className="boton-agregar-ventas"
             type="button"
@@ -958,7 +1050,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
               seleccionSinStock
             }
           >
-            Agregar al carrito
+            Agregar producto
           </button>
         </section>
       </div>
@@ -966,9 +1058,8 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       <section className="tarjeta-pos-ventas carrito-ventas" aria-labelledby="carrito-venta">
         <div className="encabezado-carrito-ventas">
           <div className="titulo-paso-ventas">
-            <span>4</span>
             <div>
-              <h2 id="carrito-venta">Carrito de venta</h2>
+            <h2 id="carrito-venta">Productos agregados</h2>
               <p>{lineas.length} {lineas.length === 1 ? 'línea' : 'líneas'} agregadas</p>
             </div>
           </div>

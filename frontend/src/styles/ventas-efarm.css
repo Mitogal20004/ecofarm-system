@@ -1,0 +1,436 @@
+/*
+ * E-farm — Ventas.
+ * Diseño de operación: producto primero, comprador compacto, líneas y cobro.
+ * Solo pantalla; no afecta los estilos de comprobantes impresos.
+ */
+@media screen {
+  .aplicacion-administrativa .pagina-ventas,
+  .aplicacion-administrativa .pos-ventas {
+    gap: 16px;
+  }
+  .aplicacion-administrativa .acciones-superiores-pos-ventas {
+    margin-bottom: 0;
+  }
+  .aplicacion-administrativa .pos-ventas > .tarjeta-pos-ventas,
+  .aplicacion-administrativa .pos-ventas .rejilla-captura-ventas > .tarjeta-pos-ventas {
+    border: 1px solid #dfe5da;
+    border-radius: 5px;
+    box-shadow: none;
+    background: #fffdf9;
+  }
+  .aplicacion-administrativa .pos-ventas .titulo-paso-ventas {
+    gap: 0;
+    margin-bottom: 13px;
+    align-items: center;
+  }
+  .aplicacion-administrativa .pos-ventas .titulo-paso-ventas > span {
+    display: none;
+  }
+  .aplicacion-administrativa .pos-ventas .titulo-paso-ventas h2 {
+    margin: 0;
+    color: #244331;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -.015em;
+  }
+  .aplicacion-administrativa .pos-ventas .titulo-paso-ventas p {
+    color: #6b776c;
+    font-size: 11px;
+  }
+
+  /* La selección ocupa el primer bloque visual de la pantalla. */
+  .aplicacion-administrativa .pos-ventas .rejilla-captura-ventas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(185px, 0.25fr);
+    align-items: stretch;
+    gap: 12px;
+  }
+  .aplicacion-administrativa .pos-ventas .producto-ventas {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: 11px 13px;
+    padding: 18px 20px;
+  }
+  .aplicacion-administrativa .pos-ventas .producto-ventas .titulo-paso-ventas,
+  .aplicacion-administrativa .pos-ventas .producto-ventas .vista-previa-venta {
+    grid-column: 1 / -1;
+  }
+  .aplicacion-administrativa .pos-ventas .campo-ventas {
+    gap: 5px;
+  }
+  .aplicacion-administrativa .pos-ventas .campo-ventas label,
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas > label,
+  .aplicacion-administrativa .pos-ventas .panel-pago-ventas > label {
+    color: #48594b;
+    font-size: 11px;
+    font-weight: 650;
+  }
+  .aplicacion-administrativa .pos-ventas .campo-ventas :is(input,select,textarea),
+  .aplicacion-administrativa .pos-ventas .control-monto-ventas input {
+    min-height: 38px;
+    padding: 7px 10px;
+    border-radius: 4px;
+    border-color: #cfd9cd;
+    background: #fff;
+    font-size: 12px;
+  }
+  .aplicacion-administrativa .pos-ventas .control-con-boton-ventas {
+    gap: 6px;
+  }
+  .aplicacion-administrativa .pos-ventas .control-con-boton-ventas .boton-secundario-ventas {
+    padding-inline: 12px;
+  }
+  .aplicacion-administrativa .pos-ventas .vista-previa-venta {
+    margin-top: 0;
+    padding: 11px 13px;
+    border-color: #e1e8da;
+    border-radius: 4px;
+    background: #f5f7f0;
+  }
+  .aplicacion-administrativa .pos-ventas .vista-previa-venta dl {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px 12px;
+  }
+  .aplicacion-administrativa .pos-ventas .vista-previa-venta dt {
+    font-size: 10px;
+    font-weight: 550;
+    text-transform: none;
+  }
+  .aplicacion-administrativa .pos-ventas .vista-previa-venta dd {
+    font-size: 12px;
+    font-weight: 630;
+    overflow-wrap: anywhere;
+  }
+  .aplicacion-administrativa .pos-ventas .vista-previa-venta .subtotal-previo-ventas dd {
+    color: #28573e;
+    font-size: 14px;
+  }
+
+  /* Cantidad directa; el teclado virtual sigue disponible al desplegarlo. */
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 11px;
+    padding: 18px 17px;
+    min-width: 0;
+  }
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas .titulo-paso-ventas {
+    margin-bottom: 2px;
+  }
+  .aplicacion-administrativa .pos-ventas .pantalla-calculadora-ventas {
+    height: 46px;
+    min-height: 46px;
+    padding: 6px 10px;
+    font-size: 20px;
+    font-weight: 680;
+    border: 1px solid #bdcdbd;
+    border-radius: 4px;
+    background: #fff;
+  }
+  .aplicacion-administrativa .pos-ventas .teclado-desplegable-ventas {
+    border: 1px solid #e1e6dc;
+    border-radius: 4px;
+    padding: 8px 10px;
+    background: #f8f8f4;
+  }
+  .aplicacion-administrativa .pos-ventas .teclado-desplegable-ventas summary {
+    cursor: pointer;
+    color: #486150;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .aplicacion-administrativa .pos-ventas .teclado-ventas {
+    gap: 5px;
+    margin-top: 10px;
+  }
+  .aplicacion-administrativa .pos-ventas .teclado-ventas button {
+    min-height: 36px;
+    padding: 6px;
+    font-size: 13px;
+    border-radius: 3px;
+  }
+  .aplicacion-administrativa .pos-ventas .boton-agregar-ventas {
+    width: 100%;
+    min-height: 41px;
+    margin-top: auto;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 660;
+  }
+
+  /* Comprador ahora debajo de la selección, sin pasos circulares. */
+  .aplicacion-administrativa .pos-ventas .comprador-ventas {
+    display: grid;
+    grid-template-columns: minmax(0, .78fr) minmax(0, 1.25fr);
+    align-items: start;
+    gap: 0 20px;
+    padding: 17px 20px;
+  }
+  .aplicacion-administrativa .pos-ventas .comprador-ventas .titulo-paso-ventas {
+    grid-column: 1 / -1;
+  }
+  .aplicacion-administrativa .pos-ventas .buscador-cliente-ventas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+    align-content: start;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .aplicacion-administrativa .pos-ventas .campos-comprador-ventas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(160px, .8fr);
+    gap: 9px 12px;
+  }
+  .aplicacion-administrativa .pos-ventas .campo-ancho-ventas,
+  .aplicacion-administrativa .pos-ventas .campo-nit-ventas {
+    grid-column: auto;
+  }
+  .aplicacion-administrativa .pos-ventas .campos-comprador-ventas .campo-ventas:last-child {
+    grid-column: 1 / -1;
+  }
+  .aplicacion-administrativa .pos-ventas .cliente-seleccionado-ventas {
+    padding: 10px 13px;
+    border: 1px solid #dbe5d9;
+    border-radius: 4px;
+    background: #f5f7f0;
+  }
+
+  /* Renglones a la izquierda; cobro real a la derecha. */
+  .aplicacion-administrativa .pos-ventas .carrito-ventas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, .37fr);
+    grid-template-rows: auto minmax(100px, auto);
+    grid-template-areas: "carrito-titulo caja" "carrito-tabla caja";
+    align-items: start;
+    gap: 0 16px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .aplicacion-administrativa .pos-ventas .encabezado-carrito-ventas {
+    grid-area: carrito-titulo;
+    align-items: center;
+    min-width: 0;
+    margin: 0;
+    padding: 15px 18px;
+    border: 1px solid #dfe5da;
+    border-bottom: 0;
+    border-radius: 5px 5px 0 0;
+    background: #fff;
+  }
+  .aplicacion-administrativa .pos-ventas .encabezado-carrito-ventas .titulo-paso-ventas {
+    margin: 0;
+  }
+  .aplicacion-administrativa .pos-ventas .total-carrito-ventas {
+    min-width: 0;
+  }
+  .aplicacion-administrativa .pos-ventas .total-carrito-ventas > span {
+    font-size: 10px;
+    font-weight: 570;
+    text-transform: none;
+  }
+  .aplicacion-administrativa .pos-ventas .total-carrito-ventas strong {
+    color: #244b35;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .aplicacion-administrativa .pos-ventas .carrito-ventas > .desplazamiento-tabla-ventas,
+  .aplicacion-administrativa .pos-ventas .carrito-ventas > .estado-carrito-ventas {
+    grid-area: carrito-tabla;
+    min-width: 0;
+    margin: 0;
+    border: 1px solid #dfe5da;
+    border-radius: 0 0 5px 5px;
+    background: #fff;
+  }
+  .aplicacion-administrativa .pos-ventas .tabla-carrito-ventas {
+    font-size: 12px;
+  }
+  .aplicacion-administrativa .pos-ventas .tabla-carrito-ventas th {
+    padding: 10px 11px;
+    background: #f1f4ec;
+    color: #566753;
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .aplicacion-administrativa .pos-ventas .tabla-carrito-ventas td {
+    padding: 11px;
+    border-bottom: 1px solid #e9ede7;
+  }
+  .aplicacion-administrativa .pos-ventas .carrito-ventas .cierre-pos-ventas {
+    grid-area: caja;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .aplicacion-administrativa .pos-ventas .observaciones-ventas {
+    padding: 13px 15px;
+    border: 1px solid #dfe5da;
+    border-radius: 5px;
+    background: #fff;
+  }
+  .aplicacion-administrativa .pos-ventas .observaciones-ventas textarea {
+    min-height: 65px;
+    resize: vertical;
+  }
+  .aplicacion-administrativa .pos-ventas .panel-pago-ventas {
+    gap: 12px;
+    padding: 17px 16px;
+    border: 1px solid #d9e1d5;
+    border-radius: 5px;
+    background: #fffdf9;
+  }
+  .aplicacion-administrativa .pos-ventas .encabezado-pago-ventas {
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e1e6dc;
+  }
+  .aplicacion-administrativa .pos-ventas .total-pago-ventas strong {
+    font-size: 19px;
+    font-weight: 720;
+  }
+  .aplicacion-administrativa .pos-ventas .resultado-pago-ventas {
+    border-color: #dce5d9;
+  }
+  .aplicacion-administrativa .pos-ventas .resultado-pago-ventas strong {
+    font-size: 17px;
+  }
+  .aplicacion-administrativa .pos-ventas .acciones-emision-ventas {
+    gap: 7px;
+  }
+  .aplicacion-administrativa .pos-ventas .boton-emitir-ventas {
+    min-height: 43px;
+    padding: 9px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+}
+@media screen and (max-width: 1150px) {
+  .aplicacion-administrativa .pos-ventas .carrito-ventas {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas: "carrito-titulo" "carrito-tabla" "caja";
+    gap: 0;
+  }
+  .aplicacion-administrativa .pos-ventas .carrito-ventas .cierre-pos-ventas {
+    display: grid;
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.3fr);
+    align-items: start;
+    gap: 13px;
+    margin-top: 13px;
+  }
+  .aplicacion-administrativa .pos-ventas .observaciones-ventas {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .aplicacion-administrativa .pos-ventas .cobro-ventas {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+@media screen and (max-width: 900px) {
+  .aplicacion-administrativa .pos-ventas .rejilla-captura-ventas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas {
+    display: grid;
+    grid-template-columns: minmax(130px, .5fr) auto minmax(150px, .6fr);
+    align-items: end;
+  }
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas .titulo-paso-ventas {
+    grid-column: 1 / -1;
+  }
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas > label {
+    display: none;
+  }
+  .aplicacion-administrativa .pos-ventas .teclado-desplegable-ventas {
+    align-self: center;
+  }
+  .aplicacion-administrativa .pos-ventas .comprador-ventas {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+@media screen and (max-width: 700px) {
+  .aplicacion-administrativa .pos-ventas .producto-ventas {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 15px;
+  }
+  .aplicacion-administrativa .pos-ventas .producto-ventas .titulo-paso-ventas,
+  .aplicacion-administrativa .pos-ventas .producto-ventas .vista-previa-venta {
+    grid-column: auto;
+  }
+  .aplicacion-administrativa .pos-ventas .producto-ventas .vista-previa-venta dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas .titulo-paso-ventas {
+    grid-column: auto;
+  }
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas > label {
+    display: block;
+  }
+  .aplicacion-administrativa .pos-ventas .comprador-ventas {
+    padding: 15px;
+  }
+  .aplicacion-administrativa .pos-ventas .campos-comprador-ventas {
+    grid-template-columns: 1fr;
+  }
+  .aplicacion-administrativa .pos-ventas .campos-comprador-ventas .campo-ventas:last-child {
+    grid-column: auto;
+  }
+  .aplicacion-administrativa .pos-ventas .carrito-ventas .cierre-pos-ventas {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .aplicacion-administrativa .pos-ventas .cobro-ventas,
+  .aplicacion-administrativa .pos-ventas .observaciones-ventas {
+    width: 100%;
+  }
+  .aplicacion-administrativa .pos-ventas .total-carrito-ventas strong {
+    font-size: 18px;
+  }
+}
+
+
+/* Ajuste visual final: el carrito gana espacio al no reservar una ficha vacía. */
+@media screen {
+  .aplicacion-administrativa .pos-ventas .producto-ventas .vista-previa-vacia {
+    display: none;
+  }
+  .aplicacion-administrativa .pos-ventas .rejilla-captura-ventas {
+    align-items: start;
+  }
+  .aplicacion-administrativa .pos-ventas .producto-ventas,
+  .aplicacion-administrativa .pos-ventas .calculadora-ventas {
+    padding-top: 15px;
+    padding-bottom: 15px;
+  }
+  .aplicacion-administrativa .pos-ventas .comprador-ventas {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .aplicacion-administrativa .pos-ventas .producto-ventas .vista-previa-venta dl {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media screen and (max-width: 700px) {
+  .aplicacion-administrativa .pos-ventas .producto-ventas .vista-previa-venta dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
