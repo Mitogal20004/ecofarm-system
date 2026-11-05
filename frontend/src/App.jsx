@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
-import iconoCerrarSesion from './assets/icono-cerrar-sesion.svg'
+import { LogOut } from 'lucide-react'
 import logoEfarm from './assets/logo-efarm-brand.png'
 import IconoInterfaz from './components/IconoInterfaz'
 import Login from './pages/Login'
@@ -375,7 +375,7 @@ function App() {
             {cerrandoSesion ? (
               <span className="spinner-cerrar-sesion" aria-hidden="true" />
             ) : (
-              <img src={iconoCerrarSesion} alt="" aria-hidden="true" />
+              <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
             )}
           </button>
         </div>
@@ -575,7 +575,7 @@ function App() {
 
       <div className="contenido-aplicacion">
         <main className="area-principal">
-          <div className="contenido-panel">
+          <div className="contenido-panel" key={vistaActual}>
             {vistaActual === VISTA_VENTAS ? (
               <Ventas
                 key={autorizacion?.perfil?.id ?? 'sin-usuario'}
