@@ -164,7 +164,7 @@ function DetalleVenta({
 
   const imprimirTicketDocumento = (tipo) => {
     try {
-      imprimirTicket(crearDocumentoVenta(detalle, tipo))
+      imprimirTicket(crearDocumentoVenta(detalle, tipo), logoEfarm)
       setError('')
     } catch (errorImpresion) {
       setError(errorImpresion?.message || 'No fue posible imprimir el documento.')
