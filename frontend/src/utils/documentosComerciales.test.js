@@ -89,3 +89,30 @@ test('números extensos no bloquean el formato ticket', () => {
   assert.ok(lineas.length > 10)
   assert.ok(lineas.every((linea) => linea.texto.length <= 80))
 })
+
+
+test('ticket PDF usa ancho de impresora térmica de 80 mm', async () => {
+  const pdf = generarPDFTicket(crearDocumentoVenta(venta))
+  const contenido = new TextDecoder('latin1').decode(await pdf.arrayBuffer())
+  assert.match(contenido, /\/MediaBox \[0 0 226\.77 /)
+})
+
+test('factura de demostración imprime aviso fiscal visible', () => {
+  const documento = crearDocumentoVenta(venta, 'factura-demostracion')
+  const contenido = construirLineasTicket(documento).map((linea) => linea.texto).join('\n')
+  assert.match(contenido, /DOCUMENTO DE PRUEBA/)
+  assert.match(contenido, /SIN VALIDEZ FISCAL/)
+})
+
+test('PDF de ticket largo reparte páginas sin truncar la venta', async () => {
+  const larga = {
+    ...venta,
+    detalles: Array.from({ length: 110 }, (_, indice) => ({
+      ...venta.detalles[0],
+      producto_nombre: 'Flores número ' + (indice + 1),
+    })),
+  }
+  const pdf = generarPDFTicket(crearDocumentoVenta(larga))
+  const contenido = new TextDecoder('latin1').decode(await pdf.arrayBuffer())
+  assert.match(contenido, /\/Type \/Pages \/Count [2-9]/)
+})
