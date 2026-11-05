@@ -797,7 +797,9 @@
   }
 
   .aplicacion-administrativa .contenido-panel {
-    animation: efarm-aparecer-modulo 235ms cubic-bezier(.2, .7, .2, 1) both;
+    /* Sin 'forwards': evitar que transform cree una capa permanente
+       que pueda interferir con cuadros de diálogo y ventanas modales. */
+    animation: efarm-aparecer-modulo 235ms cubic-bezier(.2, .7, .2, 1);
   }
 
   .aplicacion-administrativa .boton-cerrar-sesion > svg {
@@ -825,5 +827,38 @@
   .aplicacion-administrativa .opcion-navegacion-activa::after,
   .aplicacion-administrativa .contenido-panel {
     animation: none !important;
+  }
+}
+
+
+/*
+ * Barra fija por encima del contenido al desplazarse.
+ * El encabezado tiene prioridad sobre la navegación, y ambos
+ * quedan por encima de paneles, tarjetas y tablas de los módulos.
+ * Los diálogos modales conservan su propio z-index (normalmente 60+).
+ */
+@media screen and (min-width: 761px) {
+  .aplicacion-administrativa .barra-superior {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  .aplicacion-administrativa .barra-lateral {
+    position: sticky;
+    top: 72px;
+    z-index: 30;
+    background-color: #244532;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  .aplicacion-administrativa .barra-superior {
+    z-index: 40;
+  }
+
+  .aplicacion-administrativa .barra-lateral {
+    position: static;
+    z-index: auto;
   }
 }
