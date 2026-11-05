@@ -4,6 +4,7 @@ import EstadoEtiqueta from './EstadoEtiqueta'
 import {
   crearDocumentoCotizacion,
   descargarPDFTicket,
+  verPDFTicket,
   imprimirTicket,
 } from '../utils/documentosComerciales'
 import {
@@ -182,6 +183,15 @@ function DetalleCotizacion({
   }
 
   const { cotizacion, detalles } = detalle
+  const verDocumento = () => {
+    try {
+      verPDFTicket(crearDocumentoCotizacion(detalle))
+      setError('')
+    } catch (errorPrevia) {
+      setError(errorPrevia?.message || 'No fue posible abrir la vista previa.')
+    }
+  }
+
   const descargarDocumento = () => {
     try {
       descargarPDFTicket(crearDocumentoCotizacion(detalle))
@@ -222,15 +232,21 @@ function DetalleCotizacion({
           <button className="boton-secundario-cotizaciones" type="button" onClick={alVolver}>
             Volver
           </button>
+          <button className="boton-secundario-cotizaciones" type="button" onClick={verDocumento}>
+            Vista previa
+          </button>
           <button className="boton-secundario-cotizaciones" type="button" onClick={descargarDocumento}>
             Descargar PDF
           </button>
-          <button className="boton-secundario-cotizaciones" type="button" onClick={imprimirTicketDocumento}>
-            Imprimir 80 mm
+          <button className="boton-primario-cotizaciones" type="button" onClick={imprimirTicketDocumento}>
+            Imprimir
           </button>
-          <button className="boton-secundario-cotizaciones" type="button" onClick={() => window.print()}>
-            Imprimir carta
-          </button>
+          <details className="opciones-documentos-efarm">
+            <summary>Más opciones</summary>
+            <button className="boton-secundario-cotizaciones" type="button" onClick={() => window.print()}>
+              Imprimir en carta
+            </button>
+          </details>
           {puedeEditar && esBorrador && (
             <button className="boton-secundario-cotizaciones" type="button" onClick={alEditar}>
               Editar
