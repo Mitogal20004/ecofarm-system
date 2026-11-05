@@ -3,10 +3,9 @@ import logoEfarm from '../assets/logo-efarm-brand.png'
 import EstadoEtiqueta from './EstadoEtiqueta'
 import {
   crearDocumentoVenta,
-  descargarPDFTicket,
-  verPDFTicket,
   imprimirTicket,
 } from '../utils/documentosComerciales'
+import { descargarPDFFormal, verPDFFormal } from '../utils/documentosFormales'
 import {
   anularVenta,
   generarReciboVenta,
@@ -145,18 +144,18 @@ function DetalleVenta({
     }, 150)
   }, [])
 
-  const descargarDocumento = (tipo) => {
+  const descargarDocumento = async (tipo) => {
     try {
-      descargarPDFTicket(crearDocumentoVenta(detalle, tipo))
+      await descargarPDFFormal(crearDocumentoVenta(detalle, tipo), logoEfarm)
       setError('')
     } catch (errorDescarga) {
       setError(errorDescarga?.message || 'No fue posible descargar el PDF.')
     }
   }
 
-  const verDocumento = (tipo) => {
+  const verDocumento = async (tipo) => {
     try {
-      verPDFTicket(crearDocumentoVenta(detalle, tipo))
+      await verPDFFormal(crearDocumentoVenta(detalle, tipo), logoEfarm)
       setError('')
     } catch (errorPrevia) {
       setError(errorPrevia?.message || 'No fue posible abrir la vista previa.')
@@ -709,8 +708,8 @@ function DetalleVenta({
         </div>
         <small className="nota-documentos-efarm">
           {tipoDocumentoActual === 'factura-demostracion'
-            ? 'DOCUMENTO DE PRUEBA — SIN VALIDEZ FISCAL. PDF y ticket de 80 mm.'
-            : 'Vista previa, PDF e impresión preparados para ticket de 80 mm.'}
+            ? 'DOCUMENTO DE PRUEBA — SIN VALIDEZ FISCAL. PDF formal en carta; impresión térmica de 80 mm.'
+            : 'Vista previa y descarga en carta; impresión en ticket de 80 mm.'}
         </small>
       </section>
 
