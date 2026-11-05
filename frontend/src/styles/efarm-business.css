@@ -606,3 +606,114 @@
     padding-bottom: 17px;
   }
 }
+
+
+/* V2 / Arquitectura horizontal: navega como un sistema comercial, no como SaaS. */
+@media screen and (min-width: 761px) {
+  .aplicacion-administrativa {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:72px 52px minmax(calc(100svh - 124px),auto);
+    grid-template-areas:'topbar' 'sidebar' 'content';
+    background:#f8f9f6;
+  }
+  .aplicacion-administrativa .barra-superior {
+    min-height:72px;
+    padding:12px clamp(25px,3.6vw,56px);
+    gap:24px;
+    border-bottom:1px solid #e0e7df;
+    background:#fff;
+  }
+  .aplicacion-administrativa .barra-superior .marca-panel {
+    display:flex;align-items:center;gap:10px;
+    margin:0 24px 0 0;padding:0 26px 0 0;
+    border:0;border-right:1px solid #e0e7df;
+  }
+  .aplicacion-administrativa .barra-superior .simbolo-panel {
+    width:42px;height:42px;flex-basis:42px;border-radius:4px;background:transparent;
+  }
+  .aplicacion-administrativa .barra-superior .nombre-marca-panel strong {
+    color:#204633;font-size:18px;
+  }
+  .aplicacion-administrativa .barra-superior .nombre-marca-panel small {
+    color:#667d6b;
+  }
+  .aplicacion-administrativa .contexto-barra-superior span {
+    font-size:9px;color:#859287;letter-spacing:.12em;
+  }
+  .aplicacion-administrativa .contexto-barra-superior strong {
+    font-size:13px;color:#4d6554;font-weight:600;
+  }
+  .aplicacion-administrativa .barra-lateral {
+    position:sticky;top:72px;height:52px;
+    display:flex;align-items:center;gap:0;
+    padding:0 clamp(22px,3.6vw,53px);
+    overflow-x:auto;overflow-y:hidden;
+    background:#244532;border:0;border-bottom:1px solid #193b28;
+    scrollbar-width:thin;
+  }
+  .aplicacion-administrativa .navegacion-principal {
+    display:flex;align-items:center;gap:22px;
+    flex:0 0 auto;margin:0;
+  }
+  .aplicacion-administrativa .titulo-navegacion { display:none; }
+  .aplicacion-administrativa .lista-navegacion-principal {
+    display:flex;align-items:center;flex-wrap:nowrap;gap:3px;margin:0;
+  }
+  .aplicacion-administrativa .opcion-navegacion {
+    min-height:52px;height:52px;padding:0 13px;
+    gap:8px;border-radius:0;
+    font-size:12px;color:#d7e4d9;white-space:nowrap;
+  }
+  .aplicacion-administrativa .icono-navegacion {
+    width:15px;height:15px;
+  }
+  .aplicacion-administrativa .opcion-navegacion-activa {
+    color:#fff;background:#345b43;
+  }
+  .aplicacion-administrativa .opcion-navegacion-activa::after {
+    inset:auto 12px 0;width:auto;height:3px;
+    border-radius:0;background:#bad1a3;
+  }
+  .aplicacion-administrativa .seccion-navegacion-administracion {
+    margin:0;padding:0;border:0;
+  }
+  .aplicacion-administrativa .area-principal {
+    padding:clamp(25px,3.5vw,55px);
+  }
+  .aplicacion-administrativa .contenido-panel {
+    max-width:1500px;
+  }
+}
+@media screen and (max-width:760px) {
+  .aplicacion-administrativa .barra-superior .marca-panel {
+    margin:0 auto 0 0;padding:0;border:0;
+    display:flex;align-items:center;gap:8px;
+  }
+  .aplicacion-administrativa .barra-superior .simbolo-panel {
+    width:37px;height:37px;flex-basis:37px;background:transparent;
+  }
+  .aplicacion-administrativa .barra-superior .nombre-marca-panel strong {
+    color:#244b36;font-size:17px;
+  }
+  .aplicacion-administrativa .barra-superior .nombre-marca-panel small {
+    display:none;
+  }
+  .aplicacion-administrativa .barra-superior {
+    display:flex;align-items:center;flex-wrap:nowrap;gap:8px;
+    padding:8px 15px;
+  }
+  .aplicacion-administrativa .barra-superior .contexto-barra-superior {display:none;}
+  .aplicacion-administrativa .acciones-barra-superior {width:auto;flex:0 1 auto;}
+  .aplicacion-administrativa .identidad-usuario {display:none;}
+  .aplicacion-administrativa .barra-lateral {
+    padding:3px 12px;display:flex;flex-wrap:nowrap;overflow-x:auto;
+  }
+  .aplicacion-administrativa .navegacion-principal {display:flex;align-items:center;gap:6px;}
+  .aplicacion-administrativa .titulo-navegacion {display:none;}
+  .aplicacion-administrativa .lista-navegacion-principal {display:flex;gap:2px;padding:0;}
+  .aplicacion-administrativa .opcion-navegacion {border-radius:0;min-height:39px;font-size:12px;}
+  .aplicacion-administrativa .seccion-navegacion-administracion {margin:0;padding:0;border:0;}
+  .aplicacion-administrativa .opcion-navegacion-activa::after {
+    inset:auto 8px 0;width:auto;height:2px;
+  }
+}
