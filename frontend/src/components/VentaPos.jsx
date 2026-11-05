@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import '../styles/ventas-efarm.css'
 import { listarClientes } from '../services/clientes'
 import { listarInventario } from '../services/inventario'
 import { listarVariantes } from '../services/productos'
@@ -666,139 +667,11 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
         </div>
       )}
 
-      <section className="tarjeta-pos-ventas comprador-ventas" aria-labelledby="comprador-venta">
-        <div className="titulo-paso-ventas">
-          <span>1</span>
-          <div>
-            <h2 id="comprador-venta">Comprador</h2>
-          </div>
-        </div>
-        <div className="buscador-cliente-ventas">
-          {clienteSeleccionado ? (
-            <div className="cliente-seleccionado-ventas">
-              <div>
-                <span>Cliente registrado seleccionado</span>
-                <strong>{nombreCliente(clienteSeleccionado)}</strong>
-                <small>NIT {clienteSeleccionado.nit}</small>
-              </div>
-              <button
-                className="boton-secundario-ventas"
-                type="button"
-                onClick={quitarClienteSeleccionado}
-                disabled={reintentoPendiente}
-              >
-                Quitar o cambiar cliente
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="campo-ventas">
-                <label htmlFor="buscar-cliente-venta">Buscar cliente registrado</label>
-                <div className="control-con-boton-ventas">
-                  <input
-                    id="buscar-cliente-venta"
-                    value={busquedaCliente}
-                    onChange={(evento) => setBusquedaCliente(evento.target.value)}
-                    onKeyDown={(evento) => {
-                      if (evento.key === 'Enter') {
-                        evento.preventDefault()
-                        buscarClientes()
-                      }
-                    }}
-                    maxLength={150}
-                    placeholder="Nombre, empresa o NIT"
-                    disabled={reintentoPendiente}
-                  />
-                  <button
-                    className="boton-secundario-ventas"
-                    type="button"
-                    onClick={buscarClientes}
-                    disabled={consultandoClientes || reintentoPendiente}
-                  >
-                    {consultandoClientes ? 'Buscando...' : 'Buscar'}
-                  </button>
-                </div>
-              </div>
-              <div className="campo-ventas">
-                <label htmlFor="cliente-venta">Resultados</label>
-                <select
-                  id="cliente-venta"
-                  value=""
-                  onChange={(evento) => seleccionarCliente(evento.target.value)}
-                  disabled={reintentoPendiente}
-                >
-                  <option value="">Selecciona un cliente registrado</option>
-                  {clientes.map((cliente) => (
-                    <option key={cliente.id} value={cliente.id}>
-                      {nombreCliente(cliente)} · NIT {cliente.nit}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="campos-comprador-ventas">
-          <div className="campo-ventas campo-ancho-ventas">
-            <label htmlFor="nombre-comprador-venta">Nombre *</label>
-            <input
-              id="nombre-comprador-venta"
-              name="comprador_nombre"
-              value={formulario.comprador_nombre}
-              onChange={actualizarFormulario}
-              maxLength={200}
-              disabled={Boolean(formulario.cliente_id) || reintentoPendiente}
-            />
-          </div>
-          <div className="campo-ventas campo-nit-ventas">
-            <label htmlFor="nit-comprador-venta">NIT *</label>
-            <div className="control-nit-ventas">
-              <input
-                id="nit-comprador-venta"
-                name="comprador_nit"
-                value={formulario.comprador_nit}
-                onChange={actualizarFormulario}
-                maxLength={30}
-                placeholder="Ej. 1234567-8"
-                disabled={Boolean(formulario.cliente_id) || reintentoPendiente}
-              />
-              <button
-                className="boton-secundario-ventas boton-cf-ventas"
-                type="button"
-                onClick={() => {
-                  setFormulario((actual) => ({
-                    ...actual,
-                    comprador_nit: 'CF',
-                  }))
-                  setError('')
-                }}
-                disabled={Boolean(formulario.cliente_id) || reintentoPendiente}
-              >
-                Usar CF
-              </button>
-            </div>
-          </div>
-          <div className="campo-ventas campo-ancho-ventas">
-            <label htmlFor="direccion-comprador-venta">Dirección</label>
-            <input
-              id="direccion-comprador-venta"
-              name="comprador_direccion"
-              value={formulario.comprador_direccion}
-              onChange={actualizarFormulario}
-              maxLength={500}
-              disabled={Boolean(formulario.cliente_id) || reintentoPendiente}
-            />
-          </div>
-        </div>
-      </section>
-
       <div className="rejilla-captura-ventas">
         <section className="tarjeta-pos-ventas producto-ventas" aria-labelledby="producto-venta">
           <div className="titulo-paso-ventas">
-            <span>2</span>
             <div>
-              <h2 id="producto-venta">Producto y presentación</h2>
+            <h2 id="producto-venta">Seleccionar producto</h2>
             </div>
           </div>
           <div className="campo-ventas">
@@ -905,9 +778,8 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
           onKeyDown={manejarTecladoCalculadora}
         >
           <div className="titulo-paso-ventas">
-            <span>3</span>
             <div>
-              <h2 id="cantidad-venta">Cantidad</h2>
+            <h2 id="cantidad-venta">Cantidad</h2>
             </div>
           </div>
           <label htmlFor="pantalla-cantidad-venta">Cantidad</label>
@@ -932,7 +804,9 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
             }}
             disabled={reintentoPendiente}
           />
-          <div className="teclado-ventas" aria-label="Teclado numérico">
+          <details className="teclado-desplegable-ventas">
+            <summary>Teclado numérico</summary>
+            <div className="teclado-ventas" aria-label="Teclado numérico">
             {['7', '8', '9', '4', '5', '6', '1', '2', '3', 'C', '0', '←'].map((tecla) => (
               <button
                 key={tecla}
@@ -945,7 +819,8 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
                 {tecla}
               </button>
             ))}
-          </div>
+            </div>
+          </details>
           <button
             className="boton-agregar-ventas"
             type="button"
@@ -958,17 +833,142 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
               seleccionSinStock
             }
           >
-            Agregar al carrito
+            Agregar producto
           </button>
         </section>
       </div>
 
+      <section className="tarjeta-pos-ventas comprador-ventas" aria-labelledby="comprador-venta">
+        <div className="titulo-paso-ventas">
+          <div>
+            <h2 id="comprador-venta">Cliente</h2>
+          </div>
+        </div>
+        <div className="buscador-cliente-ventas">
+          {clienteSeleccionado ? (
+            <div className="cliente-seleccionado-ventas">
+              <div>
+                <span>Cliente registrado seleccionado</span>
+                <strong>{nombreCliente(clienteSeleccionado)}</strong>
+                <small>NIT {clienteSeleccionado.nit}</small>
+              </div>
+              <button
+                className="boton-secundario-ventas"
+                type="button"
+                onClick={quitarClienteSeleccionado}
+                disabled={reintentoPendiente}
+              >
+                Quitar o cambiar cliente
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="campo-ventas">
+                <label htmlFor="buscar-cliente-venta">Buscar cliente</label>
+                <div className="control-con-boton-ventas">
+                  <input
+                    id="buscar-cliente-venta"
+                    value={busquedaCliente}
+                    onChange={(evento) => setBusquedaCliente(evento.target.value)}
+                    onKeyDown={(evento) => {
+                      if (evento.key === 'Enter') {
+                        evento.preventDefault()
+                        buscarClientes()
+                      }
+                    }}
+                    maxLength={150}
+                    placeholder="Nombre, empresa o NIT"
+                    disabled={reintentoPendiente}
+                  />
+                  <button
+                    className="boton-secundario-ventas"
+                    type="button"
+                    onClick={buscarClientes}
+                    disabled={consultandoClientes || reintentoPendiente}
+                  >
+                    {consultandoClientes ? 'Buscando...' : 'Buscar'}
+                  </button>
+                </div>
+              </div>
+              <div className="campo-ventas">
+                <label htmlFor="cliente-venta">Resultados</label>
+                <select
+                  id="cliente-venta"
+                  value=""
+                  onChange={(evento) => seleccionarCliente(evento.target.value)}
+                  disabled={reintentoPendiente}
+                >
+                  <option value="">Selecciona un cliente registrado</option>
+                  {clientes.map((cliente) => (
+                    <option key={cliente.id} value={cliente.id}>
+                      {nombreCliente(cliente)} · NIT {cliente.nit}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="campos-comprador-ventas">
+          <div className="campo-ventas campo-ancho-ventas">
+            <label htmlFor="nombre-comprador-venta">Nombre *</label>
+            <input
+              id="nombre-comprador-venta"
+              name="comprador_nombre"
+              value={formulario.comprador_nombre}
+              onChange={actualizarFormulario}
+              maxLength={200}
+              disabled={Boolean(formulario.cliente_id) || reintentoPendiente}
+            />
+          </div>
+          <div className="campo-ventas campo-nit-ventas">
+            <label htmlFor="nit-comprador-venta">NIT *</label>
+            <div className="control-nit-ventas">
+              <input
+                id="nit-comprador-venta"
+                name="comprador_nit"
+                value={formulario.comprador_nit}
+                onChange={actualizarFormulario}
+                maxLength={30}
+                placeholder="Ej. 1234567-8"
+                disabled={Boolean(formulario.cliente_id) || reintentoPendiente}
+              />
+              <button
+                className="boton-secundario-ventas boton-cf-ventas"
+                type="button"
+                onClick={() => {
+                  setFormulario((actual) => ({
+                    ...actual,
+                    comprador_nit: 'CF',
+                  }))
+                  setError('')
+                }}
+                disabled={Boolean(formulario.cliente_id) || reintentoPendiente}
+              >
+                Usar CF
+              </button>
+            </div>
+          </div>
+          <div className="campo-ventas campo-ancho-ventas">
+            <label htmlFor="direccion-comprador-venta">Dirección</label>
+            <input
+              id="direccion-comprador-venta"
+              name="comprador_direccion"
+              value={formulario.comprador_direccion}
+              onChange={actualizarFormulario}
+              maxLength={500}
+              disabled={Boolean(formulario.cliente_id) || reintentoPendiente}
+            />
+          </div>
+        </div>
+      </section>
+
       <section className="tarjeta-pos-ventas carrito-ventas" aria-labelledby="carrito-venta">
         <div className="encabezado-carrito-ventas">
           <div className="titulo-paso-ventas">
-            <span>4</span>
             <div>
-              <h2 id="carrito-venta">Carrito de venta</h2>
+            <h2 id="carrito-venta">Productos agregados</h2>
               <p>{lineas.length} {lineas.length === 1 ? 'línea' : 'líneas'} agregadas</p>
             </div>
           </div>
