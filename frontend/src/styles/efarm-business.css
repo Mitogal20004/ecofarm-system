@@ -862,3 +862,73 @@
     z-index: auto;
   }
 }
+
+
+/* Ajuste de marca: encabezado crema y logotipo original sin recortes. */
+@media screen {
+  .aplicacion-administrativa .barra-superior {
+    background-color: #f8f6f0;
+    border-bottom: 1px solid #dedfd4;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .barra-superior .marca-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    flex: 0 0 auto;
+    min-width: 0;
+    margin: 0 20px 0 0;
+    padding: 0 22px 0 0;
+    border: 0;
+    border-right: 1px solid #d9ddd2;
+  }
+
+  .aplicacion-administrativa .barra-superior .logotipo-panel {
+    display: block;
+    width: 150px;
+    height: 50px;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left center;
+    transform: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .aplicacion-administrativa .barra-superior .descripcion-marca-panel {
+    display: block;
+    margin: -6px 0 0 51px;
+    color: #657662;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+}
+
+@media screen and (min-width: 761px) {
+  .aplicacion-administrativa .barra-superior {
+    padding-block: 6px;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  .aplicacion-administrativa .barra-superior .marca-panel {
+    margin: 0 auto 0 0;
+    padding: 0 10px 0 0;
+    border-right: 0;
+  }
+
+  .aplicacion-administrativa .barra-superior .logotipo-panel {
+    width: 120px;
+    height: 40px;
+  }
+
+  .aplicacion-administrativa .barra-superior .descripcion-marca-panel {
+    margin: -5px 0 0 41px;
+    font-size: 9px;
+  }
+}
