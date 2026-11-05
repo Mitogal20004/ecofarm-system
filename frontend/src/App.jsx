@@ -15,6 +15,7 @@ import Reportes from './pages/Reportes'
 import Usuarios from './pages/Usuarios'
 import Ventas from './pages/Ventas'
 import Caja from './pages/Caja'
+import './styles/efarm-business.css'
 import { limpiarOperacionesPendientesCaja } from './services/caja'
 import {
   cerrarSesion,
@@ -343,8 +344,8 @@ function App() {
     <div className="aplicacion-administrativa">
       <header className="barra-superior">
         <div className="contexto-barra-superior" aria-hidden="true">
-          <span>Gestión interna</span>
-          <strong>Operaciones E-farm</strong>
+          <span>ECOFARM S.A. / OPERACIONES</span>
+          <strong>Centro de trabajo</strong>
         </div>
 
         <div className="acciones-barra-superior">
@@ -382,7 +383,7 @@ function App() {
           </span>
           <span className="nombre-marca-panel">
             <strong>E-farm</strong>
-            <small>Sistema administrativo</small>
+            <small>Gestión agrícola</small>
           </span>
         </div>
 
@@ -551,13 +552,7 @@ function App() {
 
           {tienePermiso('usuario.ver') && (
             <div className="seccion-navegacion-administracion">
-              <p className="titulo-navegacion titulo-navegacion-con-icono">
-                <IconoInterfaz
-                  nombre="administracion"
-                  className="icono-titulo-navegacion"
-                />
-                Administración
-              </p>
+              <p className="titulo-navegacion">Administración</p>
               <ul className="lista-navegacion-principal">
                 <li>
                   <button
