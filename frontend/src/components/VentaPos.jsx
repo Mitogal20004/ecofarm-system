@@ -742,7 +742,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
             )}
           </div>
 
-          <div className={`vista-previa-venta${seleccionSinStock ? ' vista-previa-sin-stock' : ''}`}>
+          <div className={`vista-previa-venta${seleccionSinStock ? ' vista-previa-sin-stock' : ''}${!varianteSeleccionada ? ' vista-previa-vacia' : ''}`}>
             <dl>
               <div><dt>Producto</dt><dd>{varianteSeleccionada ? `${varianteSeleccionada.color} · ${varianteSeleccionada.longitud_cm} cm · ${varianteSeleccionada.clasificacion}` : '—'}</dd></div>
               <div><dt>Presentación</dt><dd>{precioSeleccionado?.presentacion ?? '—'}</dd></div>
