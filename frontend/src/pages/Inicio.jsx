@@ -60,13 +60,11 @@ function obtenerMensajeError(error, recurso) {
 
 function IndicadorInicio({ etiqueta, valor, detalle, estado, tono }) {
   return (
-    <article
-      className={`indicador-inicio indicador-inicio-${tono}`}
+    <div
+      className={`inicio-metrica inicio-metrica-${tono}`}
       aria-busy={estado.cargando}
     >
-      <div className="cabecera-indicador-inicio">
-        <span>{etiqueta}</span>
-      </div>
+      <span className="inicio-metrica-etiqueta">{etiqueta}</span>
       {estado.cargando ? (
         <span className="carga-indicador-inicio" role="status">
           Consultando...
@@ -77,11 +75,11 @@ function IndicadorInicio({ etiqueta, valor, detalle, estado, tono }) {
         </span>
       ) : (
         <>
-          <strong>{valor}</strong>
-          {detalle && <small>{detalle}</small>}
+          <strong className="inicio-metrica-valor">{valor}</strong>
+          {detalle && <span className="inicio-metrica-detalle">{detalle}</span>}
         </>
       )}
-    </article>
+    </div>
   )
 }
 
@@ -194,93 +192,103 @@ function Inicio({
   const hayIndicadores =
     puedeVerReportes || puedeConsultarCaja || puedeVerInventario
 
-  return (
-    <div className="inicio-panel">
-      <section
-        className="encabezado-panel inicio-bienvenida"
-        aria-labelledby="titulo-panel"
-      >
-        <div>
-          <p className="etiqueta-seccion">E-farm / Operación diaria</p>
-          <h1 id="titulo-panel">Resumen de operaciones</h1>
-          <p className="descripcion-panel">
-            Ventas, caja e inventario en un solo lugar.
-          </p>
-        </div>
-        <div className="estado-inicio" aria-label="Estado de la sesión">
-          <span aria-hidden="true" />
-          Sesión activa
-        </div>
-      </section>
+  const fechaLegible = new Intl.DateTimeFormat('es-GT', {
+    timeZone: ZONA_HORARIA, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  }).format(new Date())
 
-      {errorSesion && <p className="mensaje-error-sesion" role="alert">{errorSesion}</p>}
-      {errorAutorizacion && <p className="mensaje-error-sesion" role="alert">{errorAutorizacion}</p>}
+  return (
+    <div className="inicio-panel inicio-consola">
+      <header className="inicio-cabecera">
+        <div>
+          <p className="inicio-sobretitulo">ECOFARM S.A. <span>/</span> OPERACIONES</p>
+          <h1 id="titulo-panel">Centro de operaciones</h1>
+          <p className="inicio-fecha">{fechaLegible}</p>
+        </div>
+        <div className="inicio-cabecera-contexto" aria-label="Información de la plataforma">
+          <span className="inicio-contexto-titulo">E-FARM</span>
+          <span>Sistema de gestión comercial</span>
+        </div>
+      </header>
+
+      {(errorSesion || errorAutorizacion) && (
+        <section className="inicio-acceso-pendiente" aria-labelledby="titulo-acceso-pendiente" role="alert">
+          <div className="inicio-acceso-marca" aria-hidden="true">!</div>
+          <div>
+            <h2 id="titulo-acceso-pendiente">No se pudo cargar la información de tu perfil</h2>
+            <p>{errorSesion || errorAutorizacion}</p>
+            <p>Comprueba la conexión con la API y vuelve a consultar tus permisos.</p>
+          </div>
+          <button type="button" onClick={alRefrescarAutorizacion}>Reintentar</button>
+        </section>
+      )}
 
       {hayIndicadores ? (
-        <section className="seccion-resumen-inicio" aria-labelledby="titulo-resumen-inicio">
-          <div className="encabezado-resumen-inicio">
-            <p className="etiqueta-seccion">Hoy</p>
-            <h2 id="titulo-resumen-inicio">Indicadores del día</h2>
+        <section className="inicio-resumen-operativo" aria-labelledby="titulo-resumen-inicio">
+          <div className="inicio-seccion-titulo">
+            <div>
+              <span className="inicio-indice">01 / OPERACIÓN</span>
+              <h2 id="titulo-resumen-inicio">Estado de hoy</h2>
+            </div>
+            <span className="inicio-etiqueta-periodo">Datos del día</span>
           </div>
-          <div className="cuadricula-indicadores-inicio">
+          <div className="inicio-lista-metricas">
             {puedeVerReportes && (
               <>
-                <IndicadorInicio etiqueta="Ventas totales del día" valor={formatearMoneda(ventasDia.datos?.ingresos_validos)} detalle="Solo ventas confirmadas" estado={ventasDia} tono="petroleo" />
-                <IndicadorInicio etiqueta="Cantidad de ventas del día" valor={formatearCantidad(ventasDia.datos?.operaciones_confirmadas)} detalle="Operaciones confirmadas" estado={ventasDia} tono="verde" />
+                <IndicadorInicio etiqueta="Ventas del día" valor={formatearMoneda(ventasDia.datos?.ingresos_validos)} detalle="Operaciones confirmadas" estado={ventasDia} tono="petroleo" />
+                <IndicadorInicio etiqueta="Operaciones" valor={formatearCantidad(ventasDia.datos?.operaciones_confirmadas)} detalle="Ventas confirmadas" estado={ventasDia} tono="verde" />
               </>
             )}
             {puedeConsultarCaja && (
-              <IndicadorInicio
-               
-                etiqueta="Caja actual"
-                valor={cajaAbierta ? 'Abierta' : 'Sin turno abierto'}
-                detalle={cajaAbierta ? `Efectivo esperado: ${formatearMoneda(resumenCaja?.efectivo_esperado)}` : 'No hay una caja abierta para este usuario'}
-                estado={cajaActual}
-                tono={cajaAbierta ? 'verde' : 'oliva'}
-              />
+              <IndicadorInicio etiqueta="Estado de caja" valor={cajaAbierta ? 'Abierta' : 'Sin apertura'} detalle={cajaAbierta ? 'Efectivo esperado: ' + formatearMoneda(resumenCaja?.efectivo_esperado) : 'No hay un turno de caja abierto'} estado={cajaActual} tono={cajaAbierta ? 'verde' : 'oliva'} />
             )}
             {puedeVerInventario && (
-              <IndicadorInicio etiqueta="Variantes con stock bajo" valor={formatearCantidad(inventario.datos?.variantes_stock_bajo)} detalle={`${formatearCantidad(inventario.datos?.variantes_sin_stock)} sin stock`} estado={inventario} tono="dorado" />
+              <IndicadorInicio etiqueta="Stock bajo" valor={formatearCantidad(inventario.datos?.variantes_stock_bajo)} detalle={formatearCantidad(inventario.datos?.variantes_sin_stock) + ' variantes agotadas'} estado={inventario} tono="dorado" />
             )}
           </div>
         </section>
-      ) : (
-        <p className="estado-vacio-inicio">No hay indicadores disponibles para tus permisos actuales.</p>
-      )}
+      ) : !errorSesion && !errorAutorizacion ? (
+        <section className="inicio-sin-permisos">
+          <strong>Esperando acceso a los módulos</strong>
+          <p>Al cargar la autorización de tu perfil aparecerán aquí los indicadores disponibles.</p>
+        </section>
+      ) : null}
 
       {puedeVerVentas && (
-        <section className="actividad-reciente-inicio" aria-labelledby="titulo-actividad-inicio">
-          <header className="encabezado-actividad-inicio">
+        <section className="inicio-operaciones-recientes" aria-labelledby="titulo-actividad-inicio">
+          <div className="inicio-seccion-titulo">
             <div>
-              <p className="etiqueta-seccion">Ventas</p>
-              <h2 id="titulo-actividad-inicio">Actividad reciente</h2>
+              <span className="inicio-indice">02 / HISTORIAL</span>
+              <h2 id="titulo-actividad-inicio">Últimas transacciones</h2>
             </div>
-            <span>Últimas 5 operaciones</span>
-          </header>
-          {actividad.cargando ? (
-            <p className="estado-actividad-inicio" role="status">Consultando actividad...</p>
-          ) : actividad.error ? (
-            <p className="estado-actividad-inicio estado-error-inicio" role="alert">{actividad.error}</p>
-          ) : actividad.datos?.length ? (
-            <ul className="lista-actividad-inicio">
-              {actividad.datos.map((venta) => (
-                <li key={venta.id}>
-                  <div><strong>{venta.numero}</strong><span>{venta.comprador_nombre}</span></div>
-                  <div className="importe-actividad-inicio"><strong>{formatearMoneda(venta.total)}</strong><span>{formatearFechaHora(venta.fecha_confirmacion)}</span></div>
-                  <EstadoEtiqueta
-                    tono={venta.estado === 'anulada' ? 'peligro' : 'positivo'}
-                    className="estado-venta-inicio"
-                  >
-                    {venta.estado === 'anulada' ? 'Anulada' : 'Confirmada'}
-                  </EstadoEtiqueta>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="estado-actividad-inicio">No hay ventas registradas todavía.</p>
-          )}
+            <span className="inicio-etiqueta-periodo">5 registros recientes</span>
+          </div>
+          <div className="inicio-tabla-contenedor">
+            <table className="inicio-tabla" aria-label="Últimas ventas">
+              <thead><tr><th scope="col">Documento</th><th scope="col">Cliente</th><th scope="col">Fecha</th><th scope="col">Importe</th><th scope="col">Estado</th></tr></thead>
+              <tbody>
+                {actividad.cargando ? (
+                  <tr><td colSpan={5} className="inicio-tabla-vacio">Consultando transacciones...</td></tr>
+                ) : actividad.error ? (
+                  <tr><td colSpan={5} className="inicio-tabla-vacio inicio-tabla-error" role="alert">{actividad.error}</td></tr>
+                ) : actividad.datos?.length ? (
+                  actividad.datos.map((venta) => (
+                    <tr key={venta.id}>
+                      <td className="inicio-numero-documento">{venta.numero}</td>
+                      <td>{venta.comprador_nombre}</td>
+                      <td>{formatearFechaHora(venta.fecha_confirmacion)}</td>
+                      <td className="inicio-importe">{formatearMoneda(venta.total)}</td>
+                      <td><EstadoEtiqueta tono={venta.estado === 'anulada' ? 'peligro' : 'positivo'}>{venta.estado === 'anulada' ? 'Anulada' : 'Confirmada'}</EstadoEtiqueta></td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan={5} className="inicio-tabla-vacio">No se han registrado ventas.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
+      <footer className="inicio-pie">E-farm <span>·</span> ECOFARM S.A. <span>·</span> Uso interno</footer>
     </div>
   )
 }
