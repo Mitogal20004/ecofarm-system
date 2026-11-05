@@ -352,11 +352,6 @@ function App() {
             <small>Gestión agrícola</small>
           </span>
         </div>
-        <div className="contexto-barra-superior" aria-hidden="true">
-          <span>Plataforma interna</span>
-          <strong>Control comercial y agrícola</strong>
-        </div>
-
         <div className="acciones-barra-superior">
           <div className="identidad-usuario">
             <span className="etiqueta-usuario">Sesión de trabajo</span>
