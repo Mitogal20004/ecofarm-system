@@ -717,3 +717,47 @@
     inset:auto 8px 0;width:auto;height:2px;
   }
 }
+
+
+/* Encabezados directos y paleta clásica verde + crema de ECOFARM. */
+@media screen {
+  .aplicacion-administrativa {
+    --color-fondo: #f8f6f0;
+    --color-superficie-secundaria: #f2eee4;
+    background: #f8f6f0;
+  }
+  .aplicacion-administrativa .area-principal {
+    background: #f8f6f0;
+  }
+  .aplicacion-administrativa .barra-superior {
+    background: #fffdf9;
+  }
+  .aplicacion-administrativa .contenido-panel :is(
+    .encabezado-ventas,
+    .encabezado-caja,
+    .encabezado-inventario,
+    .encabezado-productos,
+    .encabezado-clientes,
+    .encabezado-cotizaciones,
+    .encabezado-reportes,
+    .encabezado-usuarios
+  ) h1 {
+    font-size: clamp(22px, 2vw, 27px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -.025em;
+  }
+  .aplicacion-administrativa .inicio-cabecera {
+    display: block;
+    padding: 0 0 17px;
+    border-bottom: 1px solid #dadfd5;
+  }
+  .aplicacion-administrativa .inicio-cabecera h1 {
+    margin: 0;
+    font-size: clamp(22px, 2vw, 27px);
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -.025em;
+    color: #203d32;
+  }
+}
