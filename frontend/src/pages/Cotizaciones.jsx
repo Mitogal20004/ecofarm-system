@@ -321,7 +321,7 @@ function Cotizaciones({
                             type="button"
                             onClick={() => abrirDetalle(cotizacion.id)}
                           >
-                            Ver
+                            Ver detalle
                           </button>
                           {puedeEditar && cotizacion.estado === 'borrador' && (
                             <button
