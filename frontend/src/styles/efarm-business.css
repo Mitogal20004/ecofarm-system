@@ -775,12 +775,13 @@
 
   .aplicacion-administrativa .opcion-navegacion .icono-navegacion {
     flex-shrink: 0;
-    transition: color 170ms ease, transform 200ms ease;
+    transform-origin: center center;
+    transition: color 200ms ease, transform 260ms cubic-bezier(.2, .8, .2, 1);
   }
 
   .aplicacion-administrativa .opcion-navegacion:hover:not(.opcion-navegacion-activa) .icono-navegacion {
     color: #f0f5e9;
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.14) rotate(-6deg);
   }
 
   .aplicacion-administrativa .opcion-navegacion:active .icono-navegacion {
@@ -790,6 +791,12 @@
   .aplicacion-administrativa .opcion-navegacion-activa {
     background: #345b43;
     color: #fff;
+  }
+
+  .aplicacion-administrativa .opcion-navegacion-activa .icono-navegacion {
+    color: #e9f7e4;
+    transform: translateY(-1px) scale(1.08);
+    animation: efarm-icono-activo 410ms cubic-bezier(.2, .75, .2, 1);
   }
 
   .aplicacion-administrativa .opcion-navegacion-activa::after {
@@ -809,6 +816,13 @@
   }
 }
 
+@keyframes efarm-icono-activo {
+  0%   { transform: translateY(2px) scale(.82) rotate(0deg); }
+  48%  { transform: translateY(-4px) scale(1.23) rotate(-8deg); }
+  75%  { transform: translateY(0) scale(1.04) rotate(3deg); }
+  100% { transform: translateY(-1px) scale(1.08) rotate(0deg); }
+}
+
 @keyframes efarm-subrayado-activo {
   from { opacity: .5; transform: scaleX(.35); }
   to { opacity: 1; transform: scaleX(1); }
@@ -825,6 +839,7 @@
     transition: none !important;
   }
   .aplicacion-administrativa .opcion-navegacion-activa::after,
+  .aplicacion-administrativa .opcion-navegacion-activa .icono-navegacion,
   .aplicacion-administrativa .contenido-panel {
     animation: none !important;
   }
