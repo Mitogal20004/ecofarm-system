@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
-import IconoInterfaz from '../components/IconoInterfaz'
 import { obtenerCajaActual } from '../services/caja'
 import { listarInventario } from '../services/inventario'
 import { obtenerReporteVentas } from '../services/reportes'
@@ -59,16 +58,13 @@ function obtenerMensajeError(error, recurso) {
   return `No fue posible consultar ${recurso}.`
 }
 
-function IndicadorInicio({ icono, etiqueta, valor, detalle, estado, tono }) {
+function IndicadorInicio({ etiqueta, valor, detalle, estado, tono }) {
   return (
     <article
       className={`indicador-inicio indicador-inicio-${tono}`}
       aria-busy={estado.cargando}
     >
       <div className="cabecera-indicador-inicio">
-        <span className="icono-indicador-inicio" aria-hidden="true">
-          <IconoInterfaz nombre={icono} />
-        </span>
         <span>{etiqueta}</span>
       </div>
       {estado.cargando ? (
@@ -205,11 +201,10 @@ function Inicio({
         aria-labelledby="titulo-panel"
       >
         <div>
-          <p className="etiqueta-seccion">Panel administrativo</p>
-          <h1 id="titulo-panel">Resumen de operaciones internas</h1>
+          <p className="etiqueta-seccion">E-farm / Operación diaria</p>
+          <h1 id="titulo-panel">Resumen de operaciones</h1>
           <p className="descripcion-panel">
-            Gestiona la actividad diaria de E-farm desde un espacio claro,
-            ordenado y conectado con el trabajo del campo.
+            Ventas, caja e inventario en un solo lugar.
           </p>
         </div>
         <div className="estado-inicio" aria-label="Estado de la sesión">
@@ -225,18 +220,18 @@ function Inicio({
         <section className="seccion-resumen-inicio" aria-labelledby="titulo-resumen-inicio">
           <div className="encabezado-resumen-inicio">
             <p className="etiqueta-seccion">Hoy</p>
-            <h2 id="titulo-resumen-inicio">Resumen operativo</h2>
+            <h2 id="titulo-resumen-inicio">Indicadores del día</h2>
           </div>
           <div className="cuadricula-indicadores-inicio">
             {puedeVerReportes && (
               <>
-                <IndicadorInicio icono="reportes" etiqueta="Ventas totales del día" valor={formatearMoneda(ventasDia.datos?.ingresos_validos)} detalle="Solo ventas confirmadas" estado={ventasDia} tono="petroleo" />
-                <IndicadorInicio icono="ventas" etiqueta="Cantidad de ventas del día" valor={formatearCantidad(ventasDia.datos?.operaciones_confirmadas)} detalle="Operaciones confirmadas" estado={ventasDia} tono="verde" />
+                <IndicadorInicio etiqueta="Ventas totales del día" valor={formatearMoneda(ventasDia.datos?.ingresos_validos)} detalle="Solo ventas confirmadas" estado={ventasDia} tono="petroleo" />
+                <IndicadorInicio etiqueta="Cantidad de ventas del día" valor={formatearCantidad(ventasDia.datos?.operaciones_confirmadas)} detalle="Operaciones confirmadas" estado={ventasDia} tono="verde" />
               </>
             )}
             {puedeConsultarCaja && (
               <IndicadorInicio
-                icono="caja"
+               
                 etiqueta="Caja actual"
                 valor={cajaAbierta ? 'Abierta' : 'Sin turno abierto'}
                 detalle={cajaAbierta ? `Efectivo esperado: ${formatearMoneda(resumenCaja?.efectivo_esperado)}` : 'No hay una caja abierta para este usuario'}
@@ -245,7 +240,7 @@ function Inicio({
               />
             )}
             {puedeVerInventario && (
-              <IndicadorInicio icono="advertencia" etiqueta="Variantes con stock bajo" valor={formatearCantidad(inventario.datos?.variantes_stock_bajo)} detalle={`${formatearCantidad(inventario.datos?.variantes_sin_stock)} sin stock`} estado={inventario} tono="dorado" />
+              <IndicadorInicio etiqueta="Variantes con stock bajo" valor={formatearCantidad(inventario.datos?.variantes_stock_bajo)} detalle={`${formatearCantidad(inventario.datos?.variantes_sin_stock)} sin stock`} estado={inventario} tono="dorado" />
             )}
           </div>
         </section>
