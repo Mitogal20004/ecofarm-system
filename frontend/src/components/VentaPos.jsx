@@ -5,7 +5,15 @@ import { listarVariantes } from '../services/productos'
 import {
   confirmarVenta,
   crearIntencionVenta,
+  obtenerVenta,
 } from '../services/ventas'
+import { CheckCircle2, Eye, FileDown, Printer, List } from 'lucide-react'
+import {
+  crearDocumentoVenta,
+  descargarPDFTicket,
+  imprimirTicket,
+  verPDFTicket,
+} from '../utils/documentosComerciales'
 import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
 
 const FORMULARIO_INICIAL = {
@@ -53,6 +61,11 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
   const [resultado, setResultado] = useState(null)
+  const [detalleConfirmado, setDetalleConfirmado] = useState(null)
+  const [documentosCargando, setDocumentosCargando] = useState(false)
+  const [documentosError, setDocumentosError] = useState('')
+  const [tipoDocumentoAcceso, setTipoDocumentoAcceso] = useState(DOCUMENTO_RECIBO)
+  const resultadoActivoRef = useRef(null)
   const confirmandoRef = useRef(false)
   const buscadorProductoRef = useRef(null)
 
@@ -437,7 +450,12 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       setPresentacionId('')
       setCantidad('1')
       setMontoRecibido('')
+      resultadoActivoRef.current = null
       setResultado(null)
+      setDetalleConfirmado(null)
+      setDocumentosError('')
+      setDocumentosCargando(false)
+      setTipoDocumentoAcceso(DOCUMENTO_RECIBO)
       setReintentoPendiente(false)
       setAviso('Nueva intención de venta preparada.')
       await cargarCatalogos()
@@ -523,19 +541,36 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
 
     try {
       const respuesta = await confirmarVenta(datos, claveIdempotencia)
+      resultadoActivoRef.current = respuesta.venta.id
+      setTipoDocumentoAcceso(tipoDocumento)
+      setDetalleConfirmado(null)
+      setDocumentosError('')
       setResultado(respuesta)
       setLineas([])
       setReintentoPendiente(false)
       setAviso('')
-      if (puedeVer && alVerVenta) {
-        alVerVenta(
-          respuesta.venta.id,
-          tipoDocumento === DOCUMENTO_RECIBO
-            ? true
-            : DOCUMENTO_FACTURA,
-        )
-      } else {
-        await cargarCatalogos()
+
+      // La venta YA fue confirmada. Consultar sus documentos es de solo lectura:
+      // si falla esta consulta, jamás volvemos a enviar el cobro.
+      if (puedeVer) {
+        setDocumentosCargando(true)
+        try {
+          const detalleGuardado = await obtenerVenta(respuesta.venta.id)
+          if (resultadoActivoRef.current === respuesta.venta.id) {
+            setDetalleConfirmado(detalleGuardado)
+          }
+        } catch (errorLectura) {
+          if (resultadoActivoRef.current === respuesta.venta.id) {
+            setDocumentosError(
+              errorLectura?.message ||
+                'La venta se guardó, pero no fue posible cargar el documento.',
+            )
+          }
+        } finally {
+          if (resultadoActivoRef.current === respuesta.venta.id) {
+            setDocumentosCargando(false)
+          }
+        }
       }
     } catch (errorConfirmacion) {
       setError(errorConfirmacion?.message || 'No fue posible confirmar la venta.')
@@ -550,6 +585,44 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
     }
   }
 
+  const recargarDocumentoConfirmado = async () => {
+    const ventaId = resultado?.venta?.id
+    if (!ventaId || !puedeVer || documentosCargando) return
+    setDocumentosCargando(true)
+    setDocumentosError('')
+    try {
+      const detalleGuardado = await obtenerVenta(ventaId)
+      if (resultadoActivoRef.current === ventaId) {
+        setDetalleConfirmado(detalleGuardado)
+      }
+    } catch (errorLectura) {
+      if (resultadoActivoRef.current === ventaId) {
+        setDocumentosError(
+          errorLectura?.message || 'No fue posible consultar el documento.',
+        )
+      }
+    } finally {
+      if (resultadoActivoRef.current === ventaId) {
+        setDocumentosCargando(false)
+      }
+    }
+  }
+
+  const ejecutarAccesoDocumento = (accion) => {
+    if (!detalleConfirmado) return
+    try {
+      const documento = crearDocumentoVenta(detalleConfirmado, tipoDocumentoAcceso)
+      if (accion === 'vista') verPDFTicket(documento)
+      if (accion === 'descargar') descargarPDFTicket(documento)
+      if (accion === 'imprimir') imprimirTicket(documento)
+      setDocumentosError('')
+    } catch (errorDocumento) {
+      setDocumentosError(
+        errorDocumento?.message || 'No fue posible preparar el documento.',
+      )
+    }
+  }
+
   if (cargando && variantes.length === 0) {
     return (
       <section className="estado-ventas" aria-live="polite">
@@ -559,68 +632,88 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   }
 
   if (resultado) {
+    const documentosListos = puedeVer && Boolean(detalleConfirmado) && !documentosCargando
+
     return (
-      <section className="resultado-venta" aria-labelledby="titulo-venta-exitosa">
-        <span className="icono-venta-exitosa" aria-hidden="true">✓</span>
-        <p className="etiqueta-seccion-ventas">Operación completada</p>
-        <h2 id="titulo-venta-exitosa">Venta confirmada</h2>
-        <p>
-          El inventario y el recibo fueron registrados en una sola operación.
-        </p>
-        <dl>
-          <div><dt>Venta</dt><dd>{resultado.venta.numero}</dd></div>
-          <div><dt>Recibo</dt><dd>{resultado.recibo.numero}</dd></div>
+      <section className="resultado-venta resultado-venta-efarm" aria-labelledby="titulo-venta-exitosa">
+        <div className="resultado-venta-titulo-efarm">
+          <CheckCircle2 size={24} strokeWidth={1.8} aria-hidden="true" />
           <div>
-            <dt>Total definitivo</dt>
-            <dd>{formatoMoneda.format(Number(resultado.venta.total))}</dd>
+            <h2 id="titulo-venta-exitosa">Venta confirmada</h2>
+            <p>Venta {resultado.venta.numero} · Recibo {resultado.recibo.numero}</p>
           </div>
-          <div>
-            <dt>Recibido</dt>
-            <dd>{formatoMoneda.format(Number(resultado.venta.monto_recibido))}</dd>
-          </div>
-          <div>
-            <dt>Cambio</dt>
-            <dd>{formatoMoneda.format(Number(resultado.venta.cambio))}</dd>
-          </div>
+        </div>
+
+        <dl className="resultado-venta-importes-efarm">
+          <div><dt>Total</dt><dd>{formatoMoneda.format(Number(resultado.venta.total))}</dd></div>
+          <div><dt>Recibido</dt><dd>{formatoMoneda.format(Number(resultado.venta.monto_recibido))}</dd></div>
+          <div><dt>Cambio</dt><dd>{formatoMoneda.format(Number(resultado.venta.cambio))}</dd></div>
         </dl>
+
         {!resultado.cambio && (
           <p className="aviso-idempotencia-ventas">
-            Este fue un reintento seguro: no se descontó inventario dos veces.
+            Reintento seguro: no se descontó inventario dos veces.
           </p>
         )}
-        <div className="acciones-resultado-venta">
+
+        {puedeVer ? (
+          <div className="documentos-resultado-efarm" aria-label="Documentos de esta venta">
+            <div className="documentos-resultado-encabezado-efarm">
+              <strong>Comprobante</strong>
+              <label htmlFor="documento-rapido-venta">
+                <span>Tipo</span>
+                <select
+                  id="documento-rapido-venta"
+                  value={tipoDocumentoAcceso}
+                  onChange={(evento) => setTipoDocumentoAcceso(evento.target.value)}
+                >
+                  <option value={DOCUMENTO_RECIBO}>Recibo</option>
+                  <option value={DOCUMENTO_FACTURA}>Factura de prueba</option>
+                </select>
+              </label>
+            </div>
+            <div className="acciones-documentos-resultado-efarm">
+              <button type="button" className="boton-secundario-ventas" disabled={!documentosListos} onClick={() => ejecutarAccesoDocumento('vista')}>
+                <Eye size={16} aria-hidden="true" />
+                Vista previa
+              </button>
+              <button type="button" className="boton-secundario-ventas" disabled={!documentosListos} onClick={() => ejecutarAccesoDocumento('descargar')}>
+                <FileDown size={16} aria-hidden="true" />
+                Descargar PDF
+              </button>
+              <button type="button" className="boton-primario-ventas" disabled={!documentosListos} onClick={() => ejecutarAccesoDocumento('imprimir')}>
+                <Printer size={16} aria-hidden="true" />
+                Imprimir
+              </button>
+            </div>
+            {documentosCargando && <p className="estado-documento-rapido-efarm" role="status">Preparando documento...</p>}
+            {documentosError && (
+              <div className="error-documento-rapido-efarm" role="alert">
+                <p>La venta sí quedó guardada. {documentosError}</p>
+                <button className="boton-secundario-ventas" type="button" disabled={documentosCargando} onClick={recargarDocumentoConfirmado}>
+                  Reintentar documento
+                </button>
+              </div>
+            )}
+            {tipoDocumentoAcceso === DOCUMENTO_FACTURA && (
+              <p className="aviso-fiscal-rapido-efarm">DOCUMENTO DE PRUEBA — SIN VALIDEZ FISCAL</p>
+            )}
+            <p className="nota-documentos-efarm">Formato de ticket de 80 mm. Imprimir no vuelve a registrar la venta.</p>
+          </div>
+        ) : (
+          <p className="estado-documento-rapido-efarm">
+            La venta está guardada. Tu usuario necesita permiso de consulta para abrir sus documentos.
+          </p>
+        )}
+
+        <div className="acciones-resultado-venta acciones-resultado-efarm">
           {puedeVer && (
-            <>
-              <button
-                className="boton-secundario-ventas"
-                type="button"
-                onClick={() => alVerVenta(resultado.venta.id)}
-              >
-                Ver recibo
-              </button>
-              <button
-                className="boton-documento-ventas boton-recibo-ventas"
-                type="button"
-                onClick={() => alVerVenta(resultado.venta.id, true)}
-              >
-                Imprimir recibo
-              </button>
-              <button
-                className="boton-documento-ventas boton-factura-ventas"
-                type="button"
-                onClick={() =>
-                  alVerVenta(resultado.venta.id, 'factura-demostracion')
-                }
-              >
-                Imprimir factura
-              </button>
-            </>
+            <button className="boton-secundario-ventas" type="button" onClick={() => alVerVenta(resultado.venta.id)}>
+              <List size={16} aria-hidden="true" />
+              Ver detalle
+            </button>
           )}
-          <button
-            className="boton-primario-ventas"
-            type="button"
-            onClick={reiniciarVenta}
-          >
+          <button className="boton-primario-ventas" type="button" onClick={reiniciarVenta}>
             Nueva venta
           </button>
         </div>
