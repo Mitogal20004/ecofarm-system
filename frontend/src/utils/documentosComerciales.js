@@ -48,8 +48,15 @@ export function crearDocumentoVenta(detalle, tipo = 'recibo') {
     throw new Error('Primero debe emitirse el recibo de la venta.')
   }
   return {
+    tipo: factura ? 'factura-demostracion' : 'recibo',
     titulo: factura ? 'FACTURA DE PRUEBA' : 'RECIBO DE VENTA',
     numero: factura ? texto(venta.numero) : texto(recibo.numero),
+    ventaNumero: texto(venta.numero),
+    reciboNumero: texto(recibo?.numero, ''),
+    origen: venta.origen === 'cotizacion' ? 'Desde cotización' : 'Venta directa',
+    clienteTipo: venta.tipo_comprador === 'registrado' ? 'Cliente registrado' : 'Comprador ocasional',
+    pagoRecibido: venta.monto_recibido == null ? null : dinero(venta.monto_recibido),
+    cambioVenta: venta.cambio == null ? null : dinero(venta.cambio),
     fecha: fecha(factura ? venta.fecha_confirmacion : (recibo.fecha_emision ?? venta.fecha_confirmacion)),
     serie: texto(recibo?.serie_usuario_snapshot ?? venta.serie_usuario_snapshot),
     cliente: texto(venta.comprador_nombre, 'Consumidor final'),
@@ -59,9 +66,13 @@ export function crearDocumentoVenta(detalle, tipo = 'recibo') {
     usuario: texto(venta.usuario_creador?.nombre_completo, ''),
     observaciones: texto(venta.observaciones, ''),
     productos: detalles.map((linea) => ({
+      codigo: texto(linea.codigo_sku, ''),
       nombre: nombreProducto(linea),
+      descripcion: [linea.producto_nombre, linea.color, linea.longitud_cm ? String(linea.longitud_cm) + ' cm' : '', linea.clasificacion].filter(Boolean).join(' · '),
       presentacion: texto(linea.presentacion_nombre, ''),
+      manojosPorUnidad: texto(linea.cantidad_manojos_presentacion, ''),
       cantidad: texto(linea.cantidad_presentaciones, '0'),
+      manojos: texto(linea.cantidad_manojos, '0'),
       precio: dinero(linea.precio_unitario),
       subtotal: dinero(linea.subtotal),
     })),
@@ -81,8 +92,13 @@ export function crearDocumentoCotizacion(detalle) {
     throw new Error('No se encontró el detalle de la cotización.')
   }
   return {
+    tipo: 'cotizacion',
     titulo: 'COTIZACIÓN',
     numero: texto(cotizacion.numero),
+    ventaNumero: '',
+    origen: 'Cotización comercial',
+    clienteTipo: cotizacion.tipo_comprador === 'registrado' ? 'Cliente registrado' : 'Comprador ocasional',
+    fechaActualizacion: fecha(cotizacion.fecha_actualizacion),
     fecha: fecha(cotizacion.fecha_emision ?? cotizacion.fecha_creacion),
     serie: texto(cotizacion.serie_usuario_snapshot),
     cliente: texto(cotizacion.comprador_nombre, 'Consumidor final'),
@@ -92,9 +108,13 @@ export function crearDocumentoCotizacion(detalle) {
     usuario: texto(cotizacion.usuario_creador?.nombre_completo, ''),
     observaciones: texto(cotizacion.observaciones, ''),
     productos: detalles.map((linea) => ({
+      codigo: texto(linea.codigo_sku, ''),
       nombre: nombreProducto(linea),
+      descripcion: [linea.producto_nombre, linea.color, linea.longitud_cm ? String(linea.longitud_cm) + ' cm' : '', linea.clasificacion].filter(Boolean).join(' · '),
       presentacion: texto(linea.presentacion_nombre, ''),
+      manojosPorUnidad: texto(linea.cantidad_manojos_presentacion, ''),
       cantidad: texto(linea.cantidad_presentaciones, '0'),
+      manojos: texto(linea.cantidad_manojos, '0'),
       precio: dinero(linea.precio_unitario),
       subtotal: dinero(linea.subtotal),
     })),
