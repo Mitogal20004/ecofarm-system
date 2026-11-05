@@ -189,11 +189,14 @@ export function imprimirTicket(documento) {
   if (!ventana) {
     throw new Error('El navegador bloqueó la ventana de impresión. Permite ventanas emergentes para E-farm.')
   }
-  const contenido = construirLineasTicket(documento)
-    .map((linea) => linea.texto).join('\n')
+  const lineas = construirLineasTicket(documento)
+  const contenido = lineas.map((linea) => linea.texto).join('\n')
+  // Largo proporcional a los renglones; evita gastar casi una hoja completa
+  // cuando la venta solo tiene uno o dos productos.
+  const altoTicketMm = Math.max(90, Math.ceil(lineas.length * 4.1 + 12))
   const html = '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
     '<title>' + escaparHTML(documento.titulo + ' ' + documento.numero) + '</title>' +
-    '<style>@page{size:80mm 297mm;margin:0}*{box-sizing:border-box}' +
+    '<style>@page{size:80mm ' + altoTicketMm + 'mm;margin:0}*{box-sizing:border-box}' +
     'body{width:80mm;max-width:80mm;margin:0;padding:4mm;background:#fff;color:#000}' +
     'pre{width:72mm;margin:0;font:10px/1.45 "Courier New",monospace;white-space:pre-wrap;overflow-wrap:anywhere}' +
     '@media screen{body{margin:auto;box-shadow:0 0 14px #ccc;min-height:300px}}</style>' +
