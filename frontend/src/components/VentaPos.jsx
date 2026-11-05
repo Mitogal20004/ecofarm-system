@@ -8,12 +8,12 @@ import {
   obtenerVenta,
 } from '../services/ventas'
 import { CheckCircle2, Eye, FileDown, Printer, List } from 'lucide-react'
+import logoEfarm from '../assets/logo-efarm-brand.png'
 import {
   crearDocumentoVenta,
-  descargarPDFTicket,
   imprimirTicket,
-  verPDFTicket,
 } from '../utils/documentosComerciales'
+import { descargarPDFFormal, verPDFFormal } from '../utils/documentosFormales'
 import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
 
 const FORMULARIO_INICIAL = {
@@ -63,6 +63,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   const [resultado, setResultado] = useState(null)
   const [detalleConfirmado, setDetalleConfirmado] = useState(null)
   const [documentosCargando, setDocumentosCargando] = useState(false)
+  const [documentosProcesando, setDocumentosProcesando] = useState(false)
   const [documentosError, setDocumentosError] = useState('')
   const [tipoDocumentoAcceso, setTipoDocumentoAcceso] = useState(DOCUMENTO_RECIBO)
   const resultadoActivoRef = useRef(null)
@@ -455,6 +456,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       setDetalleConfirmado(null)
       setDocumentosError('')
       setDocumentosCargando(false)
+      setDocumentosProcesando(false)
       setTipoDocumentoAcceso(DOCUMENTO_RECIBO)
       setReintentoPendiente(false)
       setAviso('Nueva intención de venta preparada.')
@@ -608,18 +610,21 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
     }
   }
 
-  const ejecutarAccesoDocumento = (accion) => {
-    if (!detalleConfirmado) return
+  const ejecutarAccesoDocumento = async (accion) => {
+    if (!detalleConfirmado || documentosProcesando) return
+    setDocumentosProcesando(true)
     try {
       const documento = crearDocumentoVenta(detalleConfirmado, tipoDocumentoAcceso)
-      if (accion === 'vista') verPDFTicket(documento)
-      if (accion === 'descargar') descargarPDFTicket(documento)
+      if (accion === 'vista') await verPDFFormal(documento, logoEfarm)
+      if (accion === 'descargar') await descargarPDFFormal(documento, logoEfarm)
       if (accion === 'imprimir') imprimirTicket(documento)
       setDocumentosError('')
     } catch (errorDocumento) {
       setDocumentosError(
         errorDocumento?.message || 'No fue posible preparar el documento.',
       )
+    } finally {
+      setDocumentosProcesando(false)
     }
   }
 
@@ -632,7 +637,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   }
 
   if (resultado) {
-    const documentosListos = puedeVer && Boolean(detalleConfirmado) && !documentosCargando
+    const documentosListos = puedeVer && Boolean(detalleConfirmado) && !documentosCargando && !documentosProcesando
 
     return (
       <section className="resultado-venta resultado-venta-efarm" aria-labelledby="titulo-venta-exitosa">
@@ -698,7 +703,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
             {tipoDocumentoAcceso === DOCUMENTO_FACTURA && (
               <p className="aviso-fiscal-rapido-efarm">DOCUMENTO DE PRUEBA — SIN VALIDEZ FISCAL</p>
             )}
-            <p className="nota-documentos-efarm">Formato de ticket de 80 mm. Imprimir no vuelve a registrar la venta.</p>
+            <p className="nota-documentos-efarm">Vista previa y PDF en carta; Imprimir en ticket de 80 mm. Ninguna acción registra otra venta.</p>
           </div>
         ) : (
           <p className="estado-documento-rapido-efarm">
