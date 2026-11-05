@@ -202,7 +202,7 @@ function DetalleCotizacion({
 
   const imprimirTicketDocumento = () => {
     try {
-      imprimirTicket(crearDocumentoCotizacion(detalle))
+      imprimirTicket(crearDocumentoCotizacion(detalle), logoEfarm)
       setError('')
     } catch (errorImpresion) {
       setError(errorImpresion?.message || 'No fue posible imprimir la cotización.')
