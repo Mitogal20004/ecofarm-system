@@ -617,7 +617,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
       const documento = crearDocumentoVenta(detalleConfirmado, tipoDocumentoAcceso)
       if (accion === 'vista') await verPDFFormal(documento, logoEfarm)
       if (accion === 'descargar') await descargarPDFFormal(documento, logoEfarm)
-      if (accion === 'imprimir') imprimirTicket(documento)
+      if (accion === 'imprimir') imprimirTicket(documento, logoEfarm)
       setDocumentosError('')
     } catch (errorDocumento) {
       setDocumentosError(
