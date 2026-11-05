@@ -153,19 +153,25 @@ const agregarTexto = (lineas, valor, opciones = {}) => {
   }
 }
 
-const agregarImporte = (lineas, etiqueta, importe, fuerte = false) => {
+const agregarImporte = (lineas, etiqueta, importe, tipo = 'importe') => {
   const izquierda = texto(etiqueta, '')
   const derecha = texto(importe, '')
   const espacios = Math.max(1, anchoCaracteres - izquierda.length - derecha.length)
-  lineas.push({ texto: izquierda + ' '.repeat(espacios) + derecha, negrita: fuerte })
+  lineas.push({
+    texto: izquierda + ' '.repeat(espacios) + derecha,
+    etiqueta: izquierda,
+    importe: derecha,
+    tipo,
+    negrita: tipo === 'total' || tipo === 'cambio' || tipo === 'recibido',
+  })
 }
 
 export function construirLineasTicket(documento) {
   const lineas = []
-  agregarTexto(lineas, 'E-FARM', { centro: true, negrita: true })
-  agregarTexto(lineas, 'ECOFARM S.A.', { centro: true })
-  agregarTexto(lineas, documento.titulo, { centro: true, negrita: true })
-  lineas.push({ texto: '-'.repeat(anchoCaracteres) })
+  agregarTexto(lineas, 'E-FARM', { centro: true, negrita: true, tipo: 'marca' })
+  agregarTexto(lineas, 'ECOFARM S.A.', { centro: true, tipo: 'empresa' })
+  agregarTexto(lineas, documento.titulo, { centro: true, negrita: true, tipo: 'titulo' })
+  lineas.push({ texto: '-'.repeat(anchoCaracteres), tipo: 'separador' })
   agregarTexto(lineas, 'Número: ' + documento.numero)
   agregarTexto(lineas, 'Fecha: ' + documento.fecha)
   agregarTexto(lineas, 'Serie: ' + documento.serie)
@@ -174,25 +180,34 @@ export function construirLineasTicket(documento) {
   agregarTexto(lineas, 'NIT: ' + documento.nit)
   if (documento.direccion) agregarTexto(lineas, 'Dirección: ' + documento.direccion)
   if (documento.usuario) agregarTexto(lineas, 'Atendió: ' + documento.usuario)
-  lineas.push({ texto: '-'.repeat(anchoCaracteres) })
+  lineas.push({ texto: '-'.repeat(anchoCaracteres), tipo: 'separador' })
   for (const producto of documento.productos) {
-    agregarTexto(lineas, producto.nombre, { negrita: true })
-    if (producto.presentacion) agregarTexto(lineas, producto.presentacion)
-    agregarTexto(lineas, 'Cantidad: ' + producto.cantidad + '  Precio: ' + producto.precio)
-    agregarImporte(lineas, 'Importe', producto.subtotal)
+    agregarTexto(lineas, producto.nombre, { negrita: true, tipo: 'producto' })
+    if (producto.presentacion) {
+      agregarTexto(lineas, 'Presentación: ' + producto.presentacion, { tipo: 'presentacion' })
+    }
+    agregarTexto(
+      lineas,
+      'Cant.: ' + producto.cantidad + '  Precio: ' + producto.precio,
+      { tipo: 'cantidad-precio' },
+    )
   }
-  lineas.push({ texto: '-'.repeat(anchoCaracteres) })
-  agregarImporte(lineas, 'Subtotal', documento.subtotal)
-  agregarImporte(lineas, 'TOTAL', documento.total, true)
-  if (documento.recibido !== null) agregarImporte(lineas, 'Recibido', documento.recibido)
-  if (documento.cambio !== null) agregarImporte(lineas, 'Cambio', documento.cambio, true)
+  lineas.push({ texto: '-'.repeat(anchoCaracteres), tipo: 'separador' })
+  // Una sola cifra destacada: no duplicar "Importe" ni "Subtotal".
+  agregarImporte(lineas, 'TOTAL', documento.total, 'total')
+  if (documento.recibido !== null) {
+    agregarImporte(lineas, 'Recibido', documento.recibido, 'recibido')
+  }
+  if (documento.cambio !== null) {
+    agregarImporte(lineas, 'Cambio', documento.cambio, 'cambio')
+  }
   if (documento.observaciones) {
-    lineas.push({ texto: '-'.repeat(anchoCaracteres) })
-    agregarTexto(lineas, 'Observaciones: ' + documento.observaciones)
+    lineas.push({ texto: '-'.repeat(anchoCaracteres), tipo: 'separador' })
+    agregarTexto(lineas, 'Observaciones: ' + documento.observaciones, { tipo: 'observacion' })
   }
-  lineas.push({ texto: '-'.repeat(anchoCaracteres) })
-  agregarTexto(lineas, documento.aviso, { centro: true, negrita: true })
-  agregarTexto(lineas, 'Gracias por su preferencia', { centro: true })
+  lineas.push({ texto: '-'.repeat(anchoCaracteres), tipo: 'separador' })
+  agregarTexto(lineas, documento.aviso, { centro: true, negrita: true, tipo: 'aviso' })
+  agregarTexto(lineas, 'Gracias por su preferencia', { centro: true, tipo: 'despedida' })
   return lineas
 }
 
@@ -204,28 +219,97 @@ const escaparHTML = (valor) => String(valor).replace(/[&<>"']/g, (caracter) => (
   "'": '&#39;',
 })[caracter])
 
-export function imprimirTicket(documento) {
+/**
+ * La impresión física siempre conserva el formato térmico de 80 mm.
+ * El logotipo se muestra en blanco y negro; Vista previa/Descargar PDF
+ * siguen utilizando el diseño comercial en papel carta.
+ */
+export function imprimirTicket(documento, logoSrc = null) {
   const ventana = window.open('', '_blank', 'width=420,height=760')
   if (!ventana) {
     throw new Error('El navegador bloqueó la ventana de impresión. Permite ventanas emergentes para E-farm.')
   }
+
   const lineas = construirLineasTicket(documento)
-  const contenido = lineas.map((linea) => linea.texto).join('\n')
-  // Largo proporcional a los renglones; evita gastar casi una hoja completa
-  // cuando la venta solo tiene uno o dos productos.
-  const altoTicketMm = Math.max(90, Math.ceil(lineas.length * 4.1 + 12))
+  const altoTicketMm = Math.max(100, Math.ceil(lineas.length * 4.1 + (logoSrc ? 42 : 23)))
+  const elementos = lineas.map((linea) => {
+    if (linea.tipo === 'separador') return '<hr class="separador-ticket">'
+    if (['total', 'recibido', 'cambio'].includes(linea.tipo)) {
+      return '<div class="importe-ticket ' + linea.tipo + '">' +
+        '<span>' + escaparHTML(linea.etiqueta) + '</span>' +
+        '<strong>' + escaparHTML(linea.importe) + '</strong></div>'
+    }
+    const clases = ['linea-ticket', linea.tipo || '', linea.negrita ? 'negrita' : '', linea.centro ? 'centrado' : '']
+      .filter(Boolean).join(' ')
+    return '<div class="' + clases + '">' + escaparHTML(linea.texto) + '</div>'
+  }).join('')
+
+  const imagen = logoSrc
+    ? '<img id="logo-ticket-efarm" class="logo-ticket" src="' + escaparHTML(logoSrc) + '" alt="E-farm">'
+    : ''
   const html = '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
     '<title>' + escaparHTML(documento.titulo + ' ' + documento.numero) + '</title>' +
-    '<style>@page{size:80mm ' + altoTicketMm + 'mm;margin:0}*{box-sizing:border-box}' +
-    'body{width:80mm;max-width:80mm;margin:0;padding:4mm;background:#fff;color:#000}' +
-    'pre{width:72mm;margin:0;font:10px/1.45 "Courier New",monospace;white-space:pre-wrap;overflow-wrap:anywhere}' +
-    '@media screen{body{margin:auto;box-shadow:0 0 14px #ccc;min-height:300px}}</style>' +
-    '</head><body><pre>' + escaparHTML(contenido) + '</pre></body></html>'
+    '<style>@page{size:80mm ' + altoTicketMm + 'mm;margin:0}' +
+    '*{box-sizing:border-box}' +
+    'html,body{margin:0;padding:0;background:white;color:#000}' +
+    'body{width:80mm;max-width:80mm;padding:3.5mm 4mm;font-family:"Courier New",monospace}' +
+    '.ticket{width:72mm;max-width:72mm}' +
+    '.logo-ticket{display:block;margin:0 auto 1.2mm;max-width:48mm;max-height:17mm;width:auto;height:auto;object-fit:contain;filter:grayscale(1) contrast(6)}' +
+    '.marca{font-weight:800;font-size:14px}.marca.con-logo{display:none}' +
+    '.linea-ticket{font-size:10px;line-height:1.36;overflow-wrap:anywhere;white-space:pre-wrap}' +
+    '.centrado{text-align:center}.negrita{font-weight:800}' +
+    '.empresa{font-size:10px;letter-spacing:.3px}' +
+    '.titulo{margin:1.8mm 0 1mm;font-size:12px;line-height:1.4;letter-spacing:.2px;font-weight:800}' +
+    '.producto{margin-top:1.6mm;font-size:10.5px}.presentacion,.cantidad-precio{margin-top:.5mm}' +
+    '.separador-ticket{border:0;border-top:1px dashed #000;height:0;margin:2.2mm 0}' +
+    '.importe-ticket{display:flex;align-items:baseline;justify-content:space-between;gap:2mm;font-size:10.5px;line-height:1.6}' +
+    '.importe-ticket strong{font-weight:800;white-space:nowrap}' +
+    '.importe-ticket.total{margin:1mm 0 1.3mm;padding:1.2mm 0;border-top:1.4px solid #000;border-bottom:1.4px solid #000;font-size:15px;font-weight:900;line-height:1.5}' +
+    '.importe-ticket.total strong{font-size:15px;font-weight:900}' +
+    '.importe-ticket.recibido,.importe-ticket.cambio{font-weight:800}' +
+    '.aviso{font-size:9.2px;line-height:1.35}.despedida{margin-top:1.5mm;font-size:10px}' +
+    '@media screen{body{margin:auto;box-shadow:0 0 14px #ccc;min-height:300px}}' +
+    '</style></head><body><main class="ticket">' +
+    imagen + elementos + '</main></body></html>'
+
   ventana.document.open()
   ventana.document.write(html)
   ventana.document.close()
-  ventana.focus()
-  ventana.setTimeout(() => ventana.print(), 250)
+
+  let solicitado = false
+  const abrirImpresion = () => {
+    if (solicitado || ventana.closed) return
+    solicitado = true
+    ventana.focus()
+    ventana.setTimeout(() => ventana.print(), 130)
+  }
+  const logo = ventana.document.getElementById('logo-ticket-efarm')
+  if (!logo) {
+    abrirImpresion()
+    return
+  }
+
+  // La impresión espera a que termine de cargar el logo; si falla,
+  // se recupera la marca "E-FARM" escrita en texto.
+  const textoMarca = ventana.document.querySelector('.linea-ticket.marca')
+  const logoCargado = () => {
+    if (textoMarca) textoMarca.classList.add('con-logo')
+    abrirImpresion()
+  }
+  const logoFallo = () => {
+    logo.remove()
+    abrirImpresion()
+  }
+  if (logo.complete) {
+    if (logo.naturalWidth > 0) logoCargado()
+    else logoFallo()
+  } else {
+    logo.addEventListener('load', logoCargado, { once: true })
+    logo.addEventListener('error', logoFallo, { once: true })
+    ventana.setTimeout(() => {
+      if (!solicitado) logoFallo()
+    }, 3500)
+  }
 }
 
 // PDF de texto independiente de paquetes externos: tamaño variable de 80 mm.
