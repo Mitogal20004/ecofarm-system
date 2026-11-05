@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import logoEfarm from '../assets/logo-efarm-brand.png'
 import EstadoEtiqueta from './EstadoEtiqueta'
 import {
+  crearDocumentoCotizacion,
+  descargarPDFTicket,
+  imprimirTicket,
+} from '../utils/documentosComerciales'
+import {
   cambiarEstadoCotizacion,
   obtenerCotizacion,
 } from '../services/cotizaciones'
@@ -177,6 +182,24 @@ function DetalleCotizacion({
   }
 
   const { cotizacion, detalles } = detalle
+  const descargarDocumento = () => {
+    try {
+      descargarPDFTicket(crearDocumentoCotizacion(detalle))
+      setError('')
+    } catch (errorDescarga) {
+      setError(errorDescarga?.message || 'No fue posible descargar el PDF.')
+    }
+  }
+
+  const imprimirTicketDocumento = () => {
+    try {
+      imprimirTicket(crearDocumentoCotizacion(detalle))
+      setError('')
+    } catch (errorImpresion) {
+      setError(errorImpresion?.message || 'No fue posible imprimir la cotización.')
+    }
+  }
+
   const esBorrador = cotizacion.estado === 'borrador'
   const puedeAnular = ['borrador', 'emitida'].includes(cotizacion.estado)
 
@@ -199,12 +222,14 @@ function DetalleCotizacion({
           <button className="boton-secundario-cotizaciones" type="button" onClick={alVolver}>
             Volver
           </button>
-          <button
-            className="boton-secundario-cotizaciones"
-            type="button"
-            onClick={() => window.print()}
-          >
-            Imprimir / PDF
+          <button className="boton-secundario-cotizaciones" type="button" onClick={descargarDocumento}>
+            Descargar PDF
+          </button>
+          <button className="boton-secundario-cotizaciones" type="button" onClick={imprimirTicketDocumento}>
+            Imprimir 80 mm
+          </button>
+          <button className="boton-secundario-cotizaciones" type="button" onClick={() => window.print()}>
+            Imprimir carta
           </button>
           {puedeEditar && esBorrador && (
             <button className="boton-secundario-cotizaciones" type="button" onClick={alEditar}>
