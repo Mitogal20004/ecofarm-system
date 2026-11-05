@@ -192,22 +192,10 @@ function Inicio({
   const hayIndicadores =
     puedeVerReportes || puedeConsultarCaja || puedeVerInventario
 
-  const fechaLegible = new Intl.DateTimeFormat('es-GT', {
-    timeZone: ZONA_HORARIA, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  }).format(new Date())
-
   return (
     <div className="inicio-panel inicio-consola">
       <header className="inicio-cabecera">
-        <div>
-          <p className="inicio-sobretitulo">ECOFARM S.A. <span>/</span> OPERACIONES</p>
-          <h1 id="titulo-panel">Centro de operaciones</h1>
-          <p className="inicio-fecha">{fechaLegible}</p>
-        </div>
-        <div className="inicio-cabecera-contexto" aria-label="Información de la plataforma">
-          <span className="inicio-contexto-titulo">E-FARM</span>
-          <span>Sistema de gestión comercial</span>
-        </div>
+        <h1 id="titulo-panel">INICIO</h1>
       </header>
 
       {(errorSesion || errorAutorizacion) && (
