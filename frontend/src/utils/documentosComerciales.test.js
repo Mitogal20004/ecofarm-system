@@ -101,7 +101,7 @@ test('factura de demostración imprime aviso fiscal visible', () => {
   const documento = crearDocumentoVenta(venta, 'factura-demostracion')
   const contenido = construirLineasTicket(documento).map((linea) => linea.texto).join('\n')
   assert.match(contenido, /DOCUMENTO DE PRUEBA/)
-  assert.match(contenido, /SIN VALIDEZ FISCAL/)
+  assert.match(contenido, /SIN VALIDEZ\s+FISCAL/)
 })
 
 test('PDF de ticket largo reparte páginas sin truncar la venta', async () => {
