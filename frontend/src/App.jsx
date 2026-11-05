@@ -16,6 +16,7 @@ import Usuarios from './pages/Usuarios'
 import Ventas from './pages/Ventas'
 import Caja from './pages/Caja'
 import './styles/efarm-business.css'
+import './styles/ventas-efarm.css'
 import { limpiarOperacionesPendientesCaja } from './services/caja'
 import {
   cerrarSesion,
