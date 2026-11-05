@@ -1,5 +1,11 @@
 # E-farm | Documentos, PDF e impresora de tickets
 
+## Atajos directos después de cobrar
+
+Al confirmar la venta en **Ventas → Nueva venta**, el sistema se mantiene en el POS y muestra **Venta confirmada** con total, pago recibido, cambio y un selector de comprobante (**Recibo** o **Factura de prueba**). Allí mismo aparecen **Vista previa**, **Descargar PDF**, **Imprimir**, **Ver detalle** y **Nueva venta**.
+
+Los atajos **solo están disponibles después de confirmar la venta** y requieren permiso de consulta. La aplicación carga los documentos mediante una petición de solo lectura. Si la lectura falla, aparece **Reintentar documento**: nunca se ejecuta otra venta por intentar imprimir.
+
 ## Qué está disponible
 
 Desde **Ventas → Historial → Ver detalle** se puede elegir entre **Recibo** (si ya fue emitido) y **Factura de prueba**. Las acciones disponibles son:
