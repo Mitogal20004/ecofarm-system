@@ -3,10 +3,9 @@ import logoEfarm from '../assets/logo-efarm-brand.png'
 import EstadoEtiqueta from './EstadoEtiqueta'
 import {
   crearDocumentoCotizacion,
-  descargarPDFTicket,
-  verPDFTicket,
   imprimirTicket,
 } from '../utils/documentosComerciales'
+import { descargarPDFFormal, verPDFFormal } from '../utils/documentosFormales'
 import {
   cambiarEstadoCotizacion,
   obtenerCotizacion,
@@ -183,18 +182,18 @@ function DetalleCotizacion({
   }
 
   const { cotizacion, detalles } = detalle
-  const verDocumento = () => {
+  const verDocumento = async () => {
     try {
-      verPDFTicket(crearDocumentoCotizacion(detalle))
+      await verPDFFormal(crearDocumentoCotizacion(detalle), logoEfarm)
       setError('')
     } catch (errorPrevia) {
       setError(errorPrevia?.message || 'No fue posible abrir la vista previa.')
     }
   }
 
-  const descargarDocumento = () => {
+  const descargarDocumento = async () => {
     try {
-      descargarPDFTicket(crearDocumentoCotizacion(detalle))
+      await descargarPDFFormal(crearDocumentoCotizacion(detalle), logoEfarm)
       setError('')
     } catch (errorDescarga) {
       setError(errorDescarga?.message || 'No fue posible descargar el PDF.')
