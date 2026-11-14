@@ -229,6 +229,7 @@ export function imprimirTicket(documento, logoSrc = null) {
   if (!ventana) {
     throw new Error('El navegador bloqueó la ventana de impresión. Permite ventanas emergentes para E-farm.')
   }
+  ventana.opener = null
 
   const lineas = construirLineasTicket(documento)
   const altoTicketMm = Math.max(100, Math.ceil(lineas.length * 4.1 + (logoSrc ? 42 : 23)))
@@ -401,6 +402,7 @@ export function verPDFTicket(documento) {
   if (!ventana) {
     throw new Error('El navegador bloqueó la vista previa. Permite ventanas emergentes para E-farm.')
   }
+  ventana.opener = null
 
   try {
     const url = URL.createObjectURL(generarPDFTicket(documento))

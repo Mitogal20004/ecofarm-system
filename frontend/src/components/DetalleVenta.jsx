@@ -614,7 +614,13 @@ function DetalleVenta({
     )
   }
 
-  const { venta, recibo, detalles, movimientos_inventario: movimientos } = detalle
+  const {
+    venta,
+    recibo,
+    detalles,
+    movimientos_inventario: movimientos,
+    consumos_lotes: consumosLotes,
+  } = detalle
   const estaConfirmada = venta.estado === 'confirmada'
   const tipoDocumentoActual = recibo ? tipoDocumentoSeleccionado : 'factura-demostracion'
   const esFacturaDemostracion =
@@ -853,6 +859,36 @@ function DetalleVenta({
           </table>
         </div>
       </section>
+
+      {consumosLotes.length > 0 && (
+        <section className="seccion-trazabilidad-venta" aria-labelledby="trazabilidad-venta">
+          <div className="titulo-seccion-detalle-venta">
+            <div>
+              <h2 id="trazabilidad-venta">Trazabilidad de lotes</h2>
+              <p>Consumo aplicado automáticamente por FIFO.</p>
+            </div>
+            <span>{consumosLotes.length} consumos</span>
+          </div>
+          <div className="desplazamiento-tabla-ventas">
+            <table className="tabla-detalle-venta">
+              <thead>
+                <tr><th>Lote</th><th>Origen</th><th>Calidad</th><th>Cantidad</th><th>Costo unitario</th></tr>
+              </thead>
+              <tbody>
+                {consumosLotes.map((consumo) => (
+                  <tr key={`${consumo.venta_detalle_id}-${consumo.lote_id}`}>
+                    <td data-label="Lote"><strong>{consumo.codigo_lote}</strong></td>
+                    <td data-label="Origen">{consumo.fecha_origen || '—'}</td>
+                    <td data-label="Calidad">{consumo.calidad || '—'}</td>
+                    <td data-label="Cantidad">{consumo.cantidad} manojos</td>
+                    <td data-label="Costo unitario">{formatoMoneda.format(Number(consumo.costo_unitario))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section className="cierre-detalle-venta">
         <div>

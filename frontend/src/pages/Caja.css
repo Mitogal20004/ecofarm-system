@@ -60,6 +60,10 @@
 .boton-secundario-caja,
 .boton-peligro-caja,
 .boton-peligro-texto-caja {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   min-height: 42px;
   padding: 9px 15px;
   border-radius: 6px;

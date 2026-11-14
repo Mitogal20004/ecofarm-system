@@ -4,6 +4,7 @@ import IconoInterfaz from '../components/IconoInterfaz'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import VentaPos from '../components/VentaPos'
 import { listarVentas } from '../services/ventas'
+import { History, Plus } from 'lucide-react'
 import './Ventas.css'
 
 const LIMITE_VENTAS = 10
@@ -66,6 +67,7 @@ function Ventas({
   const [ventaId, setVentaId] = useState(ventaInicialId)
   const [documentoImpresionInicial, setDocumentoImpresionInicial] = useState(null)
   const [anularAlAbrir, setAnularAlAbrir] = useState(false)
+  const [ventaEnEdicion, setVentaEnEdicion] = useState(false)
   const [versionListado, setVersionListado] = useState(0)
 
   useEffect(() => {
@@ -157,6 +159,18 @@ function Ventas({
     setError('')
   }
 
+  const abrirHistorial = () => {
+    if (vista === 'pos' && ventaEnEdicion) {
+      const continuar = window.confirm(
+        'Tus datos de venta están a punto de perderse, ¿deseas continuar?',
+      )
+      if (!continuar) return
+    }
+
+    setVentaEnEdicion(false)
+    setVista('historial')
+  }
+
   if (vista === 'detalle' && ventaId) {
     return (
       <DetalleVenta
@@ -185,9 +199,10 @@ function Ventas({
             <button
               className={vista === 'historial' ? 'boton-primario-ventas' : 'boton-secundario-ventas'}
               type="button"
-              onClick={() => setVista('historial')}
+              onClick={abrirHistorial}
               aria-pressed={vista === 'historial'}
             >
+              <History size={16} strokeWidth={2.25} aria-hidden="true" />
               Historial
             </button>
           )}
@@ -198,6 +213,7 @@ function Ventas({
               onClick={() => setVista('pos')}
               aria-pressed={vista === 'pos'}
             >
+              <Plus size={16} strokeWidth={2.25} aria-hidden="true" />
               Nueva venta
             </button>
           )}
@@ -205,10 +221,11 @@ function Ventas({
       </header>
 
       {vista === 'pos' && puedeCrear ? (
-        <VentaPos
-          alVerVenta={abrirDetalle}
-          puedeVer={puedeVer}
-          alRefrescarAutorizacion={alRefrescarAutorizacion}
+          <VentaPos
+            alVerVenta={abrirDetalle}
+            puedeVer={puedeVer}
+            alActualizarBorrador={setVentaEnEdicion}
+            alRefrescarAutorizacion={alRefrescarAutorizacion}
         />
       ) : (
         <>

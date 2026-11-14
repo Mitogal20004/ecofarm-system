@@ -1,0 +1,38 @@
+.pagina-lotes { display: grid; gap: 20px; max-width: 1440px; margin: 0 auto; }
+.encabezado-pagina-lotes, .titulo-panel-lotes { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.encabezado-pagina-lotes h1, .titulo-panel-lotes h2 { margin: 4px 0 0; color: var(--color-verde-oscuro); }
+.encabezado-pagina-lotes p, .titulo-panel-lotes > span { color: var(--color-texto-secundario); font-size: 13px; }
+.eyebrow-pagina-lotes { color: var(--color-verde-principal); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.resumen-lotes { display: grid; min-width: 140px; padding: 16px 20px; border-left: 3px solid var(--color-verde-principal); background: #eef6ed; }
+.resumen-lotes strong { color: var(--color-verde-oscuro); font-size: 28px; }
+.resumen-lotes span { color: var(--color-texto-secundario); font-size: 12px; }
+.panel-lotes { padding: 22px; border: 1px solid var(--color-borde); border-radius: 10px; background: var(--color-superficie); box-shadow: 0 8px 24px rgb(25 57 39 / 5%); }
+.formulario-lotes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+.formulario-lotes label, .modal-lotes label { display: grid; gap: 6px; color: var(--color-texto-secundario); font-size: 12px; font-weight: 700; }
+.formulario-lotes input, .formulario-lotes select, .formulario-lotes textarea, .modal-lotes select, .modal-lotes textarea { width: 100%; padding: 10px 11px; border: 1px solid var(--color-borde); border-radius: 6px; color: var(--color-texto); background: #fff; font: inherit; font-weight: 500; }
+.formulario-lotes input:focus, .formulario-lotes select:focus, .formulario-lotes textarea:focus, .modal-lotes select:focus, .modal-lotes textarea:focus { outline: 3px solid rgb(75 139 93 / 18%); border-color: var(--color-verde-principal); }
+.campo-largo-lotes { grid-column: span 2; }
+.acciones-formulario-lotes { display: flex; align-items: end; justify-content: end; }
+.boton-principal-lotes, .boton-secundario-lotes, .boton-link-lotes { min-height: 38px; padding: 9px 14px; border-radius: 6px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.boton-principal-lotes { border: 1px solid var(--color-verde-principal); color: #fff; background: var(--color-verde-principal); }
+.boton-principal-lotes:hover:not(:disabled) { background: var(--color-verde-oscuro); }
+.boton-secundario-lotes { border: 1px solid var(--color-borde); color: var(--color-verde-oscuro); background: #fff; }
+.boton-link-lotes { min-height: auto; padding: 4px 0; border: 0; color: var(--color-verde-principal); background: transparent; }
+.boton-principal-lotes:disabled { opacity: .6; cursor: wait; }
+.tabla-lotes-scroll { overflow-x: auto; margin-top: 18px; }
+.tabla-lotes { width: 100%; border-collapse: collapse; min-width: 860px; }
+.tabla-lotes th, .tabla-lotes td { padding: 12px 10px; border-bottom: 1px solid #e7eeea; color: var(--color-texto-secundario); font-size: 12px; text-align: left; white-space: nowrap; }
+.tabla-lotes th { color: var(--color-verde-oscuro); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; }
+.tabla-lotes td strong { color: var(--color-verde-oscuro); }
+.estado-vacio-lotes { padding: 28px 0 8px; color: var(--color-texto-secundario); text-align: center; }
+.alerta-lotes { padding: 12px 14px; border-radius: 7px; font-size: 13px; }
+.alerta-lotes-error { color: #8c332b; background: #fff0ee; }
+.alerta-lotes-exito { color: #28603a; background: #edf8ef; }
+.alerta-lotes-exito a { color: var(--color-verde-oscuro); font-weight: 800; }
+.boton-cerrar-aviso-lotes { margin-left: 12px; border: 0; color: var(--color-verde-oscuro); background: transparent; font-weight: 800; cursor: pointer; }
+.capa-modal-lotes { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; background: rgb(19 43 35 / 38%); }
+.modal-lotes { display: grid; gap: 16px; width: min(440px, 100%); padding: 24px; border-radius: 10px; background: #fff; box-shadow: 0 20px 60px rgb(0 0 0 / 22%); }
+.modal-lotes h2 { margin: 0; color: var(--color-verde-oscuro); }
+.acciones-modal-lotes { display: flex; justify-content: flex-end; gap: 8px; }
+@media (max-width: 900px) { .formulario-lotes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 580px) { .encabezado-pagina-lotes, .titulo-panel-lotes { align-items: flex-start; flex-direction: column; } .formulario-lotes { grid-template-columns: 1fr; } .campo-largo-lotes { grid-column: auto; } .resumen-lotes { width: 100%; } }

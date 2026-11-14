@@ -2,8 +2,11 @@ import { Router } from 'express'
 import {
   anularVenta,
   confirmarVenta,
+  confirmarVentaCredito,
   convertirCotizacionVenta,
+  convertirCotizacionVentaCredito,
   crearIntencionVenta,
+  crearPagoStripe,
   generarReciboVenta,
   listarVentas,
   obtenerVenta,
@@ -23,7 +26,14 @@ const proteger = (codigoPermiso) => [
 
 router.get('/', ...proteger('venta.ver'), listarVentas)
 router.post('/intenciones', ...proteger('venta.crear'), crearIntencionVenta)
+router.post('/pagos/stripe-intent', ...proteger('venta.crear'), crearPagoStripe)
 router.post('/', ...proteger('venta.crear'), confirmarVenta)
+router.post('/credito', ...proteger('venta.crear'), confirmarVentaCredito)
+router.post(
+  '/credito/desde-cotizacion/:cotizacionId',
+  ...proteger('cotizacion.convertir'),
+  convertirCotizacionVentaCredito,
+)
 router.post(
   '/desde-cotizacion/:cotizacionId',
   ...proteger('cotizacion.convertir'),

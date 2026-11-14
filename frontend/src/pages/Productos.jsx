@@ -2,10 +2,13 @@ import { useCallback, useEffect, useState } from 'react'
 import DetalleVarianteDialog from '../components/DetalleVarianteDialog'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import VarianteProductoDialog from '../components/VarianteProductoDialog'
+import { Eye, Pencil } from 'lucide-react'
 import { listarPresentaciones, listarVariantes } from '../services/productos'
+import { convertirACentimetros, UNIDADES_LONGITUD } from '../utils/medidas'
 import './Productos.css'
 
 const LIMITE_VARIANTES = 10
+const LIMITES_LONGITUD = { mm: 5000, cm: 500, m: 5, in: 200, ft: 20 }
 const PAGINACION_INICIAL = {
   pagina: 1,
   limite: LIMITE_VARIANTES,
@@ -39,9 +42,13 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
   const [presentaciones, setPresentaciones] = useState([])
   const [paginacion, setPaginacion] = useState(PAGINACION_INICIAL)
   const [pagina, setPagina] = useState(1)
-  const [busqueda, setBusqueda] = useState('')
-  const [busquedaAplicada, setBusquedaAplicada] = useState('')
-  const [filtroLongitud, setFiltroLongitud] = useState('')
+  const [filtroLongitudMin, setFiltroLongitudMin] = useState(0)
+  const [filtroLongitudMax, setFiltroLongitudMax] = useState(LIMITES_LONGITUD.cm)
+  const [filtroLongitudMinAplicado, setFiltroLongitudMinAplicado] = useState(0)
+  const [filtroLongitudMaxAplicado, setFiltroLongitudMaxAplicado] = useState(LIMITES_LONGITUD.cm)
+  const [unidadLongitud, setUnidadLongitud] = useState('cm')
+  const [filtroColor, setFiltroColor] = useState('todos')
+  const [coloresDisponibles, setColoresDisponibles] = useState([])
   const [filtroClasificacion, setFiltroClasificacion] = useState('todas')
   const [filtroActivo, setFiltroActivo] = useState('todos')
   const [cargando, setCargando] = useState(true)
@@ -62,14 +69,11 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
       setError('')
 
       try {
-        const [resultado, presentacionesActuales] = await Promise.all([
+        const [resultado, presentacionesActuales, resultadoColores] = await Promise.all([
           listarVariantes({
-            pagina,
-            limite: LIMITE_VARIANTES,
-            busqueda: busquedaAplicada || undefined,
-            longitud_cm: filtroLongitud
-              ? Number(filtroLongitud)
-              : undefined,
+            pagina: 1,
+            limite: 100,
+            busqueda: filtroColor !== 'todos' ? filtroColor : undefined,
             clasificacion:
               filtroClasificacion === 'todas'
                 ? undefined
@@ -80,12 +84,32 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
                 : filtroActivo === 'activos',
           }),
           listarPresentaciones(),
+          listarVariantes({ pagina: 1, limite: 100, activo: true }),
         ])
 
         if (!vistaActiva) return
-        setVariantes(resultado.variantes)
-        setPaginacion(resultado.paginacion)
+        const minimoCm = filtroLongitudMinAplicado > 0
+          ? convertirACentimetros(filtroLongitudMinAplicado, unidadLongitud)
+          : null
+        const maximoCm = filtroLongitudMaxAplicado < LIMITES_LONGITUD[unidadLongitud]
+          ? convertirACentimetros(filtroLongitudMaxAplicado, unidadLongitud)
+          : null
+        const variantesFiltradas = resultado.variantes.filter((variante) => (
+          (minimoCm === null || variante.longitud_cm >= minimoCm)
+          && (maximoCm === null || variante.longitud_cm <= maximoCm)
+        ))
+        const totalPaginas = Math.max(1, Math.ceil(variantesFiltradas.length / LIMITE_VARIANTES))
+        setVariantes(variantesFiltradas.slice((pagina - 1) * LIMITE_VARIANTES, pagina * LIMITE_VARIANTES))
+        setPaginacion({
+          pagina,
+          limite: LIMITE_VARIANTES,
+          total: variantesFiltradas.length,
+          total_paginas: totalPaginas,
+        })
         setPresentaciones(presentacionesActuales)
+        setColoresDisponibles(
+          [...new Set(resultadoColores.variantes.map((variante) => variante.color).filter(Boolean))].sort(),
+        )
       } catch (errorConsulta) {
         if (!vistaActiva) return
         setVariantes([])
@@ -108,20 +132,36 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
     }
   }, [
     alRefrescarAutorizacion,
-    busquedaAplicada,
     cerrarDetalle,
     cerrarEdicion,
     filtroActivo,
     filtroClasificacion,
-    filtroLongitud,
+    filtroLongitudMinAplicado,
+    filtroLongitudMaxAplicado,
+    unidadLongitud,
+    filtroColor,
     pagina,
     versionListado,
   ])
 
-  const manejarBusqueda = (evento) => {
-    evento.preventDefault()
+  useEffect(() => {
+    const temporizador = setTimeout(() => {
+      setFiltroLongitudMinAplicado(filtroLongitudMin)
+      setFiltroLongitudMaxAplicado(filtroLongitudMax)
+      setPagina(1)
+    }, 1000)
+
+    return () => clearTimeout(temporizador)
+  }, [filtroLongitudMin, filtroLongitudMax])
+
+  const cambiarUnidadLongitud = (evento) => {
+    const unidad = evento.target.value
+    setUnidadLongitud(unidad)
+    setFiltroLongitudMin(0)
+    setFiltroLongitudMax(LIMITES_LONGITUD[unidad])
+    setFiltroLongitudMinAplicado(0)
+    setFiltroLongitudMaxAplicado(LIMITES_LONGITUD[unidad])
     setPagina(1)
-    setBusquedaAplicada(busqueda.trim())
   }
 
   const abrirCreacion = () => {
@@ -180,7 +220,7 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
         </p>
       )}
 
-      <form className="filtros-productos" onSubmit={manejarBusqueda}>
+      <div className="filtros-productos">
         <header className="encabezado-filtros-productos">
           <h2>Filtros</h2>
           {!cargando && (
@@ -193,33 +233,68 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
         <div className="control-busqueda-productos">
           <label htmlFor="busqueda-productos">Buscar variante</label>
           <div>
-            <input
+            <select
               id="busqueda-productos"
-              type="search"
-              value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
-              placeholder="SKU o color"
-              maxLength={150}
-            />
-            <button type="submit" disabled={cargando}>Buscar</button>
+              value={filtroColor}
+              onChange={(evento) => {
+                setFiltroColor(evento.target.value)
+                setPagina(1)
+              }}
+              disabled={cargando}
+            >
+              <option value="todos">Todas las variantes</option>
+              {coloresDisponibles.map((color) => <option key={color} value={color}>{color}</option>)}
+            </select>
           </div>
         </div>
 
-        <div className="control-filtro-productos">
-          <label htmlFor="filtro-longitud-productos">Longitud (cm)</label>
-          <input
-            id="filtro-longitud-productos"
-            type="number"
-            min="1"
-            step="1"
-            value={filtroLongitud}
-            onChange={(evento) => {
-              setFiltroLongitud(evento.target.value)
-              setPagina(1)
-            }}
-            disabled={cargando}
-            placeholder="Todas"
-          />
+        <div className="control-filtro-productos control-longitud-productos">
+          <div className="encabezado-rango-longitud">
+            <label htmlFor="filtro-longitud-min-productos">Longitud</label>
+            <select
+              value={unidadLongitud}
+              onChange={cambiarUnidadLongitud}
+              disabled={cargando}
+              aria-label="Unidad para filtrar longitud"
+            >
+              {UNIDADES_LONGITUD.map((unidad) => (
+                <option key={unidad.valor} value={unidad.valor}>{unidad.valor}</option>
+              ))}
+            </select>
+          </div>
+          <div className="rango-longitud-producto">
+            <input
+              id="filtro-longitud-min-productos"
+              type="range"
+              min="0"
+              max={LIMITES_LONGITUD[unidadLongitud]}
+              step={unidadLongitud === 'm' ? '0.01' : '1'}
+              value={filtroLongitudMin}
+              onChange={(evento) => {
+                setFiltroLongitudMin(Math.min(Number(evento.target.value), filtroLongitudMax))
+                setPagina(1)
+              }}
+              disabled={cargando}
+              aria-label="Longitud mínima"
+            />
+            <input
+              type="range"
+              min="0"
+              max={LIMITES_LONGITUD[unidadLongitud]}
+              step={unidadLongitud === 'm' ? '0.01' : '1'}
+              value={filtroLongitudMax}
+              onChange={(evento) => {
+                setFiltroLongitudMax(Math.max(Number(evento.target.value), filtroLongitudMin))
+                setPagina(1)
+              }}
+              disabled={cargando}
+              aria-label="Longitud máxima"
+            />
+            <div className="valores-rango-longitud">
+              <span>{filtroLongitudMin || 'Min'} {unidadLongitud}</span>
+              <span>{filtroLongitudMax === LIMITES_LONGITUD[unidadLongitud] ? 'Max' : filtroLongitudMax} {unidadLongitud}</span>
+            </div>
+          </div>
         </div>
 
         <div className="control-filtro-productos">
@@ -256,7 +331,7 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
             <option value="inactivos">Inactivos</option>
           </select>
         </div>
-      </form>
+      </div>
 
       <div className="contenedor-listado-productos">
         {cargando ? (
@@ -327,6 +402,7 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
                             type="button"
                             onClick={() => setVarianteDetalleId(variante.id)}
                           >
+                            <Eye size={15} strokeWidth={2.1} aria-hidden="true" />
                             Ver detalle
                           </button>
                           {puedeEditar && (
@@ -335,6 +411,7 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
                               type="button"
                               onClick={() => abrirEdicion(variante)}
                             >
+                              <Pencil size={15} strokeWidth={2.1} aria-hidden="true" />
                               Editar
                             </button>
                           )}

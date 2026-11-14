@@ -6,6 +6,7 @@ import {
   obtenerDetalleUsuario as obtenerDetalleUsuarioServicio,
   reemplazarRolesUsuario as reemplazarRolesUsuarioServicio,
 } from '../services/usuarios.service.js'
+import { emitirAlertaSinBloquear } from '../services/alertas.service.js'
 
 const MENSAJE_SOLICITUD_INVALIDA = 'La solicitud contiene datos inválidos'
 const PATRON_UUID =
@@ -30,6 +31,11 @@ const CAMPOS_OBLIGATORIOS_CREACION = [
   'password',
   'rol_id',
 ]
+const CAMPOS_ACTUALIZACION_PERFIL = new Set([
+  'nombre_completo',
+  'telefono',
+  'activo',
+])
 
 class ErrorSolicitudInvalida extends Error {}
 
@@ -260,6 +266,19 @@ export async function crearUsuario(req, res) {
       datos,
     )
 
+    emitirAlertaSinBloquear({
+      tipo: 'usuarios.usuario_creado',
+      severidad: 'info',
+      titulo: 'Nuevo usuario creado',
+      mensaje: 'Se creó un nuevo usuario operativo en E-farm.',
+      contexto: {
+        usuario_id: resultado?.usuario?.id,
+        nombre_usuario: resultado?.usuario?.nombre_usuario,
+        email: resultado?.usuario?.email,
+      },
+      claveDeduplicacion: `usuarios.usuario_creado:${resultado?.usuario?.id}`,
+    })
+
     return res.status(201).json(resultado)
   } catch (error) {
     return responderError(res, error)
@@ -305,7 +324,36 @@ export async function actualizarPerfilUsuario(req, res) {
       throw new ErrorSolicitudInvalida()
     }
 
-    const cambios = { ...req.body }
+    if (
+      Object.keys(req.body).some(
+        (campo) => !CAMPOS_ACTUALIZACION_PERFIL.has(campo),
+      ) || Object.keys(req.body).length === 0
+    ) {
+      throw new ErrorSolicitudInvalida()
+    }
+
+    const cambios = {
+      ...(Object.prototype.hasOwnProperty.call(req.body, 'nombre_completo') && {
+        nombre_completo: req.body.nombre_completo,
+      }),
+      ...(Object.prototype.hasOwnProperty.call(req.body, 'telefono') && {
+        telefono: req.body.telefono,
+      }),
+      ...(Object.prototype.hasOwnProperty.call(req.body, 'activo') && {
+        activo: req.body.activo,
+      }),
+    }
+
+    if (
+      (cambios.nombre_completo !== undefined &&
+        typeof cambios.nombre_completo !== 'string') ||
+      (cambios.telefono !== undefined &&
+        cambios.telefono !== null &&
+        typeof cambios.telefono !== 'string') ||
+      (cambios.activo !== undefined && typeof cambios.activo !== 'boolean')
+    ) {
+      throw new ErrorSolicitudInvalida()
+    }
 
     if (Object.prototype.hasOwnProperty.call(cambios, 'serie_documentos')) {
       cambios.serie_documentos = normalizarSerieDocumentos(

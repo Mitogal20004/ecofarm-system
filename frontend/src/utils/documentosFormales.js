@@ -65,11 +65,6 @@ const cuadro = (p,x,y,w,h,relleno=BLANCO,borde=BORDE) => {
   p.push(color(relleno)+' rg '+x+' '+y.toFixed(2)+' '+w+' '+h.toFixed(2)+' re f')
   if(borde) p.push(color(borde)+' RG .7 w '+x+' '+y.toFixed(2)+' '+w+' '+h.toFixed(2)+' re S')
 }
-const escribirMultilinea = (p,t,x,y,ancho,tamano=8,interlineado=11,negrita=false,tinta=OSCURO) => {
-  const fragmentos = partir(t,ancho,tamano,negrita)
-  fragmentos.forEach((f,i) => escribir(p,f,x,y-i*interlineado,{tamano,negrita,tinta}))
-  return fragmentos.length
-}
 const esFactura = (d) => d.tipo === 'factura-demostracion'
 const esVenta = (d) => d.tipo === 'recibo' || esFactura(d)
 const titulo = (d) => esFactura(d) ? 'FACTURA DE DEMOSTRACIÓN' : d.tipo === 'recibo' ? 'RECIBO' : 'COTIZACIÓN'
@@ -249,6 +244,7 @@ export async function generarPDFFormal(documento,logoSrc=null) {
 export async function verPDFFormal(documento,logoSrc) {
   const ventana=window.open('','_blank')
   if(!ventana)throw new Error('El navegador bloqueó la vista previa. Permite ventanas emergentes.')
+  ventana.opener = null
   try {
     const pdf=await generarPDFFormal(documento,logoSrc)
     const url=URL.createObjectURL(pdf)

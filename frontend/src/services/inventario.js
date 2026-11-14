@@ -1,6 +1,6 @@
 import { obtenerSesion } from './auth'
 
-const apiUrl = import.meta.env.VITE_API_URL
+import { apiUrl } from './apiConfig'
 
 if (!apiUrl) {
   throw new Error('Falta VITE_API_URL en el entorno del frontend.')
