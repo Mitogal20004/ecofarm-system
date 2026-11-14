@@ -9,7 +9,6 @@ import {
   obtenerResumenCajaActual as obtenerResumenCajaActualServicio,
   registrarDevolucionVenta as registrarDevolucionVentaServicio,
 } from '../services/caja.service.js'
-import { emitirAlertaSinBloquear } from '../services/alertas.service.js'
 
 const MENSAJE_SOLICITUD_INVALIDA = 'La solicitud contiene datos inválidos'
 const PATRON_UUID =
@@ -332,23 +331,6 @@ export function crearControladoresCaja(servicios = serviciosPredeterminados) {
           claveIdempotencia,
           datos,
         )
-
-        const diferencia = Number(resultado?.caja?.diferencia)
-        if (Number.isFinite(diferencia) && diferencia !== 0) {
-          emitirAlertaSinBloquear({
-            tipo: 'caja.diferencia',
-            severidad: 'critical',
-            titulo: 'Diferencia detectada al cerrar caja',
-            mensaje: 'Una caja fue cerrada con diferencia entre el efectivo esperado y el contado.',
-            contexto: {
-              caja_id: resultado.caja.id,
-              diferencia: resultado.caja.diferencia,
-              usuario_cierre: resultado.caja.usuario_cierre,
-            },
-            claveDeduplicacion: `caja.diferencia:${resultado.caja.id}`,
-          })
-        }
-
         return res.status(200).json(resultado)
       } catch (error) {
         return responderError(res, error)

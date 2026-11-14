@@ -1,17 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { barY, defineChart, group } from '@tanstack/charts'
-import { scaleBand } from '@tanstack/charts/scales/band'
-import { scaleLinear } from '@tanstack/charts/scales/linear'
-import { scaleOrdinal } from '@tanstack/charts/scales/ordinal'
-import { tooltip } from '@tanstack/charts/tooltip'
-import { Chart } from '@tanstack/react-charts'
+import { useCallback, useEffect, useState } from 'react'
 import IconoInterfaz from '../components/IconoInterfaz'
 import {
   obtenerReporteProductosVendidos,
   obtenerReporteVentas,
 } from '../services/reportes'
 import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
-import { Eraser, Maximize2, TrendingDown, TrendingUp, X } from 'lucide-react'
 import './Reportes.css'
 
 const LIMITE_PRODUCTOS = 5
@@ -124,12 +117,12 @@ function useConsultaReporte(consultar, alRefrescarAutorizacion) {
   return { datos, cargando, error }
 }
 
-function TarjetaResumen({ icono, iconoAlterno: IconoAlterno, etiqueta, valor, detalle, tono = 'petroleo' }) {
+function TarjetaResumen({ icono, etiqueta, valor, detalle, tono = 'petroleo' }) {
   return (
     <article className={`tarjeta-resumen-reporte tarjeta-resumen-${tono}`}>
       <div className="cabecera-resumen-reporte">
-          <span className="icono-resumen-reporte" aria-hidden="true">
-            {IconoAlterno ? <IconoAlterno /> : <IconoInterfaz nombre={icono} />}
+        <span className="icono-resumen-reporte" aria-hidden="true">
+          <IconoInterfaz nombre={icono} />
         </span>
         <span>{etiqueta}</span>
       </div>
@@ -161,9 +154,9 @@ function EstadoConsulta({ cargando, error, vacio, mensajeVacio, children }) {
   return children
 }
 
-function FiltrosPeriodo({ valores, alCambiar, alLimpiar }) {
+function FiltrosPeriodo({ valores, alCambiar, alAplicar, alLimpiar }) {
   return (
-    <div className="filtros-reportes">
+    <form className="filtros-reportes" onSubmit={alAplicar}>
       <label className="control-reporte">
         <span>Desde</span>
         <input
@@ -190,186 +183,53 @@ function FiltrosPeriodo({ valores, alCambiar, alLimpiar }) {
           type="button"
           onClick={alLimpiar}
         >
-          <Eraser size={15} strokeWidth={2.1} aria-hidden="true" />
           Limpiar filtros
         </button>
+        <button className="boton-primario-reporte" type="submit">
+          Aplicar filtros
+        </button>
       </div>
-    </div>
+    </form>
   )
 }
 
-function GraficaVentas({ serie, productos }) {
-  const [graficaAmpliada, setGraficaAmpliada] = useState(false)
-  const productosDestacados = productos.slice(0, 5)
-  const datosGrafica = useMemo(
-    () =>
-      serie.flatMap((punto) => [
-        {
-          fecha: formatearFecha(punto.fecha).slice(0, 5),
-          tipo: 'Confirmadas',
-          cantidad: Number(punto.operaciones_confirmadas) || 0,
-        },
-        {
-          fecha: formatearFecha(punto.fecha).slice(0, 5),
-          tipo: 'Anuladas',
-          cantidad: Number(punto.operaciones_anuladas) || 0,
-        },
-      ]),
-    [serie],
-  )
-  const maximoEje = Math.max(
+function GraficaVentas({ serie }) {
+  const maximo = Math.max(
     1,
-    Math.ceil(Math.max(...datosGrafica.map((punto) => punto.cantidad), 0) * 1.2),
-  )
-  const definicionGrafica = useMemo(
-    () =>
-      defineChart({
-        marks: [
-          barY(datosGrafica, {
-            x: 'fecha',
-            y: 'cantidad',
-            color: 'tipo',
-            layout: group(),
-            inset: 3,
-          }),
-        ],
-        scales: {
-          x: {
-            scale: () => scaleBand().padding(0.2),
-          },
-          y: {
-            scale: scaleLinear,
-            domain: [0, maximoEje],
-            nice: true,
-            grid: true,
-            axis: { label: 'Cantidad de productos vendidos' },
-          },
-        },
-        color: {
-          scale: scaleOrdinal(
-            ['Confirmadas', 'Anuladas'],
-            ['#5f7a50', '#b42318'],
-          ),
-        },
-        tooltip: {
-          use: tooltip,
-          formatGroup(points) {
-            const fecha = points[0]?.xValue ?? 'Fecha seleccionada'
-            const detalleProductos = productosDestacados.length
-              ? productosDestacados
-                  .map(
-                    (producto) =>
-                      `${producto.codigo_sku}: ${formatearCantidad(producto.unidades_comerciales)} unidades`,
-                  )
-                  .join('\n')
-              : 'Sin productos registrados'
-
-            return [
-              String(fecha),
-              ...points.map(
-                (point) => `${point.groupLabel}: ${formatearCantidad(point.yValue)}`,
-              ),
-              'Productos vendidos en el período:',
-              detalleProductos,
-            ].join('\n')
-          },
-        },
-        svgAnimation: true,
-      }),
-    [datosGrafica, maximoEje, productosDestacados],
-  )
-
-  useEffect(() => {
-    if (!graficaAmpliada) return undefined
-
-    const cerrarConEscape = (evento) => {
-      if (evento.key === 'Escape') setGraficaAmpliada(false)
-    }
-
-    document.addEventListener('keydown', cerrarConEscape)
-    const overflowOriginal = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    return () => {
-      document.removeEventListener('keydown', cerrarConEscape)
-      document.body.style.overflow = overflowOriginal
-    }
-  }, [graficaAmpliada])
-
-  const renderizarGrafica = (altura, anchoInicial) => (
-    <Chart
-      definition={definicionGrafica}
-      height={altura}
-      initialWidth={anchoInicial}
-      ariaLabel="Ventas confirmadas y anuladas por día"
-      ariaDescription="Gráfica de operaciones confirmadas y anuladas agrupadas por fecha."
-    />
+    ...serie.map((punto) => Number(punto.operaciones_confirmadas) || 0),
   )
 
   return (
     <section className="panel-reporte" aria-labelledby="titulo-grafica-ventas">
       <div className="encabezado-panel-reporte">
         <h2 id="titulo-grafica-ventas">Ventas confirmadas por día</h2>
-        <div className="acciones-grafica-reportes">
-          <div className="leyenda-grafica-reportes" aria-label="Leyenda de la gráfica">
-            <span><i className="indicador-leyenda-reportes indicador-confirmadas-reportes" />Confirmadas</span>
-            <span><i className="indicador-leyenda-reportes indicador-anuladas-reportes" />Anuladas</span>
-          </div>
-          <button
-            className="boton-icono-reporte"
-            type="button"
-            onClick={() => setGraficaAmpliada(true)}
-            aria-label="Ampliar gráfica de ventas"
-            title="Ampliar gráfica"
-          >
-            <Maximize2 size={18} strokeWidth={2.1} aria-hidden="true" />
-          </button>
-        </div>
       </div>
-      <div className="grafica-chart-reportes">
-        {renderizarGrafica(300, 720)}
+      <div
+        className="grafica-columnas-reportes"
+        role="img"
+        aria-label="Ventas confirmadas por día"
+      >
+        {serie.map((punto) => {
+          const cantidad = Number(punto.operaciones_confirmadas) || 0
+          const altura =
+            cantidad === 0 ? 0 : Math.max(7, (cantidad / maximo) * 100)
+
+          return (
+            <div className="columna-grafica-reporte" key={punto.fecha}>
+              <span>{formatearCantidad(punto.operaciones_confirmadas)}</span>
+              <div className="riel-columna-reporte">
+                <i style={{ height: `${altura}%` }} />
+              </div>
+              <small>{formatearFecha(punto.fecha).slice(0, 5)}</small>
+            </div>
+          )
+        })}
       </div>
-      {graficaAmpliada && (
-        <div
-          className="capa-grafica-reportes"
-          role="presentation"
-          onMouseDown={(evento) => {
-            if (evento.target === evento.currentTarget) setGraficaAmpliada(false)
-          }}
-        >
-          <section
-            className="modal-grafica-reportes"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="titulo-grafica-ampliada"
-          >
-            <div className="encabezado-modal-grafica-reportes">
-              <h2 id="titulo-grafica-ampliada">Ventas confirmadas por día</h2>
-              <button
-                className="boton-icono-reporte"
-                type="button"
-                onClick={() => setGraficaAmpliada(false)}
-                aria-label="Cerrar gráfica ampliada"
-                title="Cerrar"
-              >
-                <X size={20} strokeWidth={2.1} aria-hidden="true" />
-              </button>
-            </div>
-            <div className="leyenda-grafica-reportes leyenda-modal-grafica-reportes" aria-label="Leyenda de la gráfica">
-              <span><i className="indicador-leyenda-reportes indicador-confirmadas-reportes" />Confirmadas</span>
-              <span><i className="indicador-leyenda-reportes indicador-anuladas-reportes" />Anuladas</span>
-            </div>
-            <div className="grafica-chart-reportes grafica-chart-ampliada-reportes">
-              {renderizarGrafica(520, 1200)}
-            </div>
-          </section>
-        </div>
-      )}
     </section>
   )
 }
 
-function ResumenVentas({ consulta, productos }) {
+function ResumenVentas({ consulta }) {
   const resumen = consulta.datos?.resumen
   const serie = consulta.datos?.serie ?? []
 
@@ -393,10 +253,9 @@ function ResumenVentas({ consulta, productos }) {
           />
           <TarjetaResumen
             icono="disponible"
-            iconoAlterno={Number(resumen?.operaciones_confirmadas) > 0 ? TrendingUp : TrendingDown}
             etiqueta="Ventas confirmadas"
             valor={formatearCantidad(resumen?.operaciones_confirmadas)}
-            tono={Number(resumen?.operaciones_confirmadas) > 0 ? 'verde' : 'critico'}
+            tono="verde"
           />
           <TarjetaResumen
             icono="agotado"
@@ -419,7 +278,7 @@ function ResumenVentas({ consulta, productos }) {
 
         {serie.length > 0 ? (
           <>
-            <GraficaVentas serie={serie} productos={productos} />
+            <GraficaVentas serie={serie} />
             <section
               className="panel-reporte"
               aria-labelledby="titulo-serie-ventas"
@@ -556,6 +415,11 @@ function Reportes({ alRefrescarAutorizacion }) {
     alRefrescarAutorizacion,
   )
 
+  const aplicarFiltros = (evento) => {
+    evento.preventDefault()
+    setPeriodoAplicado({ ...filtros })
+  }
+
   const limpiarFiltros = () => {
     setFiltros(PERIODO_INICIAL)
     setPeriodoAplicado(PERIODO_INICIAL)
@@ -565,38 +429,18 @@ function Reportes({ alRefrescarAutorizacion }) {
     <div className="pagina-reportes">
       <header className="encabezado-reportes">
         <h1>Reportes</h1>
-        {consultaVentas.datos?.resumen && (() => {
-          const tieneVentas = Number(consultaVentas.datos.resumen.operaciones_confirmadas) > 0
-          const IconoTendencia = tieneVentas ? TrendingUp : TrendingDown
-          return (
-            <span
-              className={`indicador-tendencia-reportes ${tieneVentas ? 'positivo' : 'negativo'}`}
-              title={tieneVentas ? 'Hay ventas confirmadas' : 'No hay ventas confirmadas'}
-              aria-label={tieneVentas ? 'Hay ventas confirmadas' : 'No hay ventas confirmadas'}
-            >
-              <IconoTendencia size={24} strokeWidth={2.3} aria-hidden="true" />
-            </span>
-          )
-        })()}
       </header>
 
       <FiltrosPeriodo
         valores={filtros}
-        alCambiar={(campo, valor) => {
-          const siguientes = { ...filtros, [campo]: valor }
-          setFiltros(siguientes)
-          if (
-            siguientes.fecha_desde &&
-            siguientes.fecha_hasta &&
-            siguientes.fecha_desde <= siguientes.fecha_hasta
-          ) {
-            setPeriodoAplicado(siguientes)
-          }
-        }}
+        alCambiar={(campo, valor) =>
+          setFiltros((actual) => ({ ...actual, [campo]: valor }))
+        }
+        alAplicar={aplicarFiltros}
         alLimpiar={limpiarFiltros}
       />
 
-      <ResumenVentas consulta={consultaVentas} productos={consultaProductos.datos?.productos ?? []} />
+      <ResumenVentas consulta={consultaVentas} />
       <ProductosMasVendidos consulta={consultaProductos} />
     </div>
   )

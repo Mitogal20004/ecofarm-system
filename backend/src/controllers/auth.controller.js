@@ -18,8 +18,6 @@ const responderSolicitudInvalida = (res) =>
 
 export async function iniciarSesion(req, res) {
   try {
-    res.setHeader('Cache-Control', 'no-store')
-
     if (!esObjeto(req.body)) {
       return responderSolicitudInvalida(res)
     }

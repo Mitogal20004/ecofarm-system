@@ -1,6 +1,6 @@
 import { obtenerSesion } from './auth'
 
-import { apiUrl } from './apiConfig'
+const apiUrl = import.meta.env.VITE_API_URL
 const PREFIJOS_OPERACIONES_PENDIENTES = [
   'efarm:caja:apertura-pendiente',
   'efarm:caja:cierre-pendiente',

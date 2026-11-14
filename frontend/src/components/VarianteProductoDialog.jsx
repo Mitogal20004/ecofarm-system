@@ -1,16 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { actualizarVariante, crearVariante } from '../services/productos'
-import {
-  convertirACentimetros,
-  obtenerUnidadLongitud,
-  UNIDADES_LONGITUD,
-} from '../utils/medidas'
 
 const FORMULARIO_INICIAL = {
   codigo_sku: '',
   color: '',
   longitud_cm: '',
-  unidad_longitud: 'cm',
   clasificacion: 'normal',
   observaciones: '',
   activo: true,
@@ -22,7 +16,6 @@ const crearFormulario = (variante) =>
         codigo_sku: variante.codigo_sku,
         color: variante.color,
         longitud_cm: String(variante.longitud_cm),
-        unidad_longitud: 'cm',
         clasificacion: variante.clasificacion,
         observaciones: variante.observaciones ?? '',
         activo: variante.activo,
@@ -93,10 +86,7 @@ function VarianteProductoDialog({
     const nuevosErrores = {}
     const codigoSku = formulario.codigo_sku.trim().toUpperCase()
     const color = formulario.color.trim().replace(/\s+/g, ' ')
-    const longitudCm = convertirACentimetros(
-      formulario.longitud_cm,
-      formulario.unidad_longitud,
-    )
+    const longitudCm = Number(formulario.longitud_cm)
     const observaciones = formulario.observaciones.trim()
 
     if (
@@ -110,8 +100,8 @@ function VarianteProductoDialog({
     if (!color || color.length > 80) {
       nuevosErrores.color = 'Ingresa un color de hasta 80 caracteres.'
     }
-    if (longitudCm === null) {
-      nuevosErrores.longitud_cm = `Ingresa una medida válida en ${obtenerUnidadLongitud(formulario.unidad_longitud).etiqueta}.`
+    if (!Number.isSafeInteger(longitudCm) || longitudCm <= 0) {
+      nuevosErrores.longitud_cm = 'Ingresa una longitud entera mayor que cero.'
     }
     if (observaciones.length > 500) {
       nuevosErrores.observaciones =
@@ -208,7 +198,6 @@ function VarianteProductoDialog({
               name="codigo_sku"
               value={formulario.codigo_sku}
               onChange={actualizarCampo}
-              placeholder="Ej. SNAP-AM-60-NOR"
               maxLength={80}
               autoCapitalize="characters"
               disabled={enviando}
@@ -226,7 +215,6 @@ function VarianteProductoDialog({
               name="color"
               value={formulario.color}
               onChange={actualizarCampo}
-              placeholder="Ej. Amarillo"
               maxLength={80}
               disabled={enviando}
               aria-invalid={Boolean(errores.color)}
@@ -237,32 +225,18 @@ function VarianteProductoDialog({
           </div>
 
           <div className="campo-formulario-producto">
-             <label htmlFor="variante-longitud">Longitud del tallo *</label>
-             <div className="control-medida-producto">
-               <input
-                 id="variante-longitud"
-                 name="longitud_cm"
-                 type="number"
-                 min="0.01"
-                 step="0.01"
-                  value={formulario.longitud_cm}
-                  onChange={actualizarCampo}
-                  placeholder="Ej. 60"
-                  disabled={enviando}
-                 aria-invalid={Boolean(errores.longitud_cm)}
-               />
-               <select
-                 name="unidad_longitud"
-                 value={formulario.unidad_longitud}
-                 onChange={actualizarCampo}
-                 disabled={enviando}
-                 aria-label="Unidad de longitud"
-               >
-                 {UNIDADES_LONGITUD.map((unidad) => (
-                   <option key={unidad.valor} value={unidad.valor}>{unidad.valor}</option>
-                 ))}
-               </select>
-             </div>
+            <label htmlFor="variante-longitud">Longitud del tallo (cm) *</label>
+            <input
+              id="variante-longitud"
+              name="longitud_cm"
+              type="number"
+              min="1"
+              step="1"
+              value={formulario.longitud_cm}
+              onChange={actualizarCampo}
+              disabled={enviando}
+              aria-invalid={Boolean(errores.longitud_cm)}
+            />
             {errores.longitud_cm && (
               <p className="error-campo-producto">{errores.longitud_cm}</p>
             )}
@@ -290,7 +264,6 @@ function VarianteProductoDialog({
               name="observaciones"
               value={formulario.observaciones}
               onChange={actualizarCampo}
-              placeholder="Información adicional de la variante"
               maxLength={500}
               rows={3}
               disabled={enviando}

@@ -1,6 +1,6 @@
 import { obtenerSesion } from './auth'
 
-import { apiUrl } from './apiConfig'
+const apiUrl = import.meta.env.VITE_API_URL
 
 if (!apiUrl) {
   throw new Error('Falta VITE_API_URL en el entorno del frontend.')
@@ -88,23 +88,6 @@ export async function crearIntencionVenta() {
   return resultado.clave_idempotencia
 }
 
-export async function crearPagoStripe(montoGtq, claveIdempotencia) {
-  const resultado = await solicitar('/api/ventas/pagos/stripe-intent', {
-    method: 'POST',
-    headers: { 'Idempotency-Key': claveIdempotencia },
-    body: JSON.stringify({ monto_gtq: montoGtq }),
-  })
-
-  if (
-    typeof resultado?.client_secret !== 'string' ||
-    typeof resultado?.payment_intent_id !== 'string'
-  ) {
-    throw new ErrorVentas('El servidor no pudo preparar el pago con tarjeta.')
-  }
-
-  return resultado
-}
-
 export async function listarVentas(opciones = {}) {
   const parametros = new URLSearchParams()
   agregarParametro(parametros, 'pagina', opciones.pagina)
@@ -142,8 +125,7 @@ export async function obtenerVenta(ventaId) {
   if (
     !resultado?.venta ||
     !Array.isArray(resultado.detalles) ||
-    !Array.isArray(resultado.movimientos_inventario) ||
-    !Array.isArray(resultado.consumos_lotes)
+    !Array.isArray(resultado.movimientos_inventario)
   ) {
     throw new ErrorVentas('El servidor devolvió una respuesta inválida.')
   }
@@ -169,39 +151,9 @@ export async function confirmarVenta(datos, claveIdempotencia) {
   return resultado
 }
 
-export async function confirmarVentaCredito(datos, claveIdempotencia) {
-  const resultado = await solicitar('/api/ventas/credito', {
-    method: 'POST',
-    headers: { 'Idempotency-Key': claveIdempotencia },
-    body: JSON.stringify(datos),
-  })
-
-  if (!resultado?.venta || !resultado?.recibo || typeof resultado.cambio !== 'boolean') {
-    throw new ErrorVentas('El servidor devolvió una respuesta inválida.')
-  }
-
-  return resultado
-}
-
 export async function convertirCotizacionVenta(cotizacionId, montoRecibido) {
   const resultado = await solicitar(
     `/api/ventas/desde-cotizacion/${encodeURIComponent(cotizacionId)}`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ monto_recibido: montoRecibido }),
-    },
-  )
-
-  if (!resultado?.venta || !resultado?.recibo) {
-    throw new ErrorVentas('El servidor devolvió una respuesta inválida.')
-  }
-
-  return resultado
-}
-
-export async function convertirCotizacionVentaCredito(cotizacionId, montoRecibido) {
-  const resultado = await solicitar(
-    `/api/ventas/credito/desde-cotizacion/${encodeURIComponent(cotizacionId)}`,
     {
       method: 'POST',
       body: JSON.stringify({ monto_recibido: montoRecibido }),

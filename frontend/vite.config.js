@@ -8,18 +8,12 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
-    headers: {
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-    },
     proxy: {
       '/api': {
         target:
           process.env.EFARM_DEV_API_TARGET ||
           'https://ecofarm-backend-woy7.onrender.com',
         changeOrigin: true,
-        secure: true,
       },
     },
   },

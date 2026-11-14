@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import IconoInterfaz from '../components/IconoInterfaz'
-import { Eraser, Eye, Filter, LockKeyhole, RefreshCw, X } from 'lucide-react'
 import {
   abrirCaja,
   cerrarCaja,
@@ -903,7 +902,6 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
           onClick={() => setRefresco((valor) => valor + 1)}
           disabled={cargandoActual || cargandoHistorial}
         >
-          <RefreshCw size={15} strokeWidth={2.2} aria-hidden="true" />
           Actualizar
         </button>
       </header>
@@ -943,7 +941,7 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
               <small>Abierto el {formatearFechaHora(cajaActual.fecha_apertura)}</small>
             </div>
             {puedeOperar && (
-               <button className="boton-peligro-caja" type="button" onClick={(evento) => prepararCierre({ ...cajaActual, usuario_responsable: { id: cajaActual.usuario_responsable } }, evento.currentTarget)}><LockKeyhole size={15} strokeWidth={2.2} aria-hidden="true" />Cerrar caja</button>
+              <button className="boton-peligro-caja" type="button" onClick={(evento) => prepararCierre({ ...cajaActual, usuario_responsable: { id: cajaActual.usuario_responsable } }, evento.currentTarget)}>Cerrar caja</button>
             )}
           </div>
           <div className="resumen-caja">
@@ -1009,7 +1007,7 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
           {puedeVer && (
             <label className="filtro-usuario-caja"><span>ID del cajero</span><input value={filtrosEdicion.usuario_id} onChange={(evento) => setFiltrosEdicion((actual) => ({ ...actual, usuario_id: evento.target.value }))} placeholder="UUID opcional" /></label>
           )}
-          <div className="acciones-filtros-caja"><button className="boton-secundario-caja" type="button" onClick={limpiarFiltros}><Eraser size={14} strokeWidth={2.2} aria-hidden="true" />Limpiar</button><button className="boton-primario-caja" type="submit"><Filter size={14} strokeWidth={2.2} aria-hidden="true" />Aplicar filtros</button></div>
+          <div className="acciones-filtros-caja"><button className="boton-secundario-caja" type="button" onClick={limpiarFiltros}>Limpiar</button><button className="boton-primario-caja" type="submit">Aplicar filtros</button></div>
         </form>
 
         {cargandoHistorial ? (
@@ -1032,7 +1030,7 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
                     <td data-label="Esperado"><strong>{formatearMoneda(turno.efectivo_esperado)}</strong></td>
                     <td data-label="Estado"><EstadoEtiqueta tono={turno.estado === 'abierta' ? 'positivo' : 'neutro'}>{turno.estado === 'abierta' ? 'Abierta' : 'Cerrada'}</EstadoEtiqueta></td>
                     <td data-label="Cierre / diferencia"><strong>{formatearFechaHora(turno.fecha_cierre)}</strong>{turno.estado === 'cerrada' && <small>Diferencia: {formatearMoneda(turno.diferencia)}</small>}</td>
-                    <td data-label="Acciones"><div className="acciones-fila-caja"><button className="boton-secundario-caja" type="button" onClick={(evento) => mostrarDetalle(turno.id, evento.currentTarget)}><Eye size={14} strokeWidth={2.2} aria-hidden="true" />Ver detalle</button>{puedeCerrarTurno(turno) && <button className="boton-peligro-texto-caja" type="button" onClick={(evento) => prepararCierre(turno, evento.currentTarget)}><X size={14} strokeWidth={2.2} aria-hidden="true" />Cerrar</button>}</div></td>
+                    <td data-label="Acciones"><div className="acciones-fila-caja"><button className="boton-secundario-caja" type="button" onClick={(evento) => mostrarDetalle(turno.id, evento.currentTarget)}>Ver detalle</button>{puedeCerrarTurno(turno) && <button className="boton-peligro-texto-caja" type="button" onClick={(evento) => prepararCierre(turno, evento.currentTarget)}>Cerrar</button>}</div></td>
                   </tr>
                 ))}
               </tbody>

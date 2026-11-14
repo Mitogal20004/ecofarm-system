@@ -1,6 +1,6 @@
 import { obtenerSesion } from './auth'
 
-import { apiUrl } from './apiConfig'
+const apiUrl = import.meta.env.VITE_API_URL
 
 if (!apiUrl) {
   throw new Error('Falta VITE_API_URL en el entorno del frontend.')
@@ -133,20 +133,5 @@ export async function actualizarCliente(clienteId, cambios) {
     throw new ErrorClientes('El servidor devolvió una respuesta inválida.')
   }
 
-  return resultado
-}
-
-export async function obtenerEstadoCuenta(clienteId, mes) {
-  const resultado = await solicitar(`/api/cuentas-clientes/${encodeURIComponent(clienteId)}?mes=${encodeURIComponent(mes)}`)
-  if (!Array.isArray(resultado?.movimientos) || resultado.saldo === undefined) throw new ErrorClientes('El servidor devolvió una respuesta inválida.')
-  return resultado
-}
-
-export async function registrarAbono(clienteId, datos) {
-  const resultado = await solicitar(`/api/cuentas-clientes/${encodeURIComponent(clienteId)}/abonos`, {
-    method: 'POST',
-    body: JSON.stringify(datos),
-  })
-  if (resultado?.saldo === undefined) throw new ErrorClientes('El servidor devolvió una respuesta inválida.')
   return resultado
 }

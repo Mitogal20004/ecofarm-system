@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
-import { LogOut, Moon, Sun, UserRound } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import logoEfarm from './assets/logo-efarm-brand.png'
 import IconoInterfaz from './components/IconoInterfaz'
 import Login from './pages/Login'
@@ -9,12 +9,7 @@ import RestablecerPassword from './pages/RestablecerPassword'
 import Clientes from './pages/Clientes'
 import Cotizaciones from './pages/Cotizaciones'
 import Inventario from './pages/Inventario'
-import Lotes from './pages/Lotes'
-import Proveedores from './pages/Proveedores'
-import Operaciones from './pages/Operaciones'
-import TrazabilidadLote from './pages/TrazabilidadLote'
 import Inicio from './pages/Inicio'
-import Perfil from './pages/Perfil'
 import Productos from './pages/Productos'
 import Reportes from './pages/Reportes'
 import Usuarios from './pages/Usuarios'
@@ -34,14 +29,10 @@ import {
 const RUTA_RECUPERAR_PASSWORD = '/recuperar-password'
 const RUTA_RESTABLECER_PASSWORD = '/restablecer-password'
 const VISTA_INICIO = 'inicio'
-const VISTA_PERFIL = 'perfil'
 const VISTA_CLIENTES = 'clientes'
 const VISTA_CAJA = 'caja'
 const VISTA_COTIZACIONES = 'cotizaciones'
 const VISTA_INVENTARIO = 'inventario'
-const VISTA_LOTES = 'lotes'
-const VISTA_PROVEEDORES = 'proveedores'
-const VISTA_OPERACIONES = 'operaciones'
 const VISTA_PRODUCTOS = 'productos'
 const VISTA_REPORTES = 'reportes'
 const VISTA_USUARIOS = 'usuarios'
@@ -52,13 +43,6 @@ const PERMISO_POR_VISTA = {
   [VISTA_CLIENTES]: ['cliente.ver'],
   [VISTA_COTIZACIONES]: ['cotizacion.ver'],
   [VISTA_INVENTARIO]: ['inventario.ver'],
-  [VISTA_LOTES]: ['lote.ver', 'lote.administrar'],
-  [VISTA_PROVEEDORES]: ['compra.ver', 'compra.administrar'],
-  [VISTA_OPERACIONES]: [
-    'compra.ver', 'compra.administrar', 'insumo.ver', 'insumo.administrar',
-    'pedido.ver', 'pedido.administrar', 'despacho.ver', 'despacho.administrar',
-    'merma.ver', 'merma.registrar',
-  ],
   [VISTA_PRODUCTOS]: ['producto.ver'],
   [VISTA_REPORTES]: ['reporte.ver'],
   [VISTA_USUARIOS]: ['usuario.ver'],
@@ -68,17 +52,6 @@ const PERMISO_POR_VISTA = {
 function normalizarRuta(pathname) {
   const ruta = pathname.replace(/\/+$/, '')
   return ruta || '/'
-}
-
-function obtenerIniciales(nombre) {
-  const palabras = String(nombre || 'Cuenta E-farm')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-
-  if (palabras.length === 1) return palabras[0].slice(0, 2).toUpperCase()
-
-  return `${palabras[0][0]}${palabras[palabras.length - 1][0]}`.toUpperCase()
 }
 
 function hayCredencialesRecuperacionEnUrl() {
@@ -97,16 +70,12 @@ function App() {
   const [comprobandoSesion, setComprobandoSesion] = useState(true)
   const [comprobandoAutorizacion, setComprobandoAutorizacion] = useState(false)
   const [cerrandoSesion, setCerrandoSesion] = useState(false)
-  const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false)
   const [errorSesion, setErrorSesion] = useState('')
   const [errorAutorizacion, setErrorAutorizacion] = useState('')
   const [vistaActual, setVistaActual] = useState(VISTA_INICIO)
   const [ventaInicialId, setVentaInicialId] = useState(null)
   const [rutaActual, setRutaActual] = useState(() =>
     normalizarRuta(window.location.pathname),
-  )
-  const [temaOscuro, setTemaOscuro] = useState(() =>
-    window.localStorage.getItem('efarm-tema') === 'oscuro',
   )
   const [sesionRecuperacionValida, setSesionRecuperacionValida] =
     useState(false)
@@ -116,12 +85,6 @@ function App() {
       hayCredencialesRecuperacionEnUrl(),
   )
   const solicitudAutorizacionRef = useRef(0)
-  const menuUsuarioRef = useRef(null)
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = temaOscuro ? 'dark' : 'light'
-    window.localStorage.setItem('efarm-tema', temaOscuro ? 'oscuro' : 'claro')
-  }, [temaOscuro])
 
   const permisos = Array.isArray(autorizacion?.permisos)
     ? autorizacion.permisos
@@ -305,27 +268,6 @@ function App() {
     return () => window.clearTimeout(temporizador)
   }, [comprobandoRecuperacion])
 
-  useEffect(() => {
-    if (!menuUsuarioAbierto) return undefined
-
-    const cerrarMenuAlHacerClickFuera = (evento) => {
-      if (!menuUsuarioRef.current?.contains(evento.target)) {
-        setMenuUsuarioAbierto(false)
-      }
-    }
-    const cerrarMenuConEscape = (evento) => {
-      if (evento.key === 'Escape') setMenuUsuarioAbierto(false)
-    }
-
-    document.addEventListener('mousedown', cerrarMenuAlHacerClickFuera)
-    document.addEventListener('keydown', cerrarMenuConEscape)
-
-    return () => {
-      document.removeEventListener('mousedown', cerrarMenuAlHacerClickFuera)
-      document.removeEventListener('keydown', cerrarMenuConEscape)
-    }
-  }, [menuUsuarioAbierto])
-
   const manejarInicioSesion = (nuevaSesion) => {
     setSesion(nuevaSesion)
     setErrorSesion('')
@@ -370,14 +312,6 @@ function App() {
     }
   }
 
-  const tokenTrazabilidad = rutaActual.startsWith('/trazabilidad/lotes/')
-    ? rutaActual.split('/').pop()
-    : null
-
-  if (tokenTrazabilidad) {
-    return <TrazabilidadLote token={tokenTrazabilidad} />
-  }
-
   if (comprobandoSesion) {
     return (
       <main className="estado-sesion" aria-live="polite">
@@ -415,57 +349,31 @@ function App() {
           <img className="logotipo-panel" src={logoEfarm} alt="E-farm" />
           <span className="descripcion-marca-panel">Gestión agrícola</span>
         </div>
-        <div className="acciones-barra-superior" ref={menuUsuarioRef}>
-          <button
-            className="boton-tema"
-            type="button"
-            onClick={() => setTemaOscuro((oscuro) => !oscuro)}
-            aria-label={temaOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
-            title={temaOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
-          >
-            {temaOscuro ? <Sun size={19} strokeWidth={1.9} aria-hidden="true" /> : <Moon size={19} strokeWidth={1.9} aria-hidden="true" />}
-          </button>
-          <button
-            className="identidad-usuario"
-            type="button"
-            onClick={() => setMenuUsuarioAbierto((abierto) => !abierto)}
-            aria-label={`Usuario ${autorizacion?.perfil?.nombre_completo || 'Cuenta E-farm'}`}
-            title={autorizacion?.perfil?.nombre_completo || 'Cuenta E-farm'}
-            aria-expanded={menuUsuarioAbierto}
-            aria-haspopup="menu"
-          >
-            <span className="avatar-usuario" aria-hidden="true">
-              {obtenerIniciales(autorizacion?.perfil?.nombre_completo)}
-            </span>
-          </button>
+        <div className="acciones-barra-superior">
+          <div className="identidad-usuario">
+            <span className="etiqueta-usuario">Sesión de trabajo</span>
+            <strong className="nombre-usuario">
+              {autorizacion?.perfil?.nombre_completo || 'Cuenta E-farm'}
+            </strong>
+            {sesion.user?.email && (
+              <span className="correo-usuario">{sesion.user.email}</span>
+            )}
+          </div>
 
-          {menuUsuarioAbierto && (
-            <div className="menu-usuario" role="menu" aria-label="Opciones de usuario">
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setMenuUsuarioAbierto(false)
-                  setVistaActual(VISTA_PERFIL)
-                }}
-              >
-                <UserRound className="menu-usuario-icono" size={17} strokeWidth={1.8} aria-hidden="true" />
-                Mi perfil
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setMenuUsuarioAbierto(false)
-                  manejarCierreSesion()
-                }}
-              >
-                <LogOut className="menu-usuario-icono menu-usuario-icono-salida" size={17} strokeWidth={1.8} aria-hidden="true" />
-                Cerrar sesión
-              </button>
-            </div>
-          )}
-
+          <button
+            className="boton-cerrar-sesion"
+            type="button"
+            onClick={manejarCierreSesion}
+            disabled={cerrandoSesion}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+          >
+            {cerrandoSesion ? (
+              <span className="spinner-cerrar-sesion" aria-hidden="true" />
+            ) : (
+              <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
+            )}
+          </button>
         </div>
       </header>
 
@@ -548,61 +456,6 @@ function App() {
                 >
                   <IconoInterfaz nombre="inventario" className="icono-navegacion" />
                   Inventario
-                </button>
-              </li>
-            )}
-            {(tienePermiso('lote.ver') || tienePermiso('lote.administrar')) && (
-              <li>
-                <button
-                  className={`opcion-navegacion boton-navegacion${
-                    vistaActual === VISTA_LOTES
-                      ? ' opcion-navegacion-activa'
-                      : ''
-                  }`}
-                  type="button"
-                  onClick={() => setVistaActual(VISTA_LOTES)}
-                  aria-current={vistaActual === VISTA_LOTES ? 'page' : undefined}
-                >
-                  <IconoInterfaz nombre="inventario" className="icono-navegacion" />
-                  Lotes
-                </button>
-              </li>
-            )}
-            {(tienePermiso('compra.ver') || tienePermiso('compra.administrar')) && (
-              <li>
-                <button
-                  className={`opcion-navegacion boton-navegacion${
-                    vistaActual === VISTA_PROVEEDORES
-                      ? ' opcion-navegacion-activa'
-                      : ''
-                  }`}
-                  type="button"
-                  onClick={() => setVistaActual(VISTA_PROVEEDORES)}
-                  aria-current={
-                    vistaActual === VISTA_PROVEEDORES ? 'page' : undefined
-                  }
-                >
-                  <IconoInterfaz nombre="proveedores" className="icono-navegacion" />
-                  Proveedores
-                </button>
-              </li>
-            )}
-            {PERMISO_POR_VISTA[VISTA_OPERACIONES].some(tienePermiso) && (
-              <li>
-                <button
-                  className={`opcion-navegacion boton-navegacion${
-                    vistaActual === VISTA_OPERACIONES
-                      ? ' opcion-navegacion-activa'
-                      : ''
-                  }`}
-                  type="button"
-                  onClick={() => setVistaActual(VISTA_OPERACIONES)}
-                  aria-current={
-                    vistaActual === VISTA_OPERACIONES ? 'page' : undefined
-                  }
-                >
-                  <IconoInterfaz nombre="capas" className="icono-navegacion" />
-                  Operaciones
                 </button>
               </li>
             )}
@@ -754,21 +607,6 @@ function App() {
                 permisos={permisos}
                 alRefrescarAutorizacion={refrescarAutorizacion}
               />
-            ) : vistaActual === VISTA_LOTES ? (
-              <Lotes
-                permisos={permisos}
-                alRefrescarAutorizacion={refrescarAutorizacion}
-              />
-            ) : vistaActual === VISTA_PROVEEDORES ? (
-              <Proveedores
-                permisos={permisos}
-                alRefrescarAutorizacion={refrescarAutorizacion}
-              />
-            ) : vistaActual === VISTA_OPERACIONES ? (
-              <Operaciones
-                permisos={permisos}
-                alRefrescarAutorizacion={refrescarAutorizacion}
-              />
             ) : vistaActual === VISTA_PRODUCTOS ? (
               <Productos
                 permisos={permisos}
@@ -782,20 +620,9 @@ function App() {
                 usuarioActualId={autorizacion?.perfil?.id ?? null}
                 alRefrescarAutorizacion={refrescarAutorizacion}
               />
-            ) : vistaActual === VISTA_PERFIL ? (
-              <Perfil
-                key={autorizacion?.perfil?.id ?? 'sin-usuario'}
-                perfil={autorizacion?.perfil}
-                alGuardar={(perfil) =>
-                  setAutorizacion((actual) => ({ ...actual, perfil }))
-                }
-                alVolver={() => setVistaActual(VISTA_INICIO)}
-                alRefrescarAutorizacion={refrescarAutorizacion}
-              />
             ) : (
               <Inicio
                 permisos={permisos}
-                nombreUsuario={autorizacion?.perfil?.nombre_completo || 'Cuenta E-farm'}
                 errorSesion={errorSesion}
                 errorAutorizacion={errorAutorizacion}
                 alRefrescarAutorizacion={refrescarAutorizacion}

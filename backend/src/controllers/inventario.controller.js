@@ -7,7 +7,6 @@ import {
   registrarEntrada as registrarEntradaServicio,
   registrarSalida as registrarSalidaServicio,
 } from '../services/inventario.service.js'
-import { emitirAlertaSinBloquear } from '../services/alertas.service.js'
 
 const MENSAJE_SOLICITUD_INVALIDA = 'La solicitud contiene datos inválidos'
 const PATRON_UUID =
@@ -255,7 +254,6 @@ export async function registrarEntrada(req, res) {
       req.autenticacion?.token,
       crearDatosMovimiento(req.body, 'cantidad_manojos', 1),
     )
-    emitirAlertaStockBajo(resultado)
     return res.status(201).json(resultado)
   } catch (error) {
     return responderError(res, error)
@@ -268,7 +266,6 @@ export async function registrarSalida(req, res) {
       req.autenticacion?.token,
       crearDatosMovimiento(req.body, 'cantidad_manojos', 1),
     )
-    emitirAlertaStockBajo(resultado)
     return res.status(201).json(resultado)
   } catch (error) {
     return responderError(res, error)
@@ -281,39 +278,10 @@ export async function registrarAjuste(req, res) {
       req.autenticacion?.token,
       crearDatosMovimiento(req.body, 'conteo_fisico_manojos', 0),
     )
-    emitirAlertaStockBajo(resultado)
     return res.status(200).json(resultado)
   } catch (error) {
     return responderError(res, error)
   }
-}
-
-function emitirAlertaStockBajo(resultado) {
-  const existencia = resultado?.existencia
-  const stock = Number(existencia?.stock_manojos)
-  const minimo = Number(existencia?.stock_minimo_manojos)
-
-  if (
-    !existencia ||
-    !Number.isFinite(stock) ||
-    !Number.isFinite(minimo) ||
-    stock > minimo
-  ) {
-    return
-  }
-
-  emitirAlertaSinBloquear({
-    tipo: 'inventario.stock_bajo',
-    severidad: stock === 0 ? 'critical' : 'warning',
-    titulo: stock === 0 ? 'Producto sin stock' : 'Stock por debajo del mínimo',
-    mensaje: 'Una variante alcanzó o quedó por debajo del stock mínimo configurado.',
-    contexto: {
-      variante_id: existencia.variante_id,
-      stock_manojos: existencia.stock_manojos,
-      stock_minimo_manojos: existencia.stock_minimo_manojos,
-    },
-    claveDeduplicacion: `inventario.stock_bajo:${existencia.variante_id}`,
-  })
 }
 
 export async function actualizarStockMinimo(req, res) {

@@ -1,44 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
-import ClienteDialog from './ClienteDialog'
 import { listarClientes } from '../services/clientes'
 import { listarInventario } from '../services/inventario'
-import { listarLotesOperativos } from '../services/operaciones'
 import { listarVariantes } from '../services/productos'
 import {
   confirmarVenta,
-  confirmarVentaCredito,
-  crearPagoStripe,
   crearIntencionVenta,
   obtenerVenta,
 } from '../services/ventas'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Banknote,
-  CheckCircle2,
-  CircleDollarSign,
-  CreditCard,
-  Eye,
-  FileDown,
-  FileText,
-  List,
-  PackageSearch,
-  Boxes,
-  Info,
-  Layers3,
-  Printer,
-  RefreshCw,
-  Ruler,
-  Search,
-  Scale,
-  SlidersHorizontal,
-  Tag,
-  X,
-  Trash2,
-  UserPlus,
-} from 'lucide-react'
+import { CheckCircle2, Eye, FileDown, Printer, List } from 'lucide-react'
 import logoEfarm from '../assets/logo-efarm-brand.png'
 import {
   crearDocumentoVenta,
@@ -66,53 +35,10 @@ const nombreCliente = (cliente) =>
 const claveLinea = (varianteId, presentacionId) =>
   `${varianteId}:${presentacionId}`
 
-const precioEstaEnRango = (precio, minimo, maximo) => {
-  const valor = Number(precio)
-  if (!Number.isFinite(valor)) return false
-  if (minimo !== null && Number.isFinite(minimo) && valor < minimo) return false
-  if (maximo !== null && Number.isFinite(maximo) && valor > maximo) return false
-  return true
-}
-
 const DOCUMENTO_RECIBO = 'recibo'
 const DOCUMENTO_FACTURA = 'factura-demostracion'
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
-  : null
 
-function FormularioPagoStripe({ alConfirmar, deshabilitado }) {
-  const stripe = useStripe()
-  const elements = useElements()
-  const [procesando, setProcesando] = useState(false)
-  const [error, setError] = useState('')
-
-  const confirmarPago = async () => {
-    if (!stripe || !elements || procesando || deshabilitado) return
-    setProcesando(true)
-    setError('')
-    const resultado = await stripe.confirmPayment({ elements, redirect: 'if_required' })
-    if (resultado.error) {
-      setError(resultado.error.message ?? 'No fue posible confirmar el pago.')
-    } else if (resultado.paymentIntent?.status === 'succeeded') {
-      alConfirmar(resultado.paymentIntent.id)
-    } else {
-      setError('El pago requiere una acción adicional o no fue confirmado.')
-    }
-    setProcesando(false)
-  }
-
-  return (
-    <div className="formulario-stripe-ventas">
-      <PaymentElement options={{ layout: 'accordion' }} />
-      {error && <p className="error-pago-stripe-ventas" role="alert">{error}</p>}
-      <button className="boton-pago-stripe-ventas" type="button" onClick={confirmarPago} disabled={!stripe || !elements || procesando || deshabilitado}>
-        {procesando ? 'Confirmando pago...' : 'Confirmar pago con tarjeta'}
-      </button>
-    </div>
-  )
-}
-
-function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarBorrador }) {
+function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion }) {
   const [formulario, setFormulario] = useState(FORMULARIO_INICIAL)
   const [clientes, setClientes] = useState([])
   const [variantes, setVariantes] = useState([])
@@ -121,25 +47,16 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
   const [lineas, setLineas] = useState([])
   const [busquedaCliente, setBusquedaCliente] = useState('')
   const [busquedaProducto, setBusquedaProducto] = useState('')
-  const [precioMinimo, setPrecioMinimo] = useState('')
-  const [precioMaximo, setPrecioMaximo] = useState('')
   const [varianteId, setVarianteId] = useState('')
   const [presentacionId, setPresentacionId] = useState('')
-  const [detalleProductoAbierto, setDetalleProductoAbierto] = useState(false)
   const [cantidad, setCantidad] = useState('1')
   const [montoRecibido, setMontoRecibido] = useState('')
-  const [metodoPago, setMetodoPago] = useState('efectivo')
-  const [stripeClientSecret, setStripeClientSecret] = useState('')
-  const [stripePaymentIntentId, setStripePaymentIntentId] = useState('')
-  const [stripeMontoPreparado, setStripeMontoPreparado] = useState(null)
-  const [preparandoPagoStripe, setPreparandoPagoStripe] = useState(false)
   const [claveIdempotencia, setClaveIdempotencia] = useState('')
   const [cargando, setCargando] = useState(true)
+  const [consultandoClientes, setConsultandoClientes] = useState(false)
+  const [consultandoProductos, setConsultandoProductos] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
   const [documentoConfirmando, setDocumentoConfirmando] = useState(null)
-  const [pasoActual, setPasoActual] = useState(1)
-  const [clienteDialogoAbierto, setClienteDialogoAbierto] = useState(false)
-  const [versionClienteDialogo, setVersionClienteDialogo] = useState(0)
   const [reintentoPendiente, setReintentoPendiente] = useState(false)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
@@ -152,32 +69,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
   const resultadoActivoRef = useRef(null)
   const confirmandoRef = useRef(false)
   const buscadorProductoRef = useRef(null)
-  const montoRecibidoRef = useRef(null)
-
-  useEffect(() => {
-    const tieneDatos = Object.values(formulario).some((valor) => String(valor).trim() !== '')
-      || lineas.length > 0
-      || busquedaCliente.trim() !== ''
-      || busquedaProducto.trim() !== ''
-      || varianteId !== ''
-      || presentacionId !== ''
-      || cantidad !== '1'
-      || montoRecibido.trim() !== ''
-      || metodoPago !== 'efectivo'
-
-    alActualizarBorrador?.(tieneDatos)
-  }, [
-    alActualizarBorrador,
-    busquedaCliente,
-    busquedaProducto,
-    cantidad,
-    formulario,
-    lineas,
-    metodoPago,
-    montoRecibido,
-    presentacionId,
-    varianteId,
-  ])
 
   const cargarCatalogos = async (busqueda = '') => {
     const [resultadoVariantes, resultadoInventario] = await Promise.all([
@@ -194,40 +85,12 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
         busqueda,
       }),
     ])
-    let lotes = []
-
-    try {
-      lotes = await listarLotesOperativos()
-    } catch (errorLotes) {
-      // El inventario histórico sigue permitiendo operar el POS mientras el
-      // catálogo operativo de lotes se recupera o se termina de configurar.
-      if (![401, 403, 500].includes(errorLotes?.status)) throw errorLotes
-    }
 
     setVariantes(resultadoVariantes.variantes)
     setExistencias((actuales) => {
       const siguientes = new Map(actuales)
       resultadoInventario.inventario.forEach((item) => {
         siguientes.set(item.variante_id, item)
-      })
-
-      const variantesConLotes = new Set()
-      const stockPorVariante = new Map()
-      lotes.forEach((lote) => {
-        if (!lote.variante_id) return
-        variantesConLotes.add(lote.variante_id)
-        if (lote.estado !== 'liberado') return
-        stockPorVariante.set(
-          lote.variante_id,
-          (stockPorVariante.get(lote.variante_id) ?? 0) +
-            Number(lote.cantidad_disponible ?? 0),
-        )
-      })
-      variantesConLotes.forEach((id) => {
-        siguientes.set(id, {
-          ...(siguientes.get(id) ?? { variante_id: id }),
-          stock_manojos: stockPorVariante.get(id) ?? 0,
-        })
       })
       return siguientes
     })
@@ -280,24 +143,8 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
     () => variantes.find((variante) => variante.id === varianteId) ?? null,
     [varianteId, variantes],
   )
-  const precioMinimoNumero = precioMinimo.trim() === '' ? null : Number(precioMinimo)
-  const precioMaximoNumero = precioMaximo.trim() === '' ? null : Number(precioMaximo)
-  const rangoPrecios = useMemo(() => {
-    const precios = variantes.flatMap((variante) => (variante.precios ?? []))
-      .filter((precio) => presentacionesActivas.has(precio.presentacion_id))
-      .map((precio) => Number(precio.precio))
-      .filter((precio) => Number.isFinite(precio))
-    if (precios.length === 0) return { minimo: 0, maximo: 1 }
-    const minimo = Math.min(...precios)
-    return { minimo, maximo: Math.max(minimo + 0.01, Math.max(...precios)) }
-  }, [presentacionesActivas, variantes])
-  const precioMinimoSlider = precioMinimoNumero ?? rangoPrecios.minimo
-  const precioMaximoSlider = precioMaximoNumero ?? rangoPrecios.maximo
-  const filtroPrecioActivo =
-    (precioMinimoNumero !== null && Number.isFinite(precioMinimoNumero)) ||
-    (precioMaximoNumero !== null && Number.isFinite(precioMaximoNumero))
   const preciosDisponibles = (varianteSeleccionada?.precios ?? []).filter(
-    (precio) => presentacionesActivas.has(precio.presentacion_id) && (!filtroPrecioActivo || precioEstaEnRango(precio.precio, precioMinimoNumero, precioMaximoNumero)),
+    (precio) => presentacionesActivas.has(precio.presentacion_id),
   )
   const precioSeleccionado =
     preciosDisponibles.find(
@@ -308,33 +155,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
     : null
   const clienteSeleccionado =
     clientes.find((cliente) => cliente.id === formulario.cliente_id) ?? null
-  const variantesVisibles = useMemo(() => {
-    const termino = busquedaProducto.trim().toLocaleLowerCase()
-    return variantes.filter((variante) => {
-      const coincideTexto = !termino || [
-        variante.codigo_sku,
-        variante.color,
-        variante.clasificacion,
-        variante.longitud_cm,
-      ]
-        .filter((valor) => valor !== undefined && valor !== null)
-        .some((valor) => String(valor).toLocaleLowerCase().includes(termino))
-      const coincidePrecio = !filtroPrecioActivo || (variante.precios ?? [])
-        .filter((precio) => presentacionesActivas.has(precio.presentacion_id))
-        .some((precio) => precioEstaEnRango(precio.precio, precioMinimoNumero, precioMaximoNumero))
-      return coincideTexto && coincidePrecio
-    })
-  }, [busquedaProducto, filtroPrecioActivo, precioMaximoNumero, precioMinimoNumero, presentacionesActivas, variantes])
-  const clientesVisibles = useMemo(() => {
-    const termino = busquedaCliente.trim().toLocaleLowerCase()
-    if (!termino) return clientes
-
-    return clientes.filter((cliente) =>
-      [nombreCliente(cliente), cliente.nit, cliente.razon_social]
-        .filter(Boolean)
-        .some((valor) => String(valor).toLocaleLowerCase().includes(termino)),
-    )
-  }, [busquedaCliente, clientes])
   const cantidadNumero = /^\d+$/.test(cantidad) ? Number(cantidad) : 0
   const cantidadValida =
     Number.isSafeInteger(cantidadNumero) &&
@@ -396,9 +216,8 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
     : 0
   const montoRecibidoValido =
     Number.isFinite(montoRecibidoNumero) &&
-    montoRecibidoNumero >= 0 &&
+    montoRecibidoNumero > 0 &&
     montoRecibidoNumero <= 999999999999.99
-  const cuentaCliente = Boolean(formulario.cliente_id)
   const diferenciaPago = montoRecibidoValido
     ? Math.round((montoRecibidoNumero - totalPrevisto) * 100) / 100
     : null
@@ -407,16 +226,13 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
   const montoFaltante = diferenciaPago !== null && diferenciaPago < 0
     ? Math.abs(diferenciaPago)
     : 0
-  const stripePagoValido = Boolean(
-    stripePaymentIntentId && stripeMontoPreparado === totalPrevisto,
-  )
   const emisionDeshabilitada =
     confirmando ||
     lineas.length === 0 ||
     lineasInvalidas ||
     lineasSinStock ||
-    (metodoPago === 'efectivo' && (!montoRecibidoValido || (!cuentaCliente && !pagoSuficiente))) ||
-    (metodoPago === 'tarjeta' && !stripePagoValido) ||
+    !montoRecibidoValido ||
+    !pagoSuficiente ||
     !claveIdempotencia
 
   const hayDatosCapturados =
@@ -434,6 +250,26 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
     const { name, value } = evento.target
     setFormulario((actual) => ({ ...actual, [name]: value }))
     setError('')
+  }
+
+  const buscarClientes = async () => {
+    if (consultandoClientes || reintentoPendiente) return
+    setConsultandoClientes(true)
+    setError('')
+
+    try {
+      const respuesta = await listarClientes({
+        pagina: 1,
+        limite: 100,
+        activo: true,
+        busqueda: busquedaCliente.trim(),
+      })
+      setClientes(respuesta.clientes)
+    } catch (errorConsulta) {
+      setError(errorConsulta?.message || 'No fue posible buscar clientes.')
+    } finally {
+      setConsultandoClientes(false)
+    }
   }
 
   const seleccionarCliente = (clienteId) => {
@@ -460,27 +296,20 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
     setError('')
   }
 
-  const abrirNuevoCliente = () => {
-    setVersionClienteDialogo((version) => version + 1)
-    setClienteDialogoAbierto(true)
-  }
-
-  const manejarClienteCreado = (cliente) => {
-    setClientes((actuales) => [
-      cliente,
-      ...actuales.filter((actual) => actual.id !== cliente.id),
-    ])
-    setFormulario((actual) => ({
-      ...actual,
-      cliente_id: cliente.id,
-      comprador_nombre: nombreCliente(cliente),
-      comprador_nit: cliente.nit ?? '',
-      comprador_direccion: cliente.direccion ?? '',
-    }))
-    setBusquedaCliente('')
-    setClienteDialogoAbierto(false)
+  const buscarProductos = async () => {
+    if (consultandoProductos || reintentoPendiente) return
+    setConsultandoProductos(true)
     setError('')
-    setAviso('Cliente creado y seleccionado para esta venta.')
+
+    try {
+      await cargarCatalogos(busquedaProducto.trim())
+      setVarianteId('')
+      setPresentacionId('')
+    } catch (errorConsulta) {
+      setError(errorConsulta?.message || 'No fue posible buscar productos.')
+    } finally {
+      setConsultandoProductos(false)
+    }
   }
 
   const escribirCantidad = (valor) => {
@@ -630,7 +459,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
       setDocumentosProcesando(false)
       setTipoDocumentoAcceso(DOCUMENTO_RECIBO)
       setReintentoPendiente(false)
-      setPasoActual(1)
       setAviso('Nueva intención de venta preparada.')
       await cargarCatalogos()
     } catch (errorPreparacion) {
@@ -656,48 +484,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
     reiniciarVenta()
   }
 
-  const continuarCliente = () => {
-    if (
-      !formulario.cliente_id &&
-      (!formulario.comprador_nombre.trim() || !formulario.comprador_nit.trim())
-    ) {
-      setError('Selecciona un cliente o completa el nombre y NIT del comprador.')
-      return
-    }
-
-    setError('')
-    setPasoActual(2)
-  }
-
-  const continuarProductos = () => {
-    if (lineas.length === 0) {
-      setError('Agrega al menos un producto para continuar al cobro.')
-      return
-    }
-
-    setError('')
-    setPasoActual(3)
-  }
-
-  const prepararPagoConTarjeta = async () => {
-    if (!stripePromise || !claveIdempotencia || lineas.length === 0 || lineasInvalidas || lineasSinStock) {
-      setError('Stripe no está configurado o el carrito todavía no es válido.')
-      return
-    }
-    setPreparandoPagoStripe(true)
-    setError('')
-    try {
-      const pago = await crearPagoStripe(totalPrevisto.toFixed(2), claveIdempotencia)
-      setStripeClientSecret(pago.client_secret)
-      setStripePaymentIntentId('')
-      setStripeMontoPreparado(totalPrevisto)
-    } catch (errorPago) {
-      setError(errorPago.message ?? 'No fue posible preparar el pago con tarjeta.')
-    } finally {
-      setPreparandoPagoStripe(false)
-    }
-  }
-
   const confirmarVentaYEmitir = async (tipoDocumento) => {
     if (confirmandoRef.current) return
 
@@ -716,16 +502,12 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
       setError('Revisa las cantidades y el stock del carrito.')
       return
     }
-    if (metodoPago === 'efectivo' && !montoRecibidoValido) {
+    if (!montoRecibidoValido) {
       setError('Ingresa el monto recibido en efectivo.')
       return
     }
-    if (metodoPago === 'efectivo' && !cuentaCliente && !pagoSuficiente) {
+    if (!pagoSuficiente) {
       setError(`Faltan ${formatoMoneda.format(montoFaltante)}.`)
-      return
-    }
-    if (metodoPago === 'tarjeta' && !stripePagoValido) {
-      setError('Confirma el pago con tarjeta antes de emitir el documento.')
       return
     }
     if (
@@ -746,9 +528,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
         ? null
         : formulario.comprador_direccion,
       observaciones: formulario.observaciones,
-      monto_recibido: metodoPago === 'efectivo' ? montoRecibido : totalPrevisto.toFixed(2),
-      metodo_pago: metodoPago,
-      stripe_payment_intent_id: metodoPago === 'tarjeta' ? stripePaymentIntentId : null,
+      monto_recibido: montoRecibido,
       detalles: lineas.map((linea) => ({
         variante_id: linea.variante_id,
         presentacion_id: linea.presentacion_id,
@@ -762,10 +542,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
     setError('')
 
     try {
-      const esVentaCredito = Boolean(formulario.cliente_id) && montoRecibidoNumero < totalPrevisto
-      const respuesta = esVentaCredito
-        ? await confirmarVentaCredito(datos, claveIdempotencia)
-        : await confirmarVenta(datos, claveIdempotencia)
+      const respuesta = await confirmarVenta(datos, claveIdempotencia)
       resultadoActivoRef.current = respuesta.venta.id
       setTipoDocumentoAcceso(tipoDocumento)
       setDetalleConfirmado(null)
@@ -951,19 +728,13 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
 
   return (
     <div className="pos-ventas">
-      <div className="flujo-pos-ventas" aria-label="Progreso de la venta">
-        <div className={pasoActual >= 1 ? 'paso-pos-activo' : 'paso-pos-ventas'}><span>1</span><strong>Cliente</strong></div>
-        <div className={pasoActual >= 2 ? 'paso-pos-activo' : 'paso-pos-ventas'}><span>2</span><strong>Productos</strong></div>
-        <div className={pasoActual >= 3 ? 'paso-pos-activo' : 'paso-pos-ventas'}><span>3</span><strong>Cobro</strong></div>
-      </div>
       <div className="acciones-superiores-pos-ventas">
         <button
-          className="boton-secundario-ventas boton-limpiar-venta-ventas"
+          className="boton-secundario-ventas"
           type="button"
           onClick={solicitarReinicio}
           disabled={cargando || confirmando}
         >
-          <Trash2 size={16} strokeWidth={1.9} aria-hidden="true" />
           Limpiar venta
         </button>
       </div>
@@ -993,13 +764,12 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
         </div>
       )}
 
-      {pasoActual === 1 ? (
       <section className="tarjeta-pos-ventas comprador-ventas" aria-labelledby="comprador-venta">
           <div className="titulo-paso-ventas">
             <h2 id="comprador-venta">Cliente</h2>
           </div>
         <div className="buscador-cliente-ventas">
-          {clienteSeleccionado && (
+          {clienteSeleccionado ? (
             <div className="cliente-seleccionado-ventas">
               <div>
                 <span>Cliente registrado seleccionado</span>
@@ -1007,63 +777,61 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
                 <small>NIT {clienteSeleccionado.nit}</small>
               </div>
               <button
-                className="boton-quitar-cliente-ventas"
+                className="boton-secundario-ventas"
                 type="button"
                 onClick={quitarClienteSeleccionado}
                 disabled={reintentoPendiente}
-                aria-label="Quitar cliente seleccionado"
-                title="Quitar cliente seleccionado"
               >
-                <Trash2 size={17} strokeWidth={1.9} aria-hidden="true" />
+                Quitar o cambiar cliente
               </button>
             </div>
-          )}
-          <div className="clientes-lista-ventas">
-              <div className="clientes-lista-cabecera-ventas">
-                <label htmlFor="buscar-cliente-venta">Clientes registrados</label>
-                <input
-                  id="buscar-cliente-venta"
-                  value={busquedaCliente}
-                  onChange={(evento) => setBusquedaCliente(evento.target.value)}
-                  maxLength={150}
-                  placeholder="Filtrar por nombre o NIT"
-                  disabled={reintentoPendiente}
-                />
-              </div>
-              <div className="clientes-lista-opciones-ventas" role="listbox" aria-label="Clientes registrados">
-                {clientesVisibles.length ? clientesVisibles.map((cliente) => (
-                  <button
-                    key={cliente.id}
-                    className={`cliente-opcion-ventas${cliente.id === formulario.cliente_id ? ' cliente-opcion-seleccionada-ventas' : ''}`}
-                    type="button"
-                    role="option"
-                    aria-selected={cliente.id === formulario.cliente_id}
-                    onClick={() => seleccionarCliente(cliente.id)}
+          ) : (
+            <>
+              <div className="campo-ventas">
+                <label htmlFor="buscar-cliente-venta">Buscar cliente</label>
+                <div className="control-con-boton-ventas">
+                  <input
+                    id="buscar-cliente-venta"
+                    value={busquedaCliente}
+                    onChange={(evento) => setBusquedaCliente(evento.target.value)}
+                    onKeyDown={(evento) => {
+                      if (evento.key === 'Enter') {
+                        evento.preventDefault()
+                        buscarClientes()
+                      }
+                    }}
+                    maxLength={150}
+                    placeholder="Nombre, empresa o NIT"
                     disabled={reintentoPendiente}
+                  />
+                  <button
+                    className="boton-secundario-ventas"
+                    type="button"
+                    onClick={buscarClientes}
+                    disabled={consultandoClientes || reintentoPendiente}
                   >
-                    <span className="cliente-opcion-avatar-ventas" aria-hidden="true">
-                      {nombreCliente(cliente).slice(0, 1).toUpperCase()}
-                    </span>
-                    <span>
-                      <strong>{nombreCliente(cliente)}</strong>
-                      <small>NIT {cliente.nit || 'No registrado'}</small>
-                    </span>
+                    {consultandoClientes ? 'Buscando...' : 'Buscar'}
                   </button>
-                )) : (
-                  <p className="clientes-lista-vacia-ventas">No hay clientes que coincidan con la búsqueda.</p>
-                )}
-              </div>
-              <div className="card-crear-cliente-ventas">
-                <div>
-                  <strong>¿No encuentras un cliente?</strong>
-                  <span>Regístralo ahora y quedará seleccionado para esta venta.</span>
                 </div>
-                <button type="button" className="boton-crear-cliente-ventas" onClick={abrirNuevoCliente}>
-                  <UserPlus size={15} strokeWidth={1.9} aria-hidden="true" />
-                  Agregar cliente
-                </button>
               </div>
-          </div>
+              <div className="campo-ventas">
+                <label htmlFor="cliente-venta">Resultados</label>
+                <select
+                  id="cliente-venta"
+                  value=""
+                  onChange={(evento) => seleccionarCliente(evento.target.value)}
+                  disabled={reintentoPendiente}
+                >
+                  <option value="">Selecciona un cliente registrado</option>
+                  {clientes.map((cliente) => (
+                    <option key={cliente.id} value={cliente.id}>
+                      {nombreCliente(cliente)} · NIT {cliente.nit}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="campos-comprador-ventas">
@@ -1102,7 +870,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
                 }}
                 disabled={Boolean(formulario.cliente_id) || reintentoPendiente}
               >
-                <FileText size={15} strokeWidth={1.9} aria-hidden="true" />
                 Usar CF
               </button>
             </div>
@@ -1119,63 +886,40 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
             />
           </div>
         </div>
-        <div className="acciones-paso-ventas">
-          <button className="boton-primario-ventas boton-avanzar-ventas" type="button" onClick={continuarCliente}>
-            Continuar a productos
-            <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
-          </button>
-        </div>
       </section>
-      ) : (
-        <section className="tarjeta-pos-ventas resumen-paso-ventas" aria-label="Cliente confirmado">
-          <CheckCircle2 className="check-paso-completado-ventas" size={22} strokeWidth={2.2} aria-label="Paso completado" />
-          <div>
-            <span>PASO 1 COMPLETADO</span>
-            <strong>{clienteSeleccionado ? nombreCliente(clienteSeleccionado) : formulario.comprador_nombre}</strong>
-            <small>NIT {formulario.comprador_nit}</small>
-          </div>
-          <button className="boton-secundario-ventas boton-cambiar-cliente-ventas" type="button" onClick={() => setPasoActual(1)}>
-            <RefreshCw size={15} strokeWidth={1.9} aria-hidden="true" />
-            Cambiar cliente
-          </button>
-        </section>
-      )}
 
-      {pasoActual === 2 && <div className="rejilla-captura-ventas">
+      <div className="rejilla-captura-ventas">
         <section className="tarjeta-pos-ventas producto-ventas" aria-labelledby="producto-venta">
           <div className="titulo-paso-ventas">
-            <h2 id="producto-venta"><PackageSearch size={19} aria-hidden="true" /> Seleccionar producto</h2>
-            <div className="filtro-rango-precio-ventas">
-              <div className="encabezado-rango-precio-ventas">
-                <span><SlidersHorizontal size={12} aria-hidden="true" /> Precio</span>
-                <strong>{formatoMoneda.format(precioMinimoSlider)} - {formatoMoneda.format(precioMaximoSlider)}</strong>
-              </div>
-              <div className="controles-rango-precio-ventas">
-                <input type="range" min={rangoPrecios.minimo} max={rangoPrecios.maximo} step="0.01" value={precioMinimoSlider} onChange={(evento) => setPrecioMinimo(String(Math.min(Number(evento.target.value), precioMaximoSlider)))} aria-label="Precio mínimo" disabled={reintentoPendiente} />
-                <input type="range" min={rangoPrecios.minimo} max={rangoPrecios.maximo} step="0.01" value={precioMaximoSlider} onChange={(evento) => setPrecioMaximo(String(Math.max(Number(evento.target.value), precioMinimoSlider)))} aria-label="Precio máximo" disabled={reintentoPendiente} />
-              </div>
-            </div>
+            <h2 id="producto-venta">Seleccionar producto</h2>
           </div>
-          <div className="campo-ventas campo-filtro-variantes-ventas">
-            <label htmlFor="buscar-producto-venta">
-              <Search size={12} strokeWidth={2.2} aria-hidden="true" />
-              Buscar variante
-            </label>
-            <input
-              id="buscar-producto-venta"
-              ref={buscadorProductoRef}
-              value={busquedaProducto}
-              onChange={(evento) => setBusquedaProducto(evento.target.value)}
-              maxLength={150}
-              placeholder="SKU, color, longitud o clasificación"
-              aria-describedby="ayuda-busqueda-variante"
-              disabled={reintentoPendiente}
-            />
-            <small id="ayuda-busqueda-variante" className="ayuda-filtro-variantes-ventas" aria-live="polite">
-              {busquedaProducto.trim()
-                ? `${variantesVisibles.length} variante${variantesVisibles.length === 1 ? '' : 's'} encontrada${variantesVisibles.length === 1 ? '' : 's'}`
-                : `${variantesVisibles.length} variantes disponibles`}
-            </small>
+          <div className="campo-ventas">
+            <label htmlFor="buscar-producto-venta">Buscar variante</label>
+            <div className="control-con-boton-ventas">
+              <input
+                id="buscar-producto-venta"
+                ref={buscadorProductoRef}
+                value={busquedaProducto}
+                onChange={(evento) => setBusquedaProducto(evento.target.value)}
+                onKeyDown={(evento) => {
+                  if (evento.key === 'Enter') {
+                    evento.preventDefault()
+                    buscarProductos()
+                  }
+                }}
+                maxLength={150}
+                placeholder="SKU o color"
+                disabled={reintentoPendiente}
+              />
+              <button
+                className="boton-secundario-ventas"
+                type="button"
+                onClick={buscarProductos}
+                disabled={consultandoProductos || reintentoPendiente}
+              >
+                {consultandoProductos ? 'Buscando...' : 'Buscar'}
+              </button>
+            </div>
           </div>
           <div className="campo-ventas">
             <label htmlFor="variante-venta">Variante *</label>
@@ -1188,15 +932,13 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
                 setError('')
               }}
               disabled={reintentoPendiente}
-              >
-                <option value="">Selecciona una variante</option>
-                {variantesVisibles.length === 0 ? (
-                  <option value="" disabled>No hay variantes con ese filtro</option>
-                ) : variantesVisibles.map((variante) => (
-                  <option key={variante.id} value={variante.id}>
-                    {variante.codigo_sku} · {variante.color} · {variante.longitud_cm} cm · {variante.clasificacion}
-                  </option>
-                ))}
+            >
+              <option value="">Selecciona una variante</option>
+              {variantes.map((variante) => (
+                <option key={variante.id} value={variante.id}>
+                  {variante.codigo_sku} · {variante.color} · {variante.longitud_cm} cm · {variante.clasificacion}
+                </option>
+              ))}
             </select>
           </div>
           <div className="campo-ventas">
@@ -1223,16 +965,29 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
           </div>
 
           <div className={`vista-previa-venta${seleccionSinStock ? ' vista-previa-sin-stock' : ''}${!varianteSeleccionada ? ' vista-previa-vacia' : ''}`}>
-            {varianteSeleccionada ? (
-              <button className="boton-ver-detalle-ventas" type="button" onClick={() => setDetalleProductoAbierto(true)}>
-                <Info size={17} aria-hidden="true" />
-                <span>Ver detalle</span>
-                <ArrowRight size={15} aria-hidden="true" />
-              </button>
-            ) : <p className="texto-detalle-vacio-ventas">Selecciona una variante para consultar su detalle.</p>}
+            <dl>
+              <div><dt>Producto</dt><dd>{varianteSeleccionada ? `${varianteSeleccionada.color} · ${varianteSeleccionada.longitud_cm} cm · ${varianteSeleccionada.clasificacion}` : '—'}</dd></div>
+              <div><dt>Presentación</dt><dd>{precioSeleccionado?.presentacion ?? '—'}</dd></div>
+              <div><dt>Precio</dt><dd>{precioSeleccionado ? formatoMoneda.format(Number(precioSeleccionado.precio)) : '—'}</dd></div>
+              <div><dt>Estado</dt><dd>{varianteSeleccionada ? 'Activa' : '—'}</dd></div>
+              <div><dt>Disponible</dt><dd>{varianteSeleccionada ? `${stockSeleccionado} manojos` : '—'}</dd></div>
+              <div><dt>Esta línea requiere</dt><dd>{manojosSeleccionados} manojos</dd></div>
+              <div><dt>En carrito actualmente</dt><dd>{consumoCarritoVariante} manojos</dd></div>
+              <div><dt>Después de venta</dt><dd>{varianteSeleccionada ? `${stockRestantePrevisto} manojos` : '—'}</dd></div>
+              <div className="subtotal-previo-ventas"><dt>Subtotal</dt><dd>{formatoMoneda.format(precioSeleccionado && cantidadValida ? Number(precioSeleccionado.precio) * cantidadNumero : 0)}</dd></div>
+            </dl>
             {seleccionSinStock && (
               <p role="alert">Stock insuficiente para el consumo total de esta variante.</p>
             )}
+            {!seleccionSinStock && varianteSeleccionada && stockRestantePrevisto === 0 && (
+              <p className="aviso-stock-previsto-ventas">Quedará sin stock.</p>
+            )}
+            {!seleccionSinStock &&
+              varianteSeleccionada &&
+              stockRestantePrevisto > 0 &&
+              stockRestantePrevisto <= stockMinimoSeleccionado && (
+                <p className="aviso-stock-previsto-ventas">Quedará en stock bajo.</p>
+              )}
           </div>
         </section>
 
@@ -1242,7 +997,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
           onKeyDown={manejarTecladoCalculadora}
         >
           <div className="titulo-paso-ventas">
-            <h2 id="cantidad-venta"><Scale size={19} aria-hidden="true" /> Cantidad</h2>
+            <h2 id="cantidad-venta">Cantidad</h2>
           </div>
           <label htmlFor="pantalla-cantidad-venta">Cantidad</label>
           <input
@@ -1298,15 +1053,9 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
             Agregar producto
           </button>
         </section>
-        <div className="acciones-paso-ventas acciones-paso-productos-ventas">
-          <button className="boton-primario-ventas boton-avanzar-ventas" type="button" onClick={continuarProductos}>
-            Continuar al cobro
-            <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
-          </button>
-        </div>
-      </div>}
+      </div>
 
-      {pasoActual >= 2 && <section className="tarjeta-pos-ventas carrito-ventas" aria-labelledby="carrito-venta">
+      <section className="tarjeta-pos-ventas carrito-ventas" aria-labelledby="carrito-venta">
         <div className="encabezado-carrito-ventas">
           <div className="titulo-paso-ventas">
             <div>
@@ -1318,46 +1067,6 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
             <span>Total previsto</span>
             <strong>{formatoMoneda.format(totalPrevisto)}</strong>
           </div>
-          {detalleProductoAbierto && varianteSeleccionada && (
-            <div className="fondo-dialogo-ventas" role="presentation" onMouseDown={(evento) => evento.target === evento.currentTarget && setDetalleProductoAbierto(false)}>
-              <section className="dialogo-detalle-ventas" role="dialog" aria-modal="true" aria-labelledby="titulo-detalle-venta">
-                <header className="encabezado-detalle-ventas">
-                  <div><span>Información del producto</span><h3 id="titulo-detalle-venta">Detalle de variante</h3></div>
-                  <button className="boton-cerrar-detalle-ventas" type="button" onClick={() => setDetalleProductoAbierto(false)} aria-label="Cerrar detalle"><X size={18} /></button>
-                </header>
-                <div className="rejilla-detalle-ventas">
-                  <div><Tag /><span>SKU</span><strong>{varianteSeleccionada.codigo_sku}</strong></div>
-                  <div><Boxes /><span>Producto</span><strong>{varianteSeleccionada.color}</strong></div>
-                  <div><Ruler /><span>Longitud</span><strong>{varianteSeleccionada.longitud_cm} cm</strong></div>
-                  <div><Layers3 /><span>Clasificación</span><strong>{varianteSeleccionada.clasificacion}</strong></div>
-                  <div><PackageSearch /><span>Presentación</span><strong>{precioSeleccionado?.presentacion ?? '—'}</strong></div>
-                  <div><CircleDollarSign /><span>Precio</span><strong>{precioSeleccionado ? formatoMoneda.format(Number(precioSeleccionado.precio)) : '—'}</strong></div>
-                  <div><CheckCircle2 /><span>Estado</span><strong>Activa</strong></div>
-                  <div><Boxes /><span>Disponible</span><strong>{stockSeleccionado} manojos</strong></div>
-                  <div><Info /><span>Esta línea requiere</span><strong>{manojosSeleccionados} manojos</strong></div>
-                  <div><PackageSearch /><span>En carrito</span><strong>{consumoCarritoVariante} manojos</strong></div>
-                  <div><Boxes /><span>Después de venta</span><strong>{stockRestantePrevisto} manojos</strong></div>
-                  <div><CircleDollarSign /><span>Subtotal</span><strong>{formatoMoneda.format(precioSeleccionado && cantidadValida ? Number(precioSeleccionado.precio) * cantidadNumero : 0)}</strong></div>
-                </div>
-                {(seleccionSinStock || stockRestantePrevisto === 0 || (!seleccionSinStock && stockRestantePrevisto > 0 && stockRestantePrevisto <= stockMinimoSeleccionado)) && (
-                  <div className="avisos-detalle-ventas">
-                    {seleccionSinStock && <p role="alert">Stock insuficiente para el consumo total de esta variante.</p>}
-                    {!seleccionSinStock && stockRestantePrevisto === 0 && <p>Quedará sin stock.</p>}
-                    {!seleccionSinStock && stockRestantePrevisto > 0 && stockRestantePrevisto <= stockMinimoSeleccionado && <p>Quedará en stock bajo.</p>}
-                  </div>
-                )}
-              </section>
-            </div>
-          )}
-          {pasoActual === 3 && (
-            <CheckCircle2 className="check-paso-completado-ventas" size={22} strokeWidth={2.2} aria-label="Paso completado" />
-          )}
-          {pasoActual === 3 && (
-            <button className="boton-secundario-ventas boton-regresar-productos-ventas" type="button" onClick={() => setPasoActual(2)}>
-              <ArrowLeft size={15} strokeWidth={1.9} aria-hidden="true" />
-              Volver a productos
-            </button>
-          )}
         </div>
 
         {lineas.length === 0 ? (
@@ -1421,10 +1130,8 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
                           type="button"
                           onClick={() => eliminarLinea(linea.clave)}
                           disabled={reintentoPendiente}
-                          aria-label={`Eliminar ${linea.codigo_sku} ${linea.presentacion_nombre}`}
-                          title="Eliminar producto"
                         >
-                          <Trash2 aria-hidden="true" size={17} strokeWidth={2.2} />
+                          Eliminar
                         </button>
                       </td>
                     </tr>
@@ -1435,7 +1142,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
           </div>
         )}
 
-        {pasoActual === 3 && <div className="cierre-pos-ventas">
+        <div className="cierre-pos-ventas">
           <div className="campo-ventas observaciones-ventas">
             <label htmlFor="observaciones-venta">Observaciones</label>
             <textarea
@@ -1454,45 +1161,45 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
               <div className="encabezado-pago-ventas">
                 <div>
                   <span>Método de pago</span>
-                  <strong>{metodoPago === 'efectivo' ? 'Efectivo' : 'Tarjeta'}</strong>
+                  <strong>Efectivo</strong>
                 </div>
                 <div className="total-pago-ventas">
                   <span id="pago-venta">Total</span>
                   <strong>{formatoMoneda.format(totalPrevisto)}</strong>
                 </div>
               </div>
-              <div className="selector-metodo-pago-ventas" role="group" aria-label="Método de pago">
-                <button className={metodoPago === 'efectivo' ? 'activo' : ''} type="button" onClick={() => { setMetodoPago('efectivo'); setStripeClientSecret(''); setStripePaymentIntentId(''); setStripeMontoPreparado(null) }} disabled={reintentoPendiente}>
-                  <Banknote aria-hidden="true" size={16} strokeWidth={2.2} />
-                  <span>Efectivo</span>
-                </button>
-                <button className={metodoPago === 'tarjeta' ? 'activo' : ''} type="button" onClick={() => { setMetodoPago('tarjeta'); setStripeClientSecret(''); setStripePaymentIntentId(''); setStripeMontoPreparado(null) }} disabled={reintentoPendiente}>
-                  <CreditCard aria-hidden="true" size={16} strokeWidth={2.2} />
-                  <span>Tarjeta</span>
+              <label htmlFor="monto-recibido-venta">Pago recibido *</label>
+              <div className="control-monto-ventas">
+                <span aria-hidden="true">Q</span>
+                <input
+                  id="monto-recibido-venta"
+                  type="text"
+                  inputMode="decimal"
+                  value={montoRecibido}
+                  onChange={(evento) => actualizarMontoRecibido(evento.target.value)}
+                  onBlur={() => {
+                    if (montoRecibidoValido) {
+                      setMontoRecibido(montoRecibidoNumero.toFixed(2))
+                    }
+                  }}
+                  placeholder="0.00"
+                  disabled={reintentoPendiente}
+                  aria-describedby="resultado-pago-venta"
+                />
+                <button
+                  className="boton-secundario-ventas"
+                  type="button"
+                  onClick={() => {
+                    setMontoRecibido(totalPrevisto.toFixed(2))
+                    setError('')
+                  }}
+                  disabled={lineas.length === 0 || reintentoPendiente}
+                >
+                  Exacto
                 </button>
               </div>
-              {metodoPago === 'efectivo' ? <>
-                <label htmlFor="monto-recibido-venta">Pago recibido *</label>
-                <div className="control-monto-ventas">
-                  <span aria-hidden="true">Q</span>
-                  <input
-                    id="monto-recibido-venta"
-                    ref={montoRecibidoRef}
-                    type="text"
-                    inputMode="decimal"
-                    value={montoRecibido}
-                    onChange={(evento) => actualizarMontoRecibido(evento.target.value)}
-                    onBlur={() => {
-                      if (montoRecibidoValido) setMontoRecibido(montoRecibidoNumero.toFixed(2))
-                    }}
-                    placeholder="0.00"
-                    disabled={reintentoPendiente}
-                    aria-describedby="resultado-pago-venta"
-                  />
-                  <button className="boton-secundario-ventas" type="button" onClick={() => { setMontoRecibido(totalPrevisto.toFixed(2)); setError('') }} disabled={lineas.length === 0 || reintentoPendiente}>Exacto</button>
-                </div>
-                <div className="atajos-pago-ventas" aria-label="Montos rápidos">
-                  {[50, 100, 200, 500].map((monto) => (
+              <div className="atajos-pago-ventas" aria-label="Montos rápidos">
+                {[50, 100, 200, 500].map((monto) => (
                   <button
                     key={monto}
                     className="boton-secundario-ventas"
@@ -1505,26 +1212,25 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
                   >
                     Q{monto}
                   </button>
-                  ))}
-                </div>
-                <div id="resultado-pago-venta" className={`resultado-pago-ventas${montoRecibidoValido && !pagoSuficiente ? ' resultado-pago-insuficiente-ventas' : ''}`} aria-live="polite">
-                   {!montoRecibidoValido ? <><span>Pago recibido</span><strong>Ingresa un monto válido</strong></> : pagoSuficiente ? <><span>Cambio</span><strong>{formatoMoneda.format(cambioPrevisto)}</strong></> : <><span>Saldo a cuenta</span><strong>{formatoMoneda.format(montoFaltante)}</strong></>}
-                </div>
-              </> : (
-                stripeClientSecret && stripePromise ? (
-                  <Elements stripe={stripePromise} options={{ clientSecret: stripeClientSecret, locale: 'es' }}>
-                    <FormularioPagoStripe alConfirmar={setStripePaymentIntentId} deshabilitado={reintentoPendiente} />
-                  </Elements>
+                ))}
+              </div>
+              <div
+                id="resultado-pago-venta"
+                className={`resultado-pago-ventas${
+                  montoRecibidoValido && !pagoSuficiente
+                    ? ' resultado-pago-insuficiente-ventas'
+                    : ''
+                }`}
+                aria-live="polite"
+              >
+                {!montoRecibidoValido ? (
+                  <><span>Pago recibido</span><strong>Ingresa un monto válido</strong></>
+                ) : pagoSuficiente ? (
+                  <><span>Cambio</span><strong>{formatoMoneda.format(cambioPrevisto)}</strong></>
                 ) : (
-                  <div className="preparar-pago-stripe-ventas">
-                    <p>El pago se procesará de forma segura en USD usando Stripe.</p>
-                    <button className="boton-pago-stripe-ventas" type="button" onClick={prepararPagoConTarjeta} disabled={preparandoPagoStripe || reintentoPendiente || lineas.length === 0}>
-                      <CreditCard aria-hidden="true" size={16} strokeWidth={2.2} />
-                      <span>{preparandoPagoStripe ? 'Preparando pago...' : 'Continuar con tarjeta'}</span>
-                    </button>
-                  </div>
-                )
-              )}
+                  <><span>Faltan</span><strong>{formatoMoneda.format(montoFaltante)}</strong></>
+                )}
+              </div>
             </section>
             <div className="acciones-emision-ventas">
               <button
@@ -1553,16 +1259,8 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
               </button>
             </div>
           </div>
-        </div>}
-      </section>}
-      <ClienteDialog
-        key={versionClienteDialogo}
-        abierto={clienteDialogoAbierto}
-        cliente={null}
-        alCerrar={() => setClienteDialogoAbierto(false)}
-        alGuardar={manejarClienteCreado}
-        alRefrescarAutorizacion={alRefrescarAutorizacion}
-      />
+        </div>
+      </section>
     </div>
   )
 }
