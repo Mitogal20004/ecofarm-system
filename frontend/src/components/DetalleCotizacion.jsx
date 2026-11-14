@@ -10,7 +10,7 @@ import {
   cambiarEstadoCotizacion,
   obtenerCotizacion,
 } from '../services/cotizaciones'
-import { convertirCotizacionVenta } from '../services/ventas'
+import { convertirCotizacionVenta, convertirCotizacionVentaCredito } from '../services/ventas'
 import { formatearManojosPorUnidad } from '../utils/formatoUnidades'
 
 const formatoMoneda = new Intl.NumberFormat('es-GT', {
@@ -117,13 +117,13 @@ function DetalleCotizacion({
 
   const convertirEnVenta = async () => {
     if (procesandoRef.current || !detalle) return
-    if (!montoValido || montoNumero <= 0) {
-      setError('Ingresa el monto recibido en efectivo.')
+    if (!montoValido || montoNumero < 0) {
+      setError('Ingresa un monto válido.')
       return
     }
-    if (cambioConversion < 0) {
+    if (cambioConversion < 0 && !detalle.cotizacion.cliente_id) {
       setError(
-        `Faltan ${formatoMoneda.format(Math.abs(cambioConversion))}.`,
+        'Una cotización sin cliente registrado debe pagarse completamente.',
       )
       return
     }
@@ -140,10 +140,9 @@ function DetalleCotizacion({
     setError('')
 
     try {
-      const resultado = await convertirCotizacionVenta(
-        cotizacionId,
-        montoRecibido,
-      )
+      const resultado = montoNumero < totalCotizacion
+        ? await convertirCotizacionVentaCredito(cotizacionId, montoRecibido)
+        : await convertirCotizacionVenta(cotizacionId, montoRecibido)
       setVentaCreada(resultado)
       setMostrarPagoConversion(false)
       await cargarDetalle()

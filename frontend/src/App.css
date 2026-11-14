@@ -79,37 +79,141 @@
 }
 
 .acciones-barra-superior {
+  position: relative;
   min-width: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
+  gap: 10px;
+}
+
+.boton-tema {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 50%;
+  color: #f6d878;
+  background: rgb(255 255 255 / 10%);
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.boton-tema:hover {
+  border-color: rgb(255 255 255 / 52%);
+  background: rgb(255 255 255 / 18%);
+  transform: translateY(-1px);
+}
+
+.boton-tema:focus-visible {
+  outline: 3px solid rgb(255 255 255 / 42%);
+  outline-offset: 2px;
 }
 
 .identidad-usuario {
-  justify-items: end;
-  gap: 0;
-  text-align: right;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 10%);
+  padding: 0;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
 }
 
-.nombre-usuario {
-  max-width: 340px;
-  color: #fff;
+.identidad-usuario:hover {
+  border-color: rgb(255 255 255 / 48%);
+  background: rgb(255 255 255 / 18%);
+  transform: translateY(-1px);
+}
+
+.identidad-usuario:focus-visible {
+  outline: 3px solid rgb(255 255 255 / 42%);
+  outline-offset: 2px;
+}
+
+.menu-usuario {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  min-width: 190px;
+  display: grid;
+  gap: 4px;
+  padding: 7px;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgb(25 57 39 / 16%);
+}
+
+.menu-usuario::before {
+  position: absolute;
+  top: -6px;
+  right: 18px;
+  width: 11px;
+  height: 11px;
+  border-top: 1px solid var(--color-borde);
+  border-left: 1px solid var(--color-borde);
+  background: #fff;
+  content: '';
+  transform: rotate(45deg);
+}
+
+.menu-usuario button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  color: #365844;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.menu-usuario button:hover,
+.menu-usuario button:focus-visible {
+  color: #1f5f3c;
+  background: #edf6ee;
+  outline: none;
+}
+
+.menu-usuario button:last-child:hover,
+.menu-usuario button:last-child:focus-visible {
+  color: #a24438;
+  background: #fff2f0;
+}
+
+.menu-usuario-icono {
+  width: 20px;
+  color: #4c8861;
+  font-size: 17px;
+  line-height: 1;
+  text-align: center;
+}
+
+.menu-usuario-icono-salida { color: #af594e; }
+
+.avatar-usuario {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--color-verde-oscuro);
+  background: #dcead8;
   font-size: 13px;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.correo-usuario {
-  max-width: 340px;
-  color: #edf2f0;
-  font-size: 11px;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .boton-cerrar-sesion {
@@ -734,13 +838,8 @@
   }
 
   .identidad-usuario {
-    justify-items: start;
-    text-align: left;
-  }
-
-  .nombre-usuario,
-  .correo-usuario {
-    max-width: min(70vw, 280px);
+    width: 48px;
+    height: 48px;
   }
 
   .nombre-marca-panel small {

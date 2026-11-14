@@ -3,11 +3,14 @@ import {
   ErrorServicioVentas,
   anularVenta as anularVentaServicio,
   confirmarVenta as confirmarVentaServicio,
+  confirmarVentaCredito as confirmarVentaCreditoServicio,
   convertirCotizacionVenta as convertirCotizacionVentaServicio,
+  convertirCotizacionVentaCredito as convertirCotizacionVentaCreditoServicio,
   generarReciboVenta as generarReciboVentaServicio,
   listarVentas as listarVentasServicio,
   obtenerVenta as obtenerVentaServicio,
 } from '../services/ventas.service.js'
+import { crearPaymentIntent } from '../services/stripe.service.js'
 
 const MENSAJE_SOLICITUD_INVALIDA = 'La solicitud contiene datos inválidos'
 const PATRON_UUID =
@@ -24,6 +27,8 @@ const CAMPOS_VENTA = new Set([
   'observaciones',
   'detalles',
   'monto_recibido',
+  'metodo_pago',
+  'stripe_payment_intent_id',
 ])
 const CAMPOS_DETALLE = new Set([
   'variante_id',
@@ -71,6 +76,17 @@ const normalizarMontoPositivo = (valor) => {
     throw new ErrorSolicitudInvalida()
   }
 
+  return texto
+}
+
+const normalizarMontoVenta = (valor) => {
+  let texto = ''
+  if (typeof valor === 'number') texto = String(valor)
+  if (typeof valor === 'string') texto = valor.trim()
+  const numero = Number(texto)
+  if (!PATRON_MONTO.test(texto) || !Number.isFinite(numero) || numero < 0 || numero > 999999999999.99) {
+    throw new ErrorSolicitudInvalida()
+  }
   return texto
 }
 
@@ -159,7 +175,7 @@ const crearOpcionesListado = (query) => {
   return opciones
 }
 
-const crearDatosVenta = (body) => {
+const crearDatosVenta = (body, permitirSaldo = false) => {
   if (!esObjeto(body)) throw new ErrorSolicitudInvalida()
 
   const campos = Object.keys(body)
@@ -208,6 +224,15 @@ const crearDatosVenta = (body) => {
   const nit = clienteId ? null : normalizarNit(body.comprador_nit)
   if (!clienteId && (!nombre || !nit)) throw new ErrorSolicitudInvalida()
 
+  const metodoPago = body.metodo_pago ?? 'efectivo'
+  if (!['efectivo', 'tarjeta'].includes(metodoPago)) throw new ErrorSolicitudInvalida()
+  const paymentIntentId = body.stripe_payment_intent_id ?? null
+  if (paymentIntentId !== null && (typeof paymentIntentId !== 'string' || !/^pi_[A-Za-z0-9_]+$/.test(paymentIntentId))) {
+    throw new ErrorSolicitudInvalida()
+  }
+  if (metodoPago === 'tarjeta' && !paymentIntentId) throw new ErrorSolicitudInvalida()
+  if (metodoPago === 'tarjeta' && Number(body.monto_recibido) <= 0) throw new ErrorSolicitudInvalida()
+
   return {
     cliente_id: clienteId,
     comprador_nombre: nombre,
@@ -216,7 +241,11 @@ const crearDatosVenta = (body) => {
       ? null
       : normalizarTextoOpcional(body.comprador_direccion, 500),
     observaciones: normalizarTextoOpcional(body.observaciones, 1000),
-    monto_recibido: normalizarMontoPositivo(body.monto_recibido),
+    monto_recibido: permitirSaldo
+      ? normalizarMontoVenta(body.monto_recibido)
+      : normalizarMontoPositivo(body.monto_recibido),
+    metodo_pago: metodoPago,
+    stripe_payment_intent_id: paymentIntentId,
     detalles,
   }
 }
@@ -285,6 +314,13 @@ const responderError = (res, error) => {
     }
   }
 
+  if (error?.codigo === '23514') {
+    return res.status(409).json({
+      ok: false,
+      message: 'El pago con tarjeta no coincide con el monto de la venta.',
+    })
+  }
+
   return res.status(500).json({
     ok: false,
     message: 'No fue posible completar la operación solicitada',
@@ -293,6 +329,28 @@ const responderError = (res, error) => {
 
 export function crearIntencionVenta(_req, res) {
   return res.status(201).json({ clave_idempotencia: randomUUID() })
+}
+
+const crearDatosVentaCredito = (body) => {
+  const datos = crearDatosVenta(body, true)
+  if (!datos.cliente_id || datos.metodo_pago !== 'efectivo' || datos.stripe_payment_intent_id) {
+    throw new ErrorSolicitudInvalida()
+  }
+  return datos
+}
+
+export async function crearPagoStripe(req, res) {
+  try {
+    const montoGtq = normalizarMontoPositivo(req.body?.monto_gtq)
+    const claveIdempotencia = validarUuid(req.get('Idempotency-Key'))
+    const resultado = await crearPaymentIntent({
+      montoGtq,
+      claveIdempotencia,
+    })
+    return res.status(201).json(resultado)
+  } catch (error) {
+    return responderError(res, error)
+  }
 }
 
 export async function listarVentas(req, res) {
@@ -334,6 +392,20 @@ export async function confirmarVenta(req, res) {
   }
 }
 
+export async function confirmarVentaCredito(req, res) {
+  try {
+    const claveIdempotencia = validarUuid(req.get('Idempotency-Key'))
+    const resultado = await confirmarVentaCreditoServicio(
+      req.autenticacion?.token,
+      claveIdempotencia,
+      crearDatosVentaCredito(req.body),
+    )
+    return res.status(201).json(resultado)
+  } catch (error) {
+    return responderError(res, error)
+  }
+}
+
 export async function convertirCotizacionVenta(req, res) {
   try {
     validarUuid(req.params.cotizacionId)
@@ -341,6 +413,20 @@ export async function convertirCotizacionVenta(req, res) {
       req.autenticacion?.token,
       req.params.cotizacionId,
       crearDatosPago(req.body),
+    )
+    return res.status(201).json(resultado)
+  } catch (error) {
+    return responderError(res, error)
+  }
+}
+
+export async function convertirCotizacionVentaCredito(req, res) {
+  try {
+    validarUuid(req.params.cotizacionId)
+    const resultado = await convertirCotizacionVentaCreditoServicio(
+      req.autenticacion?.token,
+      req.params.cotizacionId,
+      normalizarMontoVenta(req.body?.monto_recibido),
     )
     return res.status(201).json(resultado)
   } catch (error) {

@@ -3,6 +3,7 @@ import './Clientes.css'
 import ClienteDialog from '../components/ClienteDialog'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import { listarClientes } from '../services/clientes'
+import CuentaCliente from '../components/CuentaCliente'
 
 const LIMITE_CLIENTES = 10
 const PAGINACION_INICIAL = {
@@ -38,6 +39,7 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
   const [dialogoAbierto, setDialogoAbierto] = useState(false)
   const [clienteEditando, setClienteEditando] = useState(null)
   const [versionListado, setVersionListado] = useState(0)
+  const [clienteCuenta, setClienteCuenta] = useState(null)
 
   const cerrarDialogo = useCallback(() => {
     setDialogoAbierto(false)
@@ -130,6 +132,8 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
 
   const puedeCrear = permisos.includes('cliente.crear')
   const puedeEditar = permisos.includes('cliente.editar')
+  const puedeCuenta = permisos.includes('cliente.estado_cuenta')
+  const puedeAbonar = permisos.includes('cliente.abono')
   const dialogoPermitido = clienteEditando ? puedeEditar : puedeCrear
   const puedeRetroceder = pagina > 1 && !cargando
   const puedeAvanzar =
@@ -241,7 +245,7 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
                   <th scope="col">NIT</th>
                   <th scope="col">Contacto</th>
                   <th scope="col">Estado</th>
-                  {puedeEditar && <th scope="col">Acciones</th>}
+                  {(puedeEditar || puedeCuenta) && <th scope="col">Acciones</th>}
                 </tr>
               </thead>
               <tbody>
@@ -269,8 +273,9 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
                         {cliente.activo ? 'Activo' : 'Inactivo'}
                       </EstadoEtiqueta>
                     </td>
-                    {puedeEditar && (
+                    {(puedeEditar || puedeCuenta) && (
                       <td className="celda-acciones-clientes" data-label="Acciones">
+                        {puedeCuenta && <button className="boton-editar-cliente" type="button" onClick={() => setClienteCuenta(cliente)}>Cuenta</button>}
                         <button
                           className="boton-editar-cliente"
                           type="button"
@@ -321,6 +326,7 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
           alRefrescarAutorizacion={alRefrescarAutorizacion}
         />
       )}
+      {clienteCuenta && <CuentaCliente cliente={clienteCuenta} puedeAbonar={puedeAbonar} alCerrar={() => setClienteCuenta(null)} />}
     </section>
   )
 }

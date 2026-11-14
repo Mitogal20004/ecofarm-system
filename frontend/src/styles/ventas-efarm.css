@@ -434,3 +434,148 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .tarjeta-pos-ventas,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .encabezado-carrito-ventas,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .desplazamiento-tabla-ventas,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .estado-carrito-ventas,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .observaciones-ventas,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .panel-pago-ventas {
+  border-color: var(--color-borde);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .titulo-paso-ventas h2,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .campo-ventas label,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .calculadora-ventas > label,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .panel-pago-ventas > label,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .total-carrito-ventas > span {
+  color: var(--color-texto);
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .titulo-paso-ventas p,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .teclado-desplegable-ventas summary {
+  color: var(--color-texto-secundario);
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas :is(input, select, textarea),
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .pantalla-calculadora-ventas {
+  border-color: var(--color-borde-fuerte);
+  color: var(--color-texto);
+  background: #15221d;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas :is(input, select, textarea)::placeholder {
+  color: #8fa39a;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .vista-previa-venta,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .cliente-seleccionado-ventas,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .teclado-desplegable-ventas {
+  border-color: var(--color-borde);
+  background: #21342b;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .vista-previa-venta .subtotal-previo-ventas dd,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .total-carrito-ventas strong {
+  color: #b9e0c1;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .tabla-carrito-ventas th {
+  color: #c3d1c8;
+  background: #24382e;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .tabla-carrito-ventas td {
+  border-bottom-color: var(--color-borde);
+  color: var(--color-texto-secundario);
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .encabezado-pago-ventas {
+  border-bottom-color: var(--color-borde);
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .clientes-lista-cabecera-ventas label {
+  color: var(--color-texto);
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .clientes-lista-cabecera-ventas input,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .cliente-opcion-ventas {
+  border-color: var(--color-borde-fuerte);
+  color: var(--color-texto);
+  background: #15221d;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .cliente-opcion-ventas:hover:not(:disabled),
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .cliente-opcion-ventas:focus-visible {
+  border-color: #79b58b;
+  background: #294437;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .cliente-opcion-seleccionada-ventas {
+  border-color: #79b58b;
+  background: #294437;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .cliente-opcion-ventas strong,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .card-crear-cliente-ventas strong {
+  color: #d5e6d9;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .cliente-opcion-ventas small,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .card-crear-cliente-ventas span {
+  color: #9eb1a5;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .card-crear-cliente-ventas {
+  border-color: #679b76;
+  background: #1d3427;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .boton-crear-cliente-ventas {
+  border-color: #79b58b;
+  color: #c7e5cc;
+  background: #274b35;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .boton-crear-cliente-ventas:hover,
+:root[data-theme='dark'] .aplicacion-administrativa .pos-ventas .boton-crear-cliente-ventas:focus-visible {
+  background: #326044;
+}
+
+/* Corrección transversal para las tablas y filtros de los módulos en modo oscuro. */
+:root[data-theme='dark'] .aplicacion-administrativa .contenido-panel
+  :is([class*='filtros'], [class*='tabla'], [class*='contenedor-tabla'], [class*='panel-'], [class*='tarjeta-'], [class*='metrica-'], [class*='formulario-'], [class*='listado']) {
+  border-color: var(--color-borde);
+  background-color: var(--color-superficie);
+  color: var(--color-texto);
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .contenido-panel
+  :is(table, thead, tbody, tr, th, td) {
+  border-color: var(--color-borde);
+  color: var(--color-texto-secundario);
+  background-color: var(--color-superficie);
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .contenido-panel
+  :is(th, [class*='encabezado-tabla'], [class*='cabecera-tabla']) {
+  color: #c7d5cc;
+  background-color: #24382e;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .contenido-panel
+  :is(h2, h3, label, th, td, strong) {
+  color: #dce8df;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .contenido-panel
+  :is(p, small, [class*='subtitulo'], [class*='detalle']) {
+  color: #a9bbb0;
+}
+
+:root[data-theme='dark'] .aplicacion-administrativa .contenido-panel
+  :is(tbody tr:hover, [class*='fila']:hover) {
+  background-color: #243a30;
+}

@@ -192,6 +192,50 @@
   background: var(--color-superficie);
 }
 
+.cuenta-cliente {
+  position: fixed;
+  z-index: 20;
+  inset: 8% 8%;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  background: var(--color-superficie);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 20%);
+}
+
+.cuenta-cliente-cabecera,
+.movimiento-cuenta-cliente {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cuenta-cliente-cabecera h2,
+.formulario-abono-cliente h3 { margin: 0; color: var(--color-texto); }
+.cuenta-cliente-cabecera p { margin: 6px 0 0; color: var(--color-texto-secundario); }
+.cuenta-cliente-cabecera button,
+.formulario-abono-cliente button { min-height: 40px; padding: 8px 14px; border: 0; border-radius: 6px; color: #fff; background: var(--color-verde-principal); font-weight: 700; }
+.cuenta-cliente-mes { display: grid; gap: 6px; color: var(--color-texto); font-weight: 650; }
+.cuenta-cliente-mes input,
+.formulario-abono-cliente input,
+.formulario-abono-cliente select { min-height: 40px; padding: 8px; border: 1px solid var(--color-borde-fuerte); border-radius: 6px; color: var(--color-texto); background: var(--color-superficie); }
+.cuenta-cliente-historial { display: grid; gap: 2px; border: 1px solid var(--color-borde); border-radius: 6px; }
+.movimiento-cuenta-cliente { padding: 11px 14px; border-bottom: 1px solid var(--color-borde); color: var(--color-texto); }
+.movimiento-cuenta-cliente:last-child { border-bottom: 0; }
+.cuenta-abono { color: var(--color-exito); }
+.formulario-abono-cliente { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: end; padding-top: 12px; border-top: 1px solid var(--color-borde); }
+.formulario-abono-cliente h3 { grid-column: 1 / -1; }
+
+@media (max-width: 700px) {
+  .cuenta-cliente { inset: 3% 3%; padding: 16px; }
+  .formulario-abono-cliente { grid-template-columns: 1fr; }
+}
+
 .desplazamiento-tabla-clientes {
   overflow-x: auto;
 }
@@ -615,5 +659,26 @@
 
   .acciones-dialogo-cliente button {
     width: 100%;
+  }
+}
+.cuenta-cliente-acciones {
+  display: flex;
+  gap: 8px;
+}
+
+@media print {
+  .no-imprimir-clientes,
+  .encabezado-clientes,
+  .filtros-clientes,
+  .contenedor-listado-clientes {
+    display: none !important;
+  }
+
+  .cuenta-cliente {
+    position: static !important;
+    width: 100% !important;
+    max-height: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
   }
 }

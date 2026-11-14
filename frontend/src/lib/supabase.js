@@ -3,9 +3,22 @@
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
-if (!supabaseUrl || !supabasePublishableKey) {
+const esProduccion = import.meta.env.MODE === 'production'
+
+let urlSupabaseValida = false
+try {
+  const url = new URL(supabaseUrl)
+  urlSupabaseValida =
+    (url.protocol === 'https:' || (!esProduccion && url.hostname === 'localhost')) &&
+    !url.username &&
+    !url.password
+} catch {
+  urlSupabaseValida = false
+}
+
+if (!urlSupabaseValida || !supabasePublishableKey) {
   throw new Error(
-    'Faltan VITE_SUPABASE_URL o VITE_SUPABASE_PUBLISHABLE_KEY en el entorno.',
+    'La configuración de Supabase es inválida o está incompleta.',
   )
 }
 

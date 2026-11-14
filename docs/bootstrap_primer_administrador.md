@@ -23,7 +23,9 @@ Este bootstrap no habilita registro público y no debe reutilizarse como mecanis
 | --- | --- |
 | `id` | UUID generado por Supabase Auth; es PK y FK a `auth.users.id` |
 | `nombre_completo` | Nombre interno visible en ECOFARM |
+| `nombre_usuario` | Identificador utilizado para iniciar sesión |
 | `telefono` | Dato opcional |
+| `serie_documentos` | Serie interna única para documentos comerciales |
 | `activo` | Utiliza el valor predeterminado `true` |
 | `fecha_creacion` | Utiliza el valor predeterminado |
 | `fecha_actualizacion` | Utiliza el valor predeterminado |
@@ -78,6 +80,8 @@ Antes de abrir el SQL Editor, preparar únicamente estos valores fuera del repos
 - `<UUID_DEL_USUARIO>`: UUID copiado desde Supabase Auth.
 - `<NOMBRE_COMPLETO>`: nombre que se mostrará dentro de ECOFARM.
 - `<TELEFONO_OPCIONAL>`: reemplazar por un texto SQL entre comillas simples, por ejemplo `'0000-0000'`, o por `NULL` sin comillas si no se registrará teléfono.
+- `<NOMBRE_USUARIO>`: identificador de acceso en minúsculas, por ejemplo `'admin.ecofarm'`.
+- `<SERIE_DOCUMENTOS>`: serie interna única, por ejemplo `'ADM'`.
 
 Si el nombre o teléfono contiene una comilla simple, debe escaparse duplicándola según las reglas de PostgreSQL. No guardar una copia del SQL ya completado dentro del repositorio.
 
@@ -92,12 +96,16 @@ begin;
 insert into public.perfiles (
   id,
   nombre_completo,
-  telefono
+  nombre_usuario,
+  telefono,
+  serie_documentos
 )
 values (
   '<UUID_DEL_USUARIO>'::uuid,
   '<NOMBRE_COMPLETO>',
-  <TELEFONO_OPCIONAL>
+  '<NOMBRE_USUARIO>',
+  <TELEFONO_OPCIONAL>,
+  '<SERIE_DOCUMENTOS>'
 );
 
 -- Asignar el rol por su nombre único, sin escribir manualmente su UUID.

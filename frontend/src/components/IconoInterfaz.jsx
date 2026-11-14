@@ -20,6 +20,7 @@ import {
   CircleX,
   Receipt,
   FileText,
+  Handshake,
 } from 'lucide-react'
 
 // Un solo catálogo de iconos para todas las pantallas administrativas.
@@ -46,6 +47,7 @@ const ICONOS = {
   anular: CircleX,
   recibo: Receipt,
   factura: FileText,
+  proveedores: Handshake,
 }
 
 function IconoInterfaz({ nombre, className = '' }) {

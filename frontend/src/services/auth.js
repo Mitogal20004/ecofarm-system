@@ -1,10 +1,5 @@
 ﻿import { supabase } from '../lib/supabase'
-
-const apiUrl = import.meta.env.VITE_API_URL
-
-if (!apiUrl) {
-  throw new Error('Falta VITE_API_URL en el entorno del frontend.')
-}
+import { apiUrl } from './apiConfig'
 
 export class ErrorConsultaAutorizacionActual extends Error {
   constructor(status = null) {
