@@ -793,7 +793,10 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
     setError('')
 
     try {
-      const esVentaCredito = Boolean(formulario.cliente_id) && montoRecibidoNumero < totalPrevisto
+      const esVentaCredito =
+        metodoPago === 'efectivo' &&
+        Boolean(formulario.cliente_id) &&
+        montoRecibidoNumero < totalPrevisto
       const respuesta = esVentaCredito
         ? await confirmarVentaCredito(datos, claveIdempotencia)
         : await confirmarVenta(datos, claveIdempotencia)
