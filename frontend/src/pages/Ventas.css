@@ -531,6 +531,10 @@
 .producto-ventas .campo-filtro-variantes-ventas label svg { color:#3d8659; }
 .producto-ventas > .campo-ventas input, .producto-ventas > .campo-ventas select { min-height:40px; border-color:#cdded1; border-radius:7px; background:#fff; }
 .producto-ventas > .campo-ventas input:focus, .producto-ventas > .campo-ventas select:focus { border-color:#4b8c62; box-shadow:0 0 0 3px rgb(75 140 98 / 13%); outline:none; }
+.producto-ventas > .campo-ventas select:hover { border-color:#4b8c62; color:#fff; background:#43845a; }
+.producto-ventas > .campo-ventas select option { color:#17231c; background:#fff; }
+.producto-ventas > .campo-ventas select option:hover,
+.producto-ventas > .campo-ventas select option:checked { color:#fff; background:#43845a; }
 .producto-ventas .campo-filtro-variantes-ventas { position:relative; }
 .producto-ventas .ayuda-filtro-variantes-ventas { display:block; margin-top:6px; color:#718277; font-size:10px; }
 .producto-ventas .rango-precios-ventas { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:7px; }

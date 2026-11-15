@@ -29,6 +29,7 @@ import {
   Info,
   Layers3,
   Printer,
+  Plus,
   RefreshCw,
   Ruler,
   Search,
@@ -620,6 +621,8 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
     const cantidadNueva = valor === '' ? 0 : Number(valor)
     if (!Number.isSafeInteger(cantidadNueva) || cantidadNueva > 1000000) return
 
+    setCantidad(cantidadNueva > 0 ? String(cantidadNueva) : '')
+
     setLineas((actuales) =>
       actuales.map((linea) =>
         linea.clave === clave
@@ -976,6 +979,7 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
             </button>
           )}
           <button className="boton-primario-ventas" type="button" onClick={reiniciarVenta}>
+            <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
             Nueva venta
           </button>
         </div>
