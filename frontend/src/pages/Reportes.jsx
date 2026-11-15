@@ -44,7 +44,24 @@ function obtenerPeriodoInicial() {
   }
 }
 
+function desplazarFecha(fechaTexto, dias) {
+  const fecha = new Date(`${fechaTexto}T00:00:00Z`)
+  fecha.setUTCDate(fecha.getUTCDate() + dias)
+  return fecha.toISOString().slice(0, 10)
+}
+
+function obtenerPeriodoSemanaActual() {
+  const fechaHasta = obtenerFechaGuatemala()
+  const fecha = new Date(`${fechaHasta}T00:00:00Z`)
+  const dia = fecha.getUTCDay()
+  const diasDesdeLunes = dia === 0 ? 6 : dia - 1
+  const fechaDesde = desplazarFecha(fechaHasta, -diasDesdeLunes)
+
+  return { fecha_desde: fechaDesde, fecha_hasta: desplazarFecha(fechaDesde, 6) }
+}
+
 const PERIODO_INICIAL = obtenerPeriodoInicial()
+const PERIODO_SEMANA_ACTUAL = obtenerPeriodoSemanaActual()
 
 function agruparEntero(valor) {
   const texto = String(valor ?? '0')
@@ -369,6 +386,70 @@ function GraficaVentas({ serie, productos }) {
   )
 }
 
+function GraficaPedidosSemana({ consulta }) {
+  const resumen = consulta.datos?.resumen
+  const datosGrafica = [
+    { estado: 'Confirmados', cantidad: Number(resumen?.operaciones_confirmadas) || 0 },
+    { estado: 'Cancelados', cantidad: Number(resumen?.operaciones_anuladas) || 0 },
+  ]
+  const maximoEje = Math.max(1, Math.ceil(Math.max(...datosGrafica.map((punto) => punto.cantidad), 0) * 1.2))
+  const definicionGrafica = useMemo(
+    () => defineChart({
+      marks: [
+        barY(datosGrafica, {
+          x: 'estado',
+          y: 'cantidad',
+          color: 'estado',
+          inset: 22,
+        }),
+      ],
+      scales: {
+        x: { scale: () => scaleBand().padding(0.35) },
+        y: { scale: scaleLinear, domain: [0, maximoEje], nice: true, grid: true, axis: { label: 'Cantidad' } },
+      },
+      color: { scale: scaleOrdinal(['Confirmados', 'Cancelados'], ['#2f6db5', '#b36b22']) },
+      tooltip: {
+        use: tooltip,
+        formatGroup(points) {
+          return points
+            .map((point) => `${point.groupLabel}: ${formatearCantidad(point.yValue)}`)
+            .join('\n')
+        },
+      },
+      svgAnimation: true,
+    }),
+    [datosGrafica, maximoEje],
+  )
+
+  return (
+    <section className="panel-reporte" aria-labelledby="titulo-grafica-pedidos-semana">
+      <div className="encabezado-panel-reporte">
+        <h2 id="titulo-grafica-pedidos-semana">Pedidos de la semana actual</h2>
+        <div className="leyenda-grafica-reportes" aria-label="Leyenda de la gráfica">
+          <span><i className="indicador-leyenda-reportes indicador-pedidos-confirmados-reportes" />Confirmados</span>
+          <span><i className="indicador-leyenda-reportes indicador-pedidos-cancelados-reportes" />Cancelados</span>
+        </div>
+      </div>
+      <EstadoConsulta
+        cargando={consulta.cargando}
+        error={consulta.error}
+        vacio={!consulta.datos?.resumen}
+        mensajeVacio="No hay pedidos registrados esta semana."
+      >
+        <div className="grafica-chart-reportes grafica-pedidos-semana-reportes">
+          <Chart
+            definition={definicionGrafica}
+            height={270}
+            initialWidth={720}
+            ariaLabel="Pedidos confirmados y cancelados de la semana actual"
+            ariaDescription="Gráfica de barras con el total de pedidos confirmados y cancelados durante la semana actual."
+          />
+        </div>
+      </EstadoConsulta>
+    </section>
+  )
+}
+
 function ResumenVentas({ consulta, productos }) {
   const resumen = consulta.datos?.resumen
   const serie = consulta.datos?.serie ?? []
@@ -546,6 +627,10 @@ function Reportes({ alRefrescarAutorizacion }) {
       ),
     [periodoAplicado],
   )
+  const consultarPedidosSemana = useCallback(
+    (signal) => obtenerReporteVentas(PERIODO_SEMANA_ACTUAL, { signal }),
+    [],
+  )
 
   const consultaVentas = useConsultaReporte(
     consultarVentas,
@@ -553,6 +638,10 @@ function Reportes({ alRefrescarAutorizacion }) {
   )
   const consultaProductos = useConsultaReporte(
     consultarProductos,
+    alRefrescarAutorizacion,
+  )
+  const consultaPedidosSemana = useConsultaReporte(
+    consultarPedidosSemana,
     alRefrescarAutorizacion,
   )
 
@@ -596,6 +685,7 @@ function Reportes({ alRefrescarAutorizacion }) {
         alLimpiar={limpiarFiltros}
       />
 
+      <GraficaPedidosSemana consulta={consultaPedidosSemana} />
       <ResumenVentas consulta={consultaVentas} productos={consultaProductos.datos?.productos ?? []} />
       <ProductosMasVendidos consulta={consultaProductos} />
     </div>

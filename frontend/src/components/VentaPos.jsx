@@ -84,29 +84,60 @@ function FormularioPagoStripe({ alConfirmar, deshabilitado }) {
   const stripe = useStripe()
   const elements = useElements()
   const [procesando, setProcesando] = useState(false)
+  const [pagoConfirmado, setPagoConfirmado] = useState(false)
   const [error, setError] = useState('')
 
   const confirmarPago = async () => {
-    if (!stripe || !elements || procesando || deshabilitado) return
+    if (!stripe || !elements || procesando || pagoConfirmado || deshabilitado) return
     setProcesando(true)
     setError('')
-    const resultado = await stripe.confirmPayment({ elements, redirect: 'if_required' })
-    if (resultado.error) {
-      setError(resultado.error.message ?? 'No fue posible confirmar el pago.')
-    } else if (resultado.paymentIntent?.status === 'succeeded') {
-      alConfirmar(resultado.paymentIntent.id)
-    } else {
-      setError('El pago requiere una acción adicional o no fue confirmado.')
+    try {
+      const resultado = await stripe.confirmPayment({
+        elements,
+        confirmParams: { return_url: window.location.href },
+        redirect: 'if_required',
+      })
+
+      if (resultado.error) {
+        if (
+          resultado.error.payment_intent?.status === 'succeeded' &&
+          resultado.error.payment_intent.id
+        ) {
+          console.info('[stripe] PaymentIntent ya estaba confirmado.', {
+            paymentIntentId: resultado.error.payment_intent.id,
+          })
+          setPagoConfirmado(true)
+          alConfirmar(resultado.error.payment_intent.id)
+          return
+        }
+
+        console.error('[stripe] Error al confirmar el pago.', {
+          tipo: resultado.error.type,
+          codigo: resultado.error.code,
+          mensaje: resultado.error.message,
+          declineCode: resultado.error.decline_code,
+        })
+        setError(resultado.error.message ?? 'No fue posible confirmar el pago.')
+      } else if (resultado.paymentIntent?.status === 'succeeded') {
+        setPagoConfirmado(true)
+        alConfirmar(resultado.paymentIntent.id)
+      } else {
+        setError('El pago requiere una acción adicional o no fue confirmado.')
+      }
+    } catch (errorPago) {
+      console.error('[stripe] Error inesperado al confirmar el pago.', errorPago)
+      setError('No fue posible confirmar el pago. Revisa la configuración de Stripe.')
+    } finally {
+      setProcesando(false)
     }
-    setProcesando(false)
   }
 
   return (
     <div className="formulario-stripe-ventas">
       <PaymentElement options={{ layout: 'accordion' }} />
       {error && <p className="error-pago-stripe-ventas" role="alert">{error}</p>}
-      <button className="boton-pago-stripe-ventas" type="button" onClick={confirmarPago} disabled={!stripe || !elements || procesando || deshabilitado}>
-        {procesando ? 'Confirmando pago...' : 'Confirmar pago con tarjeta'}
+      <button className="boton-pago-stripe-ventas" type="button" onClick={confirmarPago} disabled={!stripe || !elements || procesando || pagoConfirmado || deshabilitado}>
+        {procesando ? 'Confirmando pago...' : pagoConfirmado ? 'Pago confirmado' : 'Confirmar pago con tarjeta'}
       </button>
     </div>
   )

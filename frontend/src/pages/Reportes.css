@@ -430,6 +430,8 @@
 .barra-confirmadas-reporte { background: var(--color-verde-secundario); }
 .indicador-anuladas-reportes,
 .barra-anuladas-reporte { background: var(--color-error); }
+.indicador-pedidos-confirmados-reportes { background: #2f6db5; }
+.indicador-pedidos-cancelados-reportes { background: #b36b22; }
 
 .resumen-grafica-reportes {
   display: flex;
