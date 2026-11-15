@@ -31,6 +31,11 @@ app.use(rechazarHttpInseguro)
 
 // El navegador solo podrá consumir la API desde el origen autorizado. La
 // variable permite cambiarlo en despliegues futuros sin modificar este archivo.
+const normalizarOrigen = (origen) => {
+  const url = new URL(origen.trim())
+  return url.origin
+}
+
 const valorOrigenes = process.env.FRONTEND_URL || 'http://localhost:5173'
 if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
   throw new Error('FRONTEND_URL es obligatorio en producción.')
@@ -38,8 +43,12 @@ if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
 
 const origenesPermitidos = valorOrigenes
   .split(',')
-  .map((origen) => origen.trim())
+  .map(normalizarOrigen)
   .filter(Boolean)
+
+if (process.env.NODE_ENV === 'production') {
+  origenesPermitidos.push('https://efarm26.online', 'https://www.efarm26.online')
+}
 
 for (const origen of origenesPermitidos) {
   const url = new URL(origen)
@@ -58,12 +67,15 @@ app.use(
       // Las solicitudes sin Origin pueden ser health checks o clientes no
       // browser; CORS no debe bloquearlas, pero tampoco debe reflejar orígenes
       // desconocidos.
-      if (!origen || origenesPermitidos.includes(origen)) {
+      const origenNormalizado = origen ? normalizarOrigen(origen) : null
+
+      if (!origenNormalizado || origenesPermitidos.includes(origenNormalizado)) {
         return callback(null, true)
       }
 
       console.warn('[cors] Origen rechazado.', {
         origen,
+        origenNormalizado,
         permitidos: origenesPermitidos,
       })
       return callback(new Error('Origen no permitido por CORS'))
