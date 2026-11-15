@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Banknote,
   CheckCircle2,
+  ChevronDown,
   CircleDollarSign,
   CreditCard,
   Eye,
@@ -54,6 +55,61 @@ const FORMULARIO_INICIAL = {
   comprador_nit: '',
   comprador_direccion: '',
   observaciones: '',
+}
+
+function SelectorVenta({ id, label, value, placeholder, options, onChange, disabled }) {
+  const [abierto, setAbierto] = useState(false)
+  const seleccion = options.find((opcion) => opcion.value === value)
+
+  return (
+    <div className="selector-venta">
+      <label htmlFor={id}>{label}</label>
+      <button
+        id={id}
+        className="boton-selector-venta"
+        type="button"
+        onClick={() => setAbierto((actual) => !actual)}
+        onBlur={() => window.setTimeout(() => setAbierto(false), 0)}
+        aria-haspopup="listbox"
+        aria-expanded={abierto}
+        disabled={disabled}
+      >
+        <span>{seleccion?.label ?? placeholder}</span>
+        <ChevronDown size={16} strokeWidth={2.1} aria-hidden="true" />
+      </button>
+      {abierto && (
+        <div className="lista-selector-venta" role="listbox" aria-label={label}>
+          <button
+            type="button"
+            role="option"
+            aria-selected={!value}
+            onMouseDown={(evento) => evento.preventDefault()}
+            onClick={() => {
+              onChange('')
+              setAbierto(false)
+            }}
+          >
+            {placeholder}
+          </button>
+          {options.map((opcion) => (
+            <button
+              key={opcion.value}
+              type="button"
+              role="option"
+              aria-selected={opcion.value === value}
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => {
+                onChange(opcion.value)
+                setAbierto(false)
+              }}
+            >
+              {opcion.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const formatoMoneda = new Intl.NumberFormat('es-GT', {
@@ -1216,45 +1272,39 @@ function VentaPos({ puedeVer, alVerVenta, alRefrescarAutorizacion, alActualizarB
             </small>
           </div>
           <div className="campo-ventas">
-            <label htmlFor="variante-venta">Variante *</label>
-            <select
+            <SelectorVenta
               id="variante-venta"
+              label="Variante *"
               value={varianteId}
-              onChange={(evento) => {
-                setVarianteId(evento.target.value)
+              placeholder="Selecciona una variante"
+              disabled={reintentoPendiente}
+              onChange={(valor) => {
+                setVarianteId(valor)
                 setPresentacionId('')
                 setError('')
               }}
-              disabled={reintentoPendiente}
-              >
-                <option value="">Selecciona una variante</option>
-                {variantesVisibles.length === 0 ? (
-                  <option value="" disabled>No hay variantes con ese filtro</option>
-                ) : variantesVisibles.map((variante) => (
-                  <option key={variante.id} value={variante.id}>
-                    {variante.codigo_sku} · {variante.color} · {variante.longitud_cm} cm · {variante.clasificacion}
-                  </option>
-                ))}
-            </select>
+              options={variantesVisibles.map((variante) => ({
+                value: variante.id,
+                label: `${variante.codigo_sku} · ${variante.color} · ${variante.longitud_cm} cm · ${variante.clasificacion}`,
+              }))}
+            />
           </div>
           <div className="campo-ventas">
-            <label htmlFor="presentacion-venta">Presentación *</label>
-            <select
+            <SelectorVenta
               id="presentacion-venta"
+              label="Presentación *"
               value={presentacionId}
-              onChange={(evento) => {
-                setPresentacionId(evento.target.value)
+              placeholder="Selecciona una presentación"
+              disabled={!varianteSeleccionada || reintentoPendiente}
+              onChange={(valor) => {
+                setPresentacionId(valor)
                 setError('')
               }}
-              disabled={!varianteSeleccionada || reintentoPendiente}
-            >
-              <option value="">Selecciona una presentación</option>
-              {preciosDisponibles.map((precio) => (
-                <option key={precio.presentacion_id} value={precio.presentacion_id}>
-                  {precio.presentacion} · {formatoMoneda.format(Number(precio.precio))}
-                </option>
-              ))}
-            </select>
+              options={preciosDisponibles.map((precio) => ({
+                value: precio.presentacion_id,
+                label: `${precio.presentacion} · ${formatoMoneda.format(Number(precio.precio))}`,
+              }))}
+            />
             {varianteSeleccionada && preciosDisponibles.length === 0 && (
               <small>No hay presentaciones activas con precio vigente.</small>
             )}
