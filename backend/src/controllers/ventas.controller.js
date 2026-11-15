@@ -340,6 +340,14 @@ const crearDatosVentaCredito = (body) => {
 }
 
 export async function crearPagoStripe(req, res) {
+  const solicitud = req.get('X-Request-Id') ?? 'sin-id'
+  console.info('[stripe] Solicitud de PaymentIntent recibida.', {
+    solicitud,
+    origen: req.get('Origin') ?? 'sin-origin',
+    montoGtq: req.body?.monto_gtq,
+    metodo: req.method,
+  })
+
   try {
     const montoGtq = normalizarMontoPositivo(req.body?.monto_gtq)
     const claveIdempotencia = validarUuid(req.get('Idempotency-Key'))
@@ -349,6 +357,13 @@ export async function crearPagoStripe(req, res) {
     })
     return res.status(201).json(resultado)
   } catch (error) {
+    console.error('[stripe] Solicitud de PaymentIntent fallida.', {
+      solicitud,
+      nombre: error?.name,
+      mensaje: error?.message,
+      codigo: error?.codigo,
+      detalle: error?.detalle,
+    })
     return responderError(res, error)
   }
 }

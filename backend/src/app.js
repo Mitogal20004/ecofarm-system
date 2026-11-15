@@ -62,6 +62,10 @@ app.use(
         return callback(null, true)
       }
 
+      console.warn('[cors] Origen rechazado.', {
+        origen,
+        permitidos: origenesPermitidos,
+      })
       return callback(new Error('Origen no permitido por CORS'))
     },
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
