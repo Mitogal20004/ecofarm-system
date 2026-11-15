@@ -11,7 +11,7 @@ const persistenciaHabilitada = process.env.ALERT_PERSIST_ENABLED === 'true'
 const alertasRecientes = new Map()
 const urlFrontend = (process.env.FRONTEND_URL || 'https://efarm26.online').split(',')[0].trim().replace(/\/$/, '')
 const urlInventario = `${urlFrontend}/?vista=inventario`
-const urlLogo = `${urlFrontend}/favicon.svg`
+const urlLogo = process.env.EMAIL_LOGO_URL || `${urlFrontend}/assets/logo-efarm-brand-BjqCU4Zf.png`
 
 async function obtenerDestinatarios() {
   const { data, error } = await supabaseAdmin.rpc(
@@ -203,7 +203,7 @@ async function emitirAlertasStockBajo() {
   const [{ data: existencias, error: errorExistencias }, { data: insumos, error: errorInsumos }] = await Promise.all([
     supabaseAdmin
       .from('inventario_existencias')
-      .select('variante_id, stock_manojos, stock_minimo_manojos'),
+      .select('variante_id, stock_manojos, stock_minimo_manojos, producto_variantes(codigo_sku, color, longitud_cm, clasificacion, productos(nombre))'),
     supabaseAdmin
       .from('insumos')
       .select('id, codigo, nombre, stock_actual, stock_minimo, activo')
@@ -216,18 +216,30 @@ async function emitirAlertasStockBajo() {
   const alertas = [
     ...(existencias ?? [])
       .filter((existencia) => Number(existencia.stock_manojos) <= Number(existencia.stock_minimo_manojos))
-      .map((existencia) => ({
-        tipo: 'inventario.stock_bajo',
-        severidad: Number(existencia.stock_manojos) === 0 ? 'critical' : 'warning',
-        titulo: Number(existencia.stock_manojos) === 0 ? 'Producto sin stock' : 'Stock por debajo del mínimo',
-        mensaje: 'Una variante de flores alcanzó o quedó por debajo del stock mínimo configurado.',
-        contexto: {
-          variante_id: existencia.variante_id,
-          stock_manojos: existencia.stock_manojos,
-          stock_minimo_manojos: existencia.stock_minimo_manojos,
-        },
-        claveDeduplicacion: `inventario.stock_bajo:${existencia.variante_id}`,
-      })),
+      .map((existencia) => {
+        const variante = existencia.producto_variantes
+        const producto = Array.isArray(variante?.productos)
+          ? variante.productos[0]
+          : variante?.productos
+        const nombre = producto?.nombre || variante?.codigo_sku || 'Producto agrícola'
+        const descripcion = variante?.codigo_sku
+          ? `${variante.codigo_sku} · ${variante.color} · ${variante.longitud_cm} cm · ${variante.clasificacion}`
+          : null
+
+        return {
+          tipo: 'inventario.stock_bajo',
+          severidad: Number(existencia.stock_manojos) === 0 ? 'critical' : 'warning',
+          titulo: Number(existencia.stock_manojos) === 0 ? `${nombre} sin stock` : `${nombre} por debajo del mínimo`,
+          mensaje: 'Una variante de flores alcanzó o quedó por debajo del stock mínimo configurado.',
+          contexto: {
+            producto: nombre,
+            ...(descripcion ? { variante: descripcion } : {}),
+            stock_manojos: existencia.stock_manojos,
+            stock_minimo_manojos: existencia.stock_minimo_manojos,
+          },
+          claveDeduplicacion: `inventario.stock_bajo:${existencia.variante_id}`,
+        }
+      }),
     ...(insumos ?? [])
       .filter((insumo) => Number(insumo.stock_actual) <= Number(insumo.stock_minimo))
       .map((insumo) => ({
