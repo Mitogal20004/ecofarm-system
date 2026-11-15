@@ -113,8 +113,16 @@ export async function emitirAlerta({
   const destinatarios = await obtenerDestinatarios()
 
   if (destinatarios.length === 0) {
+    console.warn('[alertas] Alerta omitida: no hay destinatarios configurados.', {
+      tipo,
+    })
     return { enviada: false, omitida: 'no hay destinatarios configurados' }
   }
+
+  console.info('[alertas] Enviando alerta por correo.', {
+    tipo,
+    cantidadDestinatarios: destinatarios.length,
+  })
 
   const contextoTexto = Object.entries(alerta.contexto)
     .map(([clave, valor]) => `${clave}: ${String(valor)}`)
@@ -153,6 +161,9 @@ export function emitirAlertasStockBajoSinBloquear() {
     console.error('Falló la detección de alertas de stock bajo.', {
       nombre: error?.name,
       mensaje: error?.message,
+      causaCodigo: error?.cause?.code ?? null,
+      causaNombre: error?.cause?.name ?? null,
+      causaMensaje: error?.cause?.message ?? null,
     })
     return { enviadas: false, error: true }
   })

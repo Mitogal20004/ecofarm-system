@@ -5,6 +5,11 @@ const apiKey = process.env.RESEND_API_KEY
 const correoOrigen = process.env.RESEND_FROM_EMAIL
 const nombreOrigen = process.env.RESEND_FROM_NAME || 'E-farm'
 
+const normalizarTag = (valor) =>
+  String(valor ?? '')
+    .replace(/[^A-Za-z0-9_-]/g, '_')
+    .slice(0, 256)
+
 if (habilitado && (!apiKey || !correoOrigen)) {
   throw new Error(
     'EMAIL_ALERTS_ENABLED requiere RESEND_API_KEY y RESEND_FROM_EMAIL.',
@@ -12,6 +17,11 @@ if (habilitado && (!apiKey || !correoOrigen)) {
 }
 
 const resend = habilitado ? new Resend(apiKey) : null
+
+console.info('[correo] Servicio de correo inicializado.', {
+  habilitado,
+  origenConfigurado: Boolean(correoOrigen),
+})
 
 export class ErrorServicioCorreo extends Error {
   constructor(mensaje, causa) {
@@ -26,6 +36,7 @@ export function correoEstaHabilitado() {
 
 export async function enviarCorreo({ destinatarios, asunto, html, texto, tags }) {
   if (!habilitado) {
+    console.warn('[correo] Envío omitido: EMAIL_ALERTS_ENABLED no está activo.')
     return { enviado: false, omitido: 'EMAIL_ALERTS_ENABLED no está activo' }
   }
 
@@ -46,19 +57,38 @@ export async function enviarCorreo({ destinatarios, asunto, html, texto, tags })
       subject: asunto,
       html,
       text: texto,
-      tags,
+      tags: Array.isArray(tags)
+        ? tags.map((tag) => ({
+            name: normalizarTag(tag?.name),
+            value: normalizarTag(tag?.value),
+          }))
+        : tags,
     })
 
     if (error) {
+      console.error('[correo] Resend rechazó el envío.', {
+        codigo: error.code ?? null,
+        nombre: error.name ?? null,
+        mensaje: error.message ?? null,
+        cantidadDestinatarios: destinatarios.length,
+      })
       throw new ErrorServicioCorreo(
         'Resend no pudo enviar el correo.',
         error,
       )
     }
 
+    console.info('[correo] Correo aceptado por Resend.', {
+      id: data?.id ?? null,
+      cantidadDestinatarios: destinatarios.length,
+    })
     return { enviado: true, id: data?.id ?? null }
   } catch (error) {
     if (error instanceof ErrorServicioCorreo) throw error
+    console.error('[correo] Error inesperado al enviar correo.', {
+      nombre: error?.name ?? null,
+      mensaje: error?.message ?? null,
+    })
     throw new ErrorServicioCorreo('No fue posible enviar el correo.', error)
   }
 }
