@@ -70,6 +70,13 @@ function normalizarRuta(pathname) {
   return ruta || '/'
 }
 
+function obtenerVistaInicial() {
+  const vista = new URLSearchParams(window.location.search).get('vista')
+  return Object.prototype.hasOwnProperty.call(PERMISO_POR_VISTA, vista)
+    ? vista
+    : VISTA_INICIO
+}
+
 function obtenerIniciales(nombre) {
   const palabras = String(nombre || 'Cuenta E-farm')
     .trim()
@@ -100,7 +107,7 @@ function App() {
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false)
   const [errorSesion, setErrorSesion] = useState('')
   const [errorAutorizacion, setErrorAutorizacion] = useState('')
-  const [vistaActual, setVistaActual] = useState(VISTA_INICIO)
+  const [vistaActual, setVistaActual] = useState(obtenerVistaInicial)
   const [ventaInicialId, setVentaInicialId] = useState(null)
   const [rutaActual, setRutaActual] = useState(() =>
     normalizarRuta(window.location.pathname),

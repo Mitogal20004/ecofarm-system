@@ -9,6 +9,9 @@ const destinatariosConfigurados = (process.env.ALERT_RECIPIENTS || '')
 const deduplicacionMs = Number(process.env.ALERT_DEDUPE_MS || 60 * 60 * 1000)
 const persistenciaHabilitada = process.env.ALERT_PERSIST_ENABLED === 'true'
 const alertasRecientes = new Map()
+const urlFrontend = (process.env.FRONTEND_URL || 'https://efarm26.online').split(',')[0].trim().replace(/\/$/, '')
+const urlInventario = `${urlFrontend}/?vista=inventario`
+const urlLogo = `${urlFrontend}/favicon.svg`
 
 async function obtenerDestinatarios() {
   const { data, error } = await supabaseAdmin.rpc(
@@ -130,12 +133,39 @@ export async function emitirAlerta({
 
   const asunto = `[${severidad.toUpperCase()}] ${titulo}`
   const texto = `${mensaje}\n\n${contextoTexto}`.trim()
-  const html = `<main style="font-family:Arial,sans-serif;line-height:1.5">
-    <p><strong>Severidad:</strong> ${escaparHtml(severidad)}</p>
-    <h1>${escaparHtml(titulo)}</h1>
-    <p>${escaparHtml(mensaje)}</p>
-    <pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">${escaparHtml(contextoTexto)}</pre>
-  </main>`
+  const filasContexto = Object.entries(alerta.contexto)
+    .map(
+      ([clave, valor]) => `<tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #e5ebe6;color:#637168;font-size:13px">${escaparHtml(clave.replaceAll('_', ' '))}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e5ebe6;color:#17231c;font-size:14px;font-weight:700">${escaparHtml(valor)}</td>
+      </tr>`,
+    )
+    .join('')
+  const colorSeveridad = severidad === 'critical' ? '#b42318' : '#a76616'
+  const html = `<!doctype html>
+  <html lang="es"><body style="margin:0;background:#f3f6f2;font-family:Arial,Helvetica,sans-serif;color:#17231c">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f6f2;padding:32px 12px">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dce5dd;border-radius:16px;overflow:hidden">
+          <tr><td style="padding:24px 30px;background:#173d2d">
+            <img src="${escaparHtml(urlLogo)}" width="54" height="54" alt="E-farm" style="display:block;margin-bottom:14px">
+            <div style="color:#ffffff;font-size:24px;font-weight:800;letter-spacing:-.4px">E-farm</div>
+            <div style="margin-top:4px;color:#cfe3d4;font-size:13px">Gestión agrícola</div>
+          </td></tr>
+          <tr><td style="padding:30px">
+            <div style="display:inline-block;padding:7px 11px;border-radius:999px;background:${colorSeveridad};color:#ffffff;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">${escaparHtml(severidad)}</div>
+            <h1 style="margin:18px 0 10px;color:#17231c;font-size:28px;line-height:1.2">${escaparHtml(titulo)}</h1>
+            <p style="margin:0 0 24px;color:#526158;font-size:16px;line-height:1.6">${escaparHtml(mensaje)}</p>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e5ebe6;border-radius:10px;overflow:hidden">${filasContexto}</table>
+            <div style="padding-top:28px;text-align:center">
+              <a href="${escaparHtml(urlInventario)}" style="display:inline-block;padding:13px 22px;border-radius:8px;background:#1f6a43;color:#ffffff;font-size:15px;font-weight:800;text-decoration:none">Ir al inventario</a>
+            </div>
+          </td></tr>
+          <tr><td style="padding:18px 30px;background:#f7faf7;color:#829087;font-size:12px;line-height:1.5">Alerta automática de inventario. Ingresa al sistema para revisar el stock y tomar acción.</td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body></html>`
 
   return enviarCorreo({
     destinatarios,
