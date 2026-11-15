@@ -81,7 +81,12 @@ app.use(
       return callback(new Error('Origen no permitido por CORS'))
     },
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Idempotency-Key'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Idempotency-Key',
+      'X-Idempotency-Key',
+    ],
     maxAge: 600,
   }),
 )
