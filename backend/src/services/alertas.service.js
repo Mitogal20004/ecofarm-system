@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '../lib/supabase.js'
 import { enviarCorreo } from './correo.service.js'
 
-const destinatarios = (process.env.ALERT_RECIPIENTS || '')
+const destinatariosConfigurados = (process.env.ALERT_RECIPIENTS || '')
   .split(',')
   .map((correo) => correo.trim().toLowerCase())
   .filter(Boolean)
@@ -9,6 +9,25 @@ const destinatarios = (process.env.ALERT_RECIPIENTS || '')
 const deduplicacionMs = Number(process.env.ALERT_DEDUPE_MS || 60 * 60 * 1000)
 const persistenciaHabilitada = process.env.ALERT_PERSIST_ENABLED === 'true'
 const alertasRecientes = new Map()
+
+async function obtenerDestinatarios() {
+  const { data, error } = await supabaseAdmin.rpc(
+    'listar_destinatarios_alertas_roles',
+  )
+
+  if (error) {
+    console.error('No fue posible consultar destinatarios de alertas por rol.', {
+      codigo: error.code ?? null,
+    })
+    return destinatariosConfigurados
+  }
+
+  const destinatarios = (Array.isArray(data) ? data : [])
+    .map((registro) => registro?.email?.trim().toLowerCase())
+    .filter(Boolean)
+
+  return destinatarios.length > 0 ? destinatarios : destinatariosConfigurados
+}
 
 const escaparHtml = (valor) =>
   String(valor).replace(
@@ -91,6 +110,8 @@ export async function emitirAlerta({
     }
   }
 
+  const destinatarios = await obtenerDestinatarios()
+
   if (destinatarios.length === 0) {
     return { enviada: false, omitida: 'no hay destinatarios configurados' }
   }
@@ -125,4 +146,68 @@ export function emitirAlertaSinBloquear(datos) {
     })
     return { enviada: false, error: true }
   })
+}
+
+export function emitirAlertasStockBajoSinBloquear() {
+  return emitirAlertasStockBajo().catch((error) => {
+    console.error('Falló la detección de alertas de stock bajo.', {
+      nombre: error?.name,
+      mensaje: error?.message,
+    })
+    return { enviadas: false, error: true }
+  })
+}
+
+async function emitirAlertasStockBajo() {
+  const [{ data: existencias, error: errorExistencias }, { data: insumos, error: errorInsumos }] = await Promise.all([
+    supabaseAdmin
+      .from('inventario_existencias')
+      .select('variante_id, stock_manojos, stock_minimo_manojos'),
+    supabaseAdmin
+      .from('insumos')
+      .select('id, codigo, nombre, stock_actual, stock_minimo, activo')
+      .eq('activo', true),
+  ])
+
+  if (errorExistencias) throw errorExistencias
+  if (errorInsumos) throw errorInsumos
+
+  const alertas = [
+    ...(existencias ?? [])
+      .filter((existencia) => Number(existencia.stock_manojos) <= Number(existencia.stock_minimo_manojos))
+      .map((existencia) => ({
+        tipo: 'inventario.stock_bajo',
+        severidad: Number(existencia.stock_manojos) === 0 ? 'critical' : 'warning',
+        titulo: Number(existencia.stock_manojos) === 0 ? 'Producto sin stock' : 'Stock por debajo del mínimo',
+        mensaje: 'Una variante de flores alcanzó o quedó por debajo del stock mínimo configurado.',
+        contexto: {
+          variante_id: existencia.variante_id,
+          stock_manojos: existencia.stock_manojos,
+          stock_minimo_manojos: existencia.stock_minimo_manojos,
+        },
+        claveDeduplicacion: `inventario.stock_bajo:${existencia.variante_id}`,
+      })),
+    ...(insumos ?? [])
+      .filter((insumo) => Number(insumo.stock_actual) <= Number(insumo.stock_minimo))
+      .map((insumo) => ({
+        tipo: 'insumo.stock_bajo',
+        severidad: Number(insumo.stock_actual) === 0 ? 'critical' : 'warning',
+        titulo: Number(insumo.stock_actual) === 0 ? 'Insumo agotado' : 'Insumo por debajo del mínimo',
+        mensaje: `El insumo ${insumo.codigo} - ${insumo.nombre} alcanzó o quedó por debajo del stock mínimo configurado.`,
+        contexto: {
+          insumo_id: insumo.id,
+          codigo: insumo.codigo,
+          nombre: insumo.nombre,
+          stock_actual: insumo.stock_actual,
+          stock_minimo: insumo.stock_minimo,
+        },
+        claveDeduplicacion: `insumo.stock_bajo:${insumo.id}`,
+      })),
+  ]
+
+  for (const alerta of alertas) {
+    await emitirAlerta(alerta)
+  }
+
+  return { enviadas: alertas.length }
 }

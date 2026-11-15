@@ -11,6 +11,7 @@ import {
   obtenerVenta as obtenerVentaServicio,
 } from '../services/ventas.service.js'
 import { crearPaymentIntent } from '../services/stripe.service.js'
+import { emitirAlertasStockBajoSinBloquear } from '../services/alertas.service.js'
 
 const MENSAJE_SOLICITUD_INVALIDA = 'La solicitud contiene datos inválidos'
 const PATRON_UUID =
@@ -401,6 +402,7 @@ export async function confirmarVenta(req, res) {
       claveIdempotencia,
       crearDatosVenta(req.body),
     )
+    emitirAlertasStockBajoSinBloquear()
     return res.status(resultado.cambio ? 201 : 200).json(resultado)
   } catch (error) {
     return responderError(res, error)
@@ -415,6 +417,7 @@ export async function confirmarVentaCredito(req, res) {
       claveIdempotencia,
       crearDatosVentaCredito(req.body),
     )
+    emitirAlertasStockBajoSinBloquear()
     return res.status(201).json(resultado)
   } catch (error) {
     return responderError(res, error)
@@ -429,6 +432,7 @@ export async function convertirCotizacionVenta(req, res) {
       req.params.cotizacionId,
       crearDatosPago(req.body),
     )
+    emitirAlertasStockBajoSinBloquear()
     return res.status(201).json(resultado)
   } catch (error) {
     return responderError(res, error)
@@ -443,6 +447,7 @@ export async function convertirCotizacionVentaCredito(req, res) {
       req.params.cotizacionId,
       normalizarMontoVenta(req.body?.monto_recibido),
     )
+    emitirAlertasStockBajoSinBloquear()
     return res.status(201).json(resultado)
   } catch (error) {
     return responderError(res, error)

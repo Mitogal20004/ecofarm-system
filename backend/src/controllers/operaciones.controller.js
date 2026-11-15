@@ -32,6 +32,7 @@ import {
   listarMermas as listarMermasServicio,
   registrarMermaOperativa as registrarMermaOperativaServicio,
 } from '../services/operaciones.service.js'
+import { emitirAlertasStockBajoSinBloquear } from '../services/alertas.service.js'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -117,7 +118,9 @@ export async function crearInsumo(req, res) {
     exigirObjeto(req.body, CAMPOS_INSUMO)
     const b = req.body
     if (!texto(b.codigo, 40) || !texto(b.nombre, 150) || !texto(b.categoria, 50) || !texto(b.unidad_medida, 20) || typeof b.costo_referencia !== 'number' || b.costo_referencia < 0 || typeof b.stock_actual !== 'number' || b.stock_actual < 0 || typeof b.stock_minimo !== 'number' || b.stock_minimo < 0) throw new Error('Solicitud inválida')
-    return res.status(201).json({ insumo: await crearInsumoServicio({ ...b, codigo: b.codigo.trim().toUpperCase() }) })
+    const insumo = await crearInsumoServicio({ ...b, codigo: b.codigo.trim().toUpperCase() })
+    emitirAlertasStockBajoSinBloquear()
+    return res.status(201).json({ insumo })
   } catch (e) { return responderError(res, e) }
 }
 
@@ -156,7 +159,9 @@ export async function actualizarInsumoDatos(req, res) {
       }
     }
     datos.fecha_actualizacion = new Date().toISOString()
-    return res.json({ insumo: await actualizarInsumoServicio(req.params.insumoId, datos) })
+    const insumo = await actualizarInsumoServicio(req.params.insumoId, datos)
+    emitirAlertasStockBajoSinBloquear()
+    return res.json({ insumo })
   } catch (e) { return responderError(res, e) }
 }
 

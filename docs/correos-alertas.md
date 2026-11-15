@@ -18,10 +18,15 @@ ALERT_PERSIST_ENABLED=true
 
 El dominio utilizado en `RESEND_FROM_EMAIL` debe estar verificado en Resend. La API key solo debe existir en el backend y nunca en variables `VITE_*`.
 
+Para las alertas de stock, el sistema consulta automáticamente los correos de
+usuarios activos que tengan el rol `jefe` o `administrador`. `ALERT_RECIPIENTS`
+queda como respaldo si la consulta por roles no encuentra destinatarios.
+
 ## Alertas actuales
 
 - `caja.diferencia`: diferencia distinta de cero al cerrar caja.
-- `inventario.stock_bajo`: stock igual o inferior al mínimo configurado.
+- `inventario.stock_bajo`: stock de flores igual o inferior al mínimo configurado.
+- `insumo.stock_bajo`: stock de un insumo activo igual o inferior al mínimo configurado.
 - `usuarios.usuario_creado`: creación de un usuario operativo.
 
 Las alertas se deduplican temporalmente con `ALERT_DEDUPE_MS`. Cuando `ALERT_PERSIST_ENABLED=true`, también se registran en la tabla `public.alertas`; aplica antes la migración `20261113010000_crear_alertas.sql`.
