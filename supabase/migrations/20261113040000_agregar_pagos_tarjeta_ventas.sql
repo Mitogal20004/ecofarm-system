@@ -1,14 +1,25 @@
 begin;
 
 alter table public.ventas
-  add column metodo_pago text not null default 'efectivo',
-  add column stripe_payment_intent_id text;
+  add column if not exists metodo_pago text not null default 'efectivo',
+  add column if not exists stripe_payment_intent_id text;
 
-alter table public.ventas
-  add constraint ventas_metodo_pago_check
-    check (metodo_pago in ('efectivo', 'tarjeta'));
+do $bloque$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ventas_metodo_pago_check'
+      and conrelid = 'public.ventas'::regclass
+  ) then
+    alter table public.ventas
+      add constraint ventas_metodo_pago_check
+        check (metodo_pago in ('efectivo', 'tarjeta'));
+  end if;
+end
+$bloque$;
 
-create unique index ventas_stripe_payment_intent_id_unico
+create unique index if not exists ventas_stripe_payment_intent_id_unico
   on public.ventas (stripe_payment_intent_id)
   where stripe_payment_intent_id is not null;
 

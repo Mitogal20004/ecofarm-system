@@ -219,6 +219,58 @@
   font-size: 18px;
 }
 
+.encabezado-grafica-oculto {
+  position: absolute;
+  top: 17px;
+  right: 18px;
+  z-index: 2;
+  min-height: 0;
+  justify-content: flex-end;
+  padding: 0;
+  border-bottom: 0;
+  background: transparent;
+}
+
+.grafica-temporal-reportes {
+  position: relative;
+}
+
+.grafica-temporal-reportes > .encabezado-grafica-temporal > .acciones-grafica-reportes {
+  padding-right: 50px;
+}
+
+.filtros-grafica-temporal {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  background: var(--color-beige-suave);
+}
+
+.filtros-grafica-temporal button {
+  min-width: 76px;
+  min-height: 32px;
+  padding: 5px 13px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--color-texto-secundario);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.filtros-grafica-temporal button:hover,
+.filtros-grafica-temporal button.activo {
+  color: #fff;
+  background: #1f2d28;
+}
+
+.filtros-grafica-temporal button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
 .acciones-grafica-reportes {
   display: flex;
   align-items: center;
@@ -470,6 +522,14 @@
   filter: brightness(1.08) drop-shadow(0 4px 5px rgb(31 58 61 / 18%));
 }
 
+.grafica-chart-reportes g.ts-chart__line-y path {
+  stroke-width: 3px;
+}
+
+.grafica-chart-reportes g.ts-chart__line-y circle {
+  r: 4px;
+}
+
 .grafica-chart-reportes g.ts-chart__grid line {
   stroke: var(--color-borde);
   stroke-dasharray: 3 5;
@@ -576,4 +636,21 @@
 
   .acciones-filtros-reportes button { width: 100%; }
   .tarjeta-resumen-reporte { min-height: 128px; }
+
+  .encabezado-grafica-temporal {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .grafica-temporal-reportes > .encabezado-grafica-temporal > .acciones-grafica-reportes {
+    padding-right: 44px;
+  }
+
+  .filtros-grafica-temporal {
+    width: 100%;
+  }
+
+  .filtros-grafica-temporal button {
+    flex: 1;
+  }
 }

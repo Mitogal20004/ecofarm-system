@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { barY, defineChart, group } from '@tanstack/charts'
+import { defineChart, lineY } from '@tanstack/charts'
 import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
-import { scaleOrdinal } from '@tanstack/charts/scales/ordinal'
 import { tooltip } from '@tanstack/charts/tooltip'
 import { Chart } from '@tanstack/react-charts'
 import IconoInterfaz from '../components/IconoInterfaz'
@@ -58,6 +57,15 @@ function obtenerPeriodoSemanaActual() {
   const fechaDesde = desplazarFecha(fechaHasta, -diasDesdeLunes)
 
   return { fecha_desde: fechaDesde, fecha_hasta: desplazarFecha(fechaDesde, 6) }
+}
+
+function obtenerPeriodoGrafica(tipo) {
+  const fechaHasta = obtenerFechaGuatemala()
+  if (tipo === 'dia') return { fecha_desde: fechaHasta, fecha_hasta: fechaHasta }
+  if (tipo === 'mes') {
+    return { fecha_desde: `${fechaHasta.slice(0, 7)}-01`, fecha_hasta: fechaHasta }
+  }
+  return obtenerPeriodoSemanaActual()
 }
 
 const PERIODO_INICIAL = obtenerPeriodoInicial()
@@ -215,85 +223,70 @@ function FiltrosPeriodo({ valores, alCambiar, alLimpiar }) {
   )
 }
 
-function GraficaVentas({ serie, productos }) {
+function GraficaVentas({ serie, sinEncabezado = false }) {
   const [graficaAmpliada, setGraficaAmpliada] = useState(false)
-  const productosDestacados = productos.slice(0, 5)
   const datosGrafica = useMemo(
-    () =>
-      serie.flatMap((punto) => [
-        {
-          fecha: formatearFecha(punto.fecha).slice(0, 5),
-          tipo: 'Confirmadas',
-          cantidad: Number(punto.operaciones_confirmadas) || 0,
-        },
-        {
-          fecha: formatearFecha(punto.fecha).slice(0, 5),
-          tipo: 'Anuladas',
-          cantidad: Number(punto.operaciones_anuladas) || 0,
-        },
-      ]),
+    () => serie.map((punto) => ({
+      fecha: formatearFecha(punto.fecha).slice(0, 5),
+      confirmadas: Number(punto.operaciones_confirmadas) || 0,
+      anuladas: Number(punto.operaciones_anuladas) || 0,
+      productos: Array.isArray(punto.productos) ? punto.productos : [],
+    })),
     [serie],
   )
   const maximoEje = Math.max(
     1,
-    Math.ceil(Math.max(...datosGrafica.map((punto) => punto.cantidad), 0) * 1.2),
+    Math.ceil(
+      Math.max(
+        ...datosGrafica.flatMap((punto) => [punto.confirmadas, punto.anuladas]),
+        0,
+      ) * 1.2,
+    ),
   )
   const definicionGrafica = useMemo(
-    () =>
-      defineChart({
-        marks: [
-          barY(datosGrafica, {
-            x: 'fecha',
-            y: 'cantidad',
-            color: 'tipo',
-            layout: group(),
-            inset: 3,
-          }),
-        ],
-        scales: {
-          x: {
-            scale: () => scaleBand().padding(0.2),
-          },
-          y: {
-            scale: scaleLinear,
-            domain: [0, maximoEje],
-            nice: true,
-            grid: true,
-            axis: { label: 'Cantidad de productos vendidos' },
-          },
+    () => defineChart({
+      marks: [
+        lineY(datosGrafica, { x: 'fecha', y: 'confirmadas', color: '#2583df' }),
+        lineY(datosGrafica, { x: 'fecha', y: 'anuladas', color: '#9b51e0' }),
+      ],
+      scales: {
+        x: { scale: () => scaleBand().padding(0.2) },
+        y: {
+          scale: scaleLinear,
+          domain: [0, maximoEje],
+          nice: true,
+          grid: true,
+          axis: { label: 'Cantidad de ventas' },
         },
-        color: {
-          scale: scaleOrdinal(
-            ['Confirmadas', 'Anuladas'],
-            ['#5f7a50', '#b42318'],
-          ),
-        },
-        tooltip: {
-          use: tooltip,
-          formatGroup(points) {
-            const fecha = points[0]?.xValue ?? 'Fecha seleccionada'
-            const detalleProductos = productosDestacados.length
-              ? productosDestacados
-                  .map(
-                    (producto) =>
-                      `${producto.codigo_sku}: ${formatearCantidad(producto.unidades_comerciales)} unidades`,
-                  )
-                  .join('\n')
-              : 'Sin productos registrados'
+      },
+      tooltip: {
+        use: tooltip,
+        formatGroup(points) {
+          const punto = datosGrafica.find(
+            (dato) => dato.fecha === String(points[0]?.xValue ?? ''),
+          )
+          const productos = punto?.productos?.length
+            ? punto.productos
+                .map(
+                  (producto) =>
+                    `${producto.nombre} (${producto.sku}) · ${producto.presentacion}: ${formatearCantidad(producto.cantidad)}`,
+                )
+                .join('\n')
+            : 'Sin productos confirmados'
 
-            return [
-              String(fecha),
-              ...points.map(
-                (point) => `${point.groupLabel}: ${formatearCantidad(point.yValue)}`,
-              ),
-              'Productos vendidos en el período:',
-              detalleProductos,
-            ].join('\n')
-          },
+          return [
+            String(points[0]?.xValue ?? 'Fecha seleccionada'),
+            ...points.map(
+              (point) => `${point.groupLabel}: ${formatearCantidad(point.yValue)} ventas`,
+            ),
+            'Productos vendidos:',
+            productos,
+          ].join('\n')
         },
-        svgAnimation: true,
-      }),
-    [datosGrafica, maximoEje, productosDestacados],
+      },
+      svgAnimation: true,
+    }),
+    [datosGrafica, maximoEje],
   )
 
   useEffect(() => {
@@ -325,23 +318,25 @@ function GraficaVentas({ serie, productos }) {
 
   return (
     <section className="panel-reporte" aria-labelledby="titulo-grafica-ventas">
-      <div className="encabezado-panel-reporte">
-        <h2 id="titulo-grafica-ventas">Ventas confirmadas por día</h2>
-        <div className="acciones-grafica-reportes">
-          <div className="leyenda-grafica-reportes" aria-label="Leyenda de la gráfica">
-            <span><i className="indicador-leyenda-reportes indicador-confirmadas-reportes" />Confirmadas</span>
-            <span><i className="indicador-leyenda-reportes indicador-anuladas-reportes" />Anuladas</span>
+      <div className={`encabezado-panel-reporte ${sinEncabezado ? 'encabezado-grafica-oculto' : ''}`}>
+          {!sinEncabezado && <h2 id="titulo-grafica-ventas">Ventas confirmadas y anuladas</h2>}
+          <div className="acciones-grafica-reportes">
+            {!sinEncabezado && (
+              <div className="leyenda-grafica-reportes" aria-label="Leyenda de la gráfica">
+                <span><i className="indicador-leyenda-reportes indicador-confirmadas-reportes" />Confirmadas</span>
+                <span><i className="indicador-leyenda-reportes indicador-anuladas-reportes" />Anuladas</span>
+              </div>
+            )}
+            <button
+              className="boton-icono-reporte"
+              type="button"
+              onClick={() => setGraficaAmpliada(true)}
+              aria-label="Ampliar gráfica de ventas"
+              title="Ampliar gráfica"
+            >
+              <Maximize2 size={18} strokeWidth={2.1} aria-hidden="true" />
+            </button>
           </div>
-          <button
-            className="boton-icono-reporte"
-            type="button"
-            onClick={() => setGraficaAmpliada(true)}
-            aria-label="Ampliar gráfica de ventas"
-            title="Ampliar gráfica"
-          >
-            <Maximize2 size={18} strokeWidth={2.1} aria-hidden="true" />
-          </button>
-        </div>
       </div>
       <div className="grafica-chart-reportes">
         {renderizarGrafica(300, 720)}
@@ -361,7 +356,7 @@ function GraficaVentas({ serie, productos }) {
             aria-labelledby="titulo-grafica-ampliada"
           >
             <div className="encabezado-modal-grafica-reportes">
-              <h2 id="titulo-grafica-ampliada">Ventas confirmadas por día</h2>
+              <h2 id="titulo-grafica-ampliada">Ventas confirmadas y anuladas</h2>
               <button
                 className="boton-icono-reporte"
                 type="button"
@@ -386,71 +381,7 @@ function GraficaVentas({ serie, productos }) {
   )
 }
 
-function GraficaPedidosSemana({ consulta }) {
-  const resumen = consulta.datos?.resumen
-  const datosGrafica = [
-    { estado: 'Confirmados', cantidad: Number(resumen?.operaciones_confirmadas) || 0 },
-    { estado: 'Cancelados', cantidad: Number(resumen?.operaciones_anuladas) || 0 },
-  ]
-  const maximoEje = Math.max(1, Math.ceil(Math.max(...datosGrafica.map((punto) => punto.cantidad), 0) * 1.2))
-  const definicionGrafica = useMemo(
-    () => defineChart({
-      marks: [
-        barY(datosGrafica, {
-          x: 'estado',
-          y: 'cantidad',
-          color: 'estado',
-          inset: 22,
-        }),
-      ],
-      scales: {
-        x: { scale: () => scaleBand().padding(0.35) },
-        y: { scale: scaleLinear, domain: [0, maximoEje], nice: true, grid: true, axis: { label: 'Cantidad' } },
-      },
-      color: { scale: scaleOrdinal(['Confirmados', 'Cancelados'], ['#2f6db5', '#b36b22']) },
-      tooltip: {
-        use: tooltip,
-        formatGroup(points) {
-          return points
-            .map((point) => `${point.groupLabel}: ${formatearCantidad(point.yValue)}`)
-            .join('\n')
-        },
-      },
-      svgAnimation: true,
-    }),
-    [datosGrafica, maximoEje],
-  )
-
-  return (
-    <section className="panel-reporte" aria-labelledby="titulo-grafica-pedidos-semana">
-      <div className="encabezado-panel-reporte">
-        <h2 id="titulo-grafica-pedidos-semana">Pedidos de la semana actual</h2>
-        <div className="leyenda-grafica-reportes" aria-label="Leyenda de la gráfica">
-          <span><i className="indicador-leyenda-reportes indicador-pedidos-confirmados-reportes" />Confirmados</span>
-          <span><i className="indicador-leyenda-reportes indicador-pedidos-cancelados-reportes" />Cancelados</span>
-        </div>
-      </div>
-      <EstadoConsulta
-        cargando={consulta.cargando}
-        error={consulta.error}
-        vacio={!consulta.datos?.resumen}
-        mensajeVacio="No hay pedidos registrados esta semana."
-      >
-        <div className="grafica-chart-reportes grafica-pedidos-semana-reportes">
-          <Chart
-            definition={definicionGrafica}
-            height={270}
-            initialWidth={720}
-            ariaLabel="Pedidos confirmados y cancelados de la semana actual"
-            ariaDescription="Gráfica de barras con el total de pedidos confirmados y cancelados durante la semana actual."
-          />
-        </div>
-      </EstadoConsulta>
-    </section>
-  )
-}
-
-function ResumenVentas({ consulta, productos }) {
+function ResumenVentas({ consulta }) {
   const resumen = consulta.datos?.resumen
   const serie = consulta.datos?.serie ?? []
 
@@ -500,7 +431,6 @@ function ResumenVentas({ consulta, productos }) {
 
         {serie.length > 0 ? (
           <>
-            <GraficaVentas serie={serie} productos={productos} />
             <section
               className="panel-reporte"
               aria-labelledby="titulo-serie-ventas"
@@ -607,9 +537,57 @@ function ProductosMasVendidos({ consulta }) {
   )
 }
 
+function GraficaTemporal({ consulta, periodo, alCambiarPeriodo }) {
+  const serie = consulta.datos?.serie ?? []
+  const filtros = [
+    ['dia', 'Día'],
+    ['semana', 'Semana'],
+    ['mes', 'Mes'],
+  ]
+
+  return (
+    <section className="panel-reporte grafica-temporal-reportes" aria-labelledby="titulo-grafica-temporal">
+      <div className="encabezado-panel-reporte encabezado-grafica-temporal">
+        <h2 id="titulo-grafica-temporal">Ventas confirmadas y anuladas</h2>
+        <div className="acciones-grafica-reportes">
+          <div className="leyenda-grafica-reportes" aria-label="Leyenda de la gráfica">
+            <span><i className="indicador-leyenda-reportes indicador-confirmadas-reportes" />Confirmadas</span>
+            <span><i className="indicador-leyenda-reportes indicador-anuladas-reportes" />Anuladas</span>
+          </div>
+          <div className="filtros-grafica-temporal" role="group" aria-label="Período de la gráfica">
+            {filtros.map(([valor, etiqueta]) => (
+              <button
+                key={valor}
+                className={periodo === valor ? 'activo' : ''}
+                type="button"
+                aria-pressed={periodo === valor}
+                onClick={() => alCambiarPeriodo(valor)}
+              >
+                {etiqueta}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <EstadoConsulta
+        cargando={consulta.cargando}
+        error={consulta.error}
+        vacio={!consulta.datos || serie.length === 0}
+        mensajeVacio="No hay ventas registradas en este período."
+      >
+        <GraficaVentas serie={serie} sinEncabezado />
+      </EstadoConsulta>
+    </section>
+  )
+}
+
 function Reportes({ alRefrescarAutorizacion }) {
   const [filtros, setFiltros] = useState(PERIODO_INICIAL)
   const [periodoAplicado, setPeriodoAplicado] = useState(PERIODO_INICIAL)
+  const [periodoGrafica, setPeriodoGrafica] = useState('semana')
+  const [periodoGraficaAplicado, setPeriodoGraficaAplicado] = useState(
+    PERIODO_SEMANA_ACTUAL,
+  )
 
   const consultarVentas = useCallback(
     (signal) => obtenerReporteVentas(periodoAplicado, { signal }),
@@ -627,9 +605,9 @@ function Reportes({ alRefrescarAutorizacion }) {
       ),
     [periodoAplicado],
   )
-  const consultarPedidosSemana = useCallback(
-    (signal) => obtenerReporteVentas(PERIODO_SEMANA_ACTUAL, { signal }),
-    [],
+  const consultarGrafica = useCallback(
+    (signal) => obtenerReporteVentas(periodoGraficaAplicado, { signal }),
+    [periodoGraficaAplicado],
   )
 
   const consultaVentas = useConsultaReporte(
@@ -640,10 +618,18 @@ function Reportes({ alRefrescarAutorizacion }) {
     consultarProductos,
     alRefrescarAutorizacion,
   )
-  const consultaPedidosSemana = useConsultaReporte(
-    consultarPedidosSemana,
+  const consultaGrafica = useConsultaReporte(
+    consultarGrafica,
     alRefrescarAutorizacion,
   )
+
+  useEffect(() => {
+    const temporizador = window.setTimeout(() => {
+      setPeriodoGraficaAplicado(obtenerPeriodoGrafica(periodoGrafica))
+    }, 350)
+
+    return () => window.clearTimeout(temporizador)
+  }, [periodoGrafica])
 
   const limpiarFiltros = () => {
     setFiltros(PERIODO_INICIAL)
@@ -685,8 +671,12 @@ function Reportes({ alRefrescarAutorizacion }) {
         alLimpiar={limpiarFiltros}
       />
 
-      <GraficaPedidosSemana consulta={consultaPedidosSemana} />
-      <ResumenVentas consulta={consultaVentas} productos={consultaProductos.datos?.productos ?? []} />
+      <GraficaTemporal
+        consulta={consultaGrafica}
+        periodo={periodoGrafica}
+        alCambiarPeriodo={setPeriodoGrafica}
+      />
+      <ResumenVentas consulta={consultaVentas} />
       <ProductosMasVendidos consulta={consultaProductos} />
     </div>
   )
