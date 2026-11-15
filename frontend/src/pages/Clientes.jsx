@@ -4,6 +4,7 @@ import ClienteDialog from '../components/ClienteDialog'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import { listarClientes } from '../services/clientes'
 import CuentaCliente from '../components/CuentaCliente'
+import { ChevronLeft, ChevronRight, Pencil, UserPlus, UsersRound, Wallet } from 'lucide-react'
 
 const LIMITE_CLIENTES = 10
 const PAGINACION_INICIAL = {
@@ -23,6 +24,48 @@ const obtenerMensajeConsulta = (error) => {
   }
 
   return 'No fue posible cargar los clientes.'
+}
+
+function SelectorFiltroClientes({ id, value, options, onChange, disabled }) {
+  const [abierto, setAbierto] = useState(false)
+  const etiquetaActual = options.find(([valor]) => valor === value)?.[1] ?? ''
+
+  return (
+    <div className="selector-filtro-clientes">
+      <button
+        className="boton-selector-filtro-clientes"
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={abierto}
+        aria-controls={`${id}-opciones`}
+        onClick={() => setAbierto((actual) => !actual)}
+        onBlur={() => window.setTimeout(() => setAbierto(false), 0)}
+        disabled={disabled}
+      >
+        {etiquetaActual}
+        <span aria-hidden="true">⌄</span>
+      </button>
+      {abierto && (
+        <div id={`${id}-opciones`} className="lista-opciones-filtro-clientes" role="listbox">
+          {options.map(([valor, etiqueta]) => (
+            <button
+              key={valor}
+              type="button"
+              role="option"
+              aria-selected={value === valor}
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => {
+                onChange(valor)
+                setAbierto(false)
+              }}
+            >
+              {etiqueta}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function Clientes({ permisos, alRefrescarAutorizacion }) {
@@ -100,6 +143,18 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
     versionListado,
   ])
 
+  useEffect(() => {
+    const valorBusqueda = busqueda.trim()
+    if (valorBusqueda === busquedaAplicada) return undefined
+
+    const temporizador = window.setTimeout(() => {
+      setPagina(1)
+      setBusquedaAplicada(valorBusqueda)
+    }, 1000)
+
+    return () => window.clearTimeout(temporizador)
+  }, [busqueda, busquedaAplicada])
+
   const manejarBusqueda = (evento) => {
     evento.preventDefault()
     setPagina(1)
@@ -151,7 +206,8 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
             type="button"
             onClick={abrirCreacion}
           >
-            + Nuevo cliente
+            <UserPlus size={16} strokeWidth={2.1} aria-hidden="true" />
+            Nuevo cliente
           </button>
         )}
       </header>
@@ -169,7 +225,8 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
             <p>Consulta el catálogo por identidad, tipo y estado.</p>
           </div>
           {!cargando && (
-            <span>
+            <span className="contador-clientes">
+              <UsersRound size={14} strokeWidth={2.1} aria-hidden="true" />
               {paginacion.total} {paginacion.total === 1 ? 'cliente' : 'clientes'}
             </span>
           )}
@@ -185,42 +242,43 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
               placeholder="Nombre, razón social o NIT"
               maxLength={150}
             />
-            <button type="submit" disabled={cargando}>Buscar</button>
           </div>
         </div>
 
         <div className="control-filtro-clientes">
           <label htmlFor="filtro-tipo-clientes">Tipo</label>
-          <select
+          <SelectorFiltroClientes
             id="filtro-tipo-clientes"
             value={filtroTipo}
-            onChange={(evento) => {
-              setFiltroTipo(evento.target.value)
+            options={[
+              ['todos', 'Todos'],
+              ['individual', 'Individual'],
+              ['empresa', 'Empresa'],
+            ]}
+            onChange={(valor) => {
+              setFiltroTipo(valor)
               setPagina(1)
             }}
             disabled={cargando}
-          >
-            <option value="todos">Todos</option>
-            <option value="individual">Individual</option>
-            <option value="empresa">Empresa</option>
-          </select>
+          />
         </div>
 
         <div className="control-filtro-clientes">
           <label htmlFor="filtro-estado-clientes">Estado</label>
-          <select
+          <SelectorFiltroClientes
             id="filtro-estado-clientes"
             value={filtroActivo}
-            onChange={(evento) => {
-              setFiltroActivo(evento.target.value)
+            options={[
+              ['todos', 'Todos'],
+              ['activos', 'Activos'],
+              ['inactivos', 'Inactivos'],
+            ]}
+            onChange={(valor) => {
+              setFiltroActivo(valor)
               setPagina(1)
             }}
             disabled={cargando}
-          >
-            <option value="todos">Todos</option>
-            <option value="activos">Activos</option>
-            <option value="inactivos">Inactivos</option>
-          </select>
+          />
         </div>
       </form>
 
@@ -275,12 +333,18 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
                     </td>
                     {(puedeEditar || puedeCuenta) && (
                       <td className="celda-acciones-clientes" data-label="Acciones">
-                        {puedeCuenta && <button className="boton-editar-cliente" type="button" onClick={() => setClienteCuenta(cliente)}>Cuenta</button>}
+                        {puedeCuenta && (
+                          <button className="boton-editar-cliente" type="button" onClick={() => setClienteCuenta(cliente)}>
+                            <Wallet size={15} strokeWidth={2.1} aria-hidden="true" />
+                            Cuenta
+                          </button>
+                        )}
                         <button
                           className="boton-editar-cliente"
                           type="button"
                           onClick={() => abrirEdicion(cliente)}
                         >
+                          <Pencil size={15} strokeWidth={2.1} aria-hidden="true" />
                           Editar
                         </button>
                       </td>
@@ -298,8 +362,11 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
               type="button"
               onClick={() => setPagina((actual) => actual - 1)}
               disabled={!puedeRetroceder}
+              className="boton-paginacion-flecha-clientes"
+              aria-label="Página anterior"
+              title="Página anterior"
             >
-              Anterior
+              <ChevronLeft size={19} strokeWidth={2.25} aria-hidden="true" />
             </button>
             <span>
               Página {paginacion.pagina} de {Math.max(paginacion.total_paginas, 1)}
@@ -309,8 +376,11 @@ function Clientes({ permisos, alRefrescarAutorizacion }) {
               type="button"
               onClick={() => setPagina((actual) => actual + 1)}
               disabled={!puedeAvanzar}
+              className="boton-paginacion-flecha-clientes"
+              aria-label="Página siguiente"
+              title="Página siguiente"
             >
-              Siguiente
+              <ChevronRight size={19} strokeWidth={2.25} aria-hidden="true" />
             </button>
           </footer>
         )}

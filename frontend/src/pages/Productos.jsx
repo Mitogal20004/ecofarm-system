@@ -2,7 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import DetalleVarianteDialog from '../components/DetalleVarianteDialog'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import VarianteProductoDialog from '../components/VarianteProductoDialog'
-import { Eye, Pencil } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  PackagePlus,
+  Pencil,
+} from 'lucide-react'
 import { listarPresentaciones, listarVariantes } from '../services/productos'
 import { convertirACentimetros, UNIDADES_LONGITUD } from '../utils/medidas'
 import './Productos.css'
@@ -47,10 +54,14 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
   const [filtroLongitudMinAplicado, setFiltroLongitudMinAplicado] = useState(0)
   const [filtroLongitudMaxAplicado, setFiltroLongitudMaxAplicado] = useState(LIMITES_LONGITUD.cm)
   const [unidadLongitud, setUnidadLongitud] = useState('cm')
+  const [selectorUnidadAbierto, setSelectorUnidadAbierto] = useState(false)
   const [filtroColor, setFiltroColor] = useState('todos')
   const [coloresDisponibles, setColoresDisponibles] = useState([])
+  const [selectorColorAbierto, setSelectorColorAbierto] = useState(false)
   const [filtroClasificacion, setFiltroClasificacion] = useState('todas')
   const [filtroActivo, setFiltroActivo] = useState('todos')
+  const [selectorClasificacionAbierto, setSelectorClasificacionAbierto] = useState(false)
+  const [selectorEstadoAbierto, setSelectorEstadoAbierto] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [mensajeExito, setMensajeExito] = useState('')
@@ -209,7 +220,8 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
             type="button"
             onClick={abrirCreacion}
           >
-            + Nueva variante
+            <PackagePlus size={17} strokeWidth={2} aria-hidden="true" />
+            Nueva variante
           </button>
         )}
       </header>
@@ -233,34 +245,90 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
         <div className="control-busqueda-productos">
           <label htmlFor="busqueda-productos">Buscar variante</label>
           <div>
-            <select
+            <div className="selector-color-productos">
+              <button
               id="busqueda-productos"
-              value={filtroColor}
-              onChange={(evento) => {
-                setFiltroColor(evento.target.value)
-                setPagina(1)
-              }}
+              className="boton-selector-color-productos"
+              type="button"
+              onClick={() => setSelectorColorAbierto((abierto) => !abierto)}
               disabled={cargando}
-            >
-              <option value="todos">Todas las variantes</option>
-              {coloresDisponibles.map((color) => <option key={color} value={color}>{color}</option>)}
-            </select>
+              aria-haspopup="listbox"
+              aria-expanded={selectorColorAbierto}
+              >
+                {filtroColor === 'todos' ? 'Todas las variantes' : filtroColor}
+                <ChevronDown size={17} strokeWidth={2} aria-hidden="true" />
+              </button>
+              {selectorColorAbierto && (
+                <div className="lista-colores-productos" role="listbox" aria-label="Selecciona una variante">
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={filtroColor === 'todos'}
+                    onClick={() => {
+                      setFiltroColor('todos')
+                      setPagina(1)
+                      setSelectorColorAbierto(false)
+                    }}
+                  >
+                    Todas las variantes
+                  </button>
+                  {coloresDisponibles.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      role="option"
+                      aria-selected={color === filtroColor}
+                      onClick={() => {
+                        setFiltroColor(color)
+                        setPagina(1)
+                        setSelectorColorAbierto(false)
+                      }}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="control-filtro-productos control-longitud-productos">
           <div className="encabezado-rango-longitud">
             <label htmlFor="filtro-longitud-min-productos">Longitud</label>
-            <select
-              value={unidadLongitud}
-              onChange={cambiarUnidadLongitud}
+            <div className="selector-unidad-productos">
+              <button
+              id="unidad-longitud-productos"
+              className="boton-selector-unidad-productos"
+              type="button"
+              onClick={() => setSelectorUnidadAbierto((abierto) => !abierto)}
               disabled={cargando}
+              aria-haspopup="listbox"
+              aria-expanded={selectorUnidadAbierto}
               aria-label="Unidad para filtrar longitud"
-            >
-              {UNIDADES_LONGITUD.map((unidad) => (
-                <option key={unidad.valor} value={unidad.valor}>{unidad.valor}</option>
-              ))}
-            </select>
+              >
+                {unidadLongitud}
+                <ChevronDown size={17} strokeWidth={2} aria-hidden="true" />
+              </button>
+              {selectorUnidadAbierto && (
+                <div className="lista-unidades-productos" role="listbox" aria-label="Selecciona una unidad">
+                  {UNIDADES_LONGITUD.map((unidad) => (
+                    <button
+                      key={unidad.valor}
+                      type="button"
+                      role="option"
+                      aria-selected={unidad.valor === unidadLongitud}
+                      onClick={() => {
+                        cambiarUnidadLongitud({ target: { value: unidad.valor } })
+                        setSelectorUnidadAbierto(false)
+                      }}
+                    >
+                      {unidad.valor}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="rango-longitud-producto">
             <input
@@ -299,37 +367,87 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
 
         <div className="control-filtro-productos">
           <label htmlFor="filtro-clasificacion-productos">Clasificación</label>
-          <select
+          <div className="selector-clasificacion-productos">
+            <button
             id="filtro-clasificacion-productos"
-            value={filtroClasificacion}
-            onChange={(evento) => {
-              setFiltroClasificacion(evento.target.value)
-              setPagina(1)
-            }}
+            className="boton-selector-clasificacion-productos"
+            type="button"
+            onClick={() => setSelectorClasificacionAbierto((abierto) => !abierto)}
             disabled={cargando}
-          >
-            <option value="todas">Todas</option>
-            <option value="normal">Normal</option>
-            <option value="completa">Completa</option>
-            <option value="premium">Premium</option>
-          </select>
+            aria-haspopup="listbox"
+            aria-expanded={selectorClasificacionAbierto}
+            >
+              {filtroClasificacion === 'todas'
+                ? 'Todas'
+                : nombreClasificacion[filtroClasificacion]}
+              <ChevronDown size={17} strokeWidth={2} aria-hidden="true" />
+            </button>
+            {selectorClasificacionAbierto && (
+              <div className="lista-clasificaciones-productos" role="listbox" aria-label="Selecciona una clasificación">
+                {[
+                  ['todas', 'Todas'],
+                  ['normal', 'Normal'],
+                  ['completa', 'Completa'],
+                  ['premium', 'Premium'],
+                ].map(([valor, etiqueta]) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    role="option"
+                    aria-selected={valor === filtroClasificacion}
+                    onClick={() => {
+                      setFiltroClasificacion(valor)
+                      setPagina(1)
+                      setSelectorClasificacionAbierto(false)
+                    }}
+                  >
+                    {etiqueta}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="control-filtro-productos">
           <label htmlFor="filtro-estado-productos">Estado</label>
-          <select
+          <div className="selector-estado-productos">
+            <button
             id="filtro-estado-productos"
-            value={filtroActivo}
-            onChange={(evento) => {
-              setFiltroActivo(evento.target.value)
-              setPagina(1)
-            }}
+            className="boton-selector-estado-productos"
+            type="button"
+            onClick={() => setSelectorEstadoAbierto((abierto) => !abierto)}
             disabled={cargando}
-          >
-            <option value="todos">Todos</option>
-            <option value="activos">Activos</option>
-            <option value="inactivos">Inactivos</option>
-          </select>
+            aria-haspopup="listbox"
+            aria-expanded={selectorEstadoAbierto}
+            >
+              {filtroActivo === 'todos' ? 'Todos' : filtroActivo === 'activos' ? 'Activos' : 'Inactivos'}
+              <ChevronDown size={17} strokeWidth={2} aria-hidden="true" />
+            </button>
+            {selectorEstadoAbierto && (
+              <div className="lista-estados-productos" role="listbox" aria-label="Selecciona un estado">
+                {[
+                  ['todos', 'Todos'],
+                  ['activos', 'Activos'],
+                  ['inactivos', 'Inactivos'],
+                ].map(([valor, etiqueta]) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    role="option"
+                    aria-selected={valor === filtroActivo}
+                    onClick={() => {
+                      setFiltroActivo(valor)
+                      setPagina(1)
+                      setSelectorEstadoAbierto(false)
+                    }}
+                  >
+                    {etiqueta}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -431,8 +549,11 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
               type="button"
               onClick={() => setPagina((actual) => actual - 1)}
               disabled={!puedeRetroceder}
+              className="boton-paginacion-flecha-productos"
+              aria-label="Página anterior"
+              title="Página anterior"
             >
-              Anterior
+              <ChevronLeft size={19} strokeWidth={2.25} aria-hidden="true" />
             </button>
             <span>
               Página {paginacion.pagina} de {Math.max(paginacion.total_paginas, 1)}
@@ -442,8 +563,11 @@ function Productos({ permisos, alRefrescarAutorizacion }) {
               type="button"
               onClick={() => setPagina((actual) => actual + 1)}
               disabled={!puedeAvanzar}
+              className="boton-paginacion-flecha-productos"
+              aria-label="Página siguiente"
+              title="Página siguiente"
             >
-              Siguiente
+              <ChevronRight size={19} strokeWidth={2.25} aria-hidden="true" />
             </button>
           </footer>
         )}

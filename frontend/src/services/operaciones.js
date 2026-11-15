@@ -76,8 +76,21 @@ export async function crearProveedor(datos) {
 export async function eliminarProveedor(proveedorId) {
   await solicitar(`/api/operaciones/proveedores/${proveedorId}`, { method: 'DELETE' })
 }
-export const actualizarProveedor = (id, activo) => crearOperacion(`/api/operaciones/proveedores/${id}/estado`, 'proveedor', { activo })
+export const actualizarProveedor = (id, activo) => actualizarOperacion(`/api/operaciones/proveedores/${id}/estado`, 'proveedor', { activo })
+export const editarProveedor = (id, datos) => actualizarOperacion(`/api/operaciones/proveedores/${id}`, 'proveedor', datos)
 export const actualizarInsumo = (id, activo) => crearOperacion(`/api/operaciones/insumos/${id}/estado`, 'insumo', { activo })
+export const editarInsumo = (id, datos) => actualizarOperacion(`/api/operaciones/insumos/${id}`, 'insumo', datos)
+export const eliminarInsumo = async (id) => solicitar(`/api/operaciones/insumos/${id}`, { method: 'DELETE' })
+
+const actualizarOperacion = async (ruta, clave, datos) => {
+  const resultado = await solicitar(ruta, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  })
+  if (!resultado?.[clave]) throw new Error(`Respuesta de ${clave} inválida.`)
+  return resultado[clave]
+}
 
 const crearOperacion = async (ruta, clave, datos) => {
   const resultado = await solicitar(ruta, {

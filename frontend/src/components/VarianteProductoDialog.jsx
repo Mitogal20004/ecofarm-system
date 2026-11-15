@@ -1,4 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  AlertTriangle,
+  ChevronDown,
+  PackagePlus,
+  Save,
+  X,
+} from 'lucide-react'
 import { actualizarVariante, crearVariante } from '../services/productos'
 import {
   convertirACentimetros,
@@ -53,6 +60,8 @@ function VarianteProductoDialog({
   const [errores, setErrores] = useState({})
   const [errorEnvio, setErrorEnvio] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [selectorUnidadAbierto, setSelectorUnidadAbierto] = useState(false)
+  const [selectorClasificacionAbierto, setSelectorClasificacionAbierto] = useState(false)
   const campoInicialRef = useRef(null)
   const editando = Boolean(variante)
 
@@ -251,17 +260,38 @@ function VarianteProductoDialog({
                   disabled={enviando}
                  aria-invalid={Boolean(errores.longitud_cm)}
                />
-               <select
-                 name="unidad_longitud"
-                 value={formulario.unidad_longitud}
-                 onChange={actualizarCampo}
-                 disabled={enviando}
-                 aria-label="Unidad de longitud"
-               >
-                 {UNIDADES_LONGITUD.map((unidad) => (
-                   <option key={unidad.valor} value={unidad.valor}>{unidad.valor}</option>
-                 ))}
-               </select>
+                <div className="selector-formulario-producto">
+                  <button
+                  className="boton-selector-formulario-producto"
+                  type="button"
+                  onClick={() => setSelectorUnidadAbierto((abierto) => !abierto)}
+                  disabled={enviando}
+                  aria-label="Unidad de longitud"
+                  aria-expanded={selectorUnidadAbierto}
+                  aria-haspopup="listbox"
+                  >
+                    {formulario.unidad_longitud}
+                    <ChevronDown size={17} strokeWidth={2} aria-hidden="true" />
+                  </button>
+                  {selectorUnidadAbierto && (
+                    <div className="lista-formulario-producto" role="listbox" aria-label="Selecciona una unidad">
+                      {UNIDADES_LONGITUD.map((unidad) => (
+                        <button
+                          key={unidad.valor}
+                          type="button"
+                          role="option"
+                          aria-selected={unidad.valor === formulario.unidad_longitud}
+                          onClick={() => {
+                            actualizarCampo({ target: { name: 'unidad_longitud', value: unidad.valor } })
+                            setSelectorUnidadAbierto(false)
+                          }}
+                        >
+                          {unidad.valor}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
              </div>
             {errores.longitud_cm && (
               <p className="error-campo-producto">{errores.longitud_cm}</p>
@@ -270,17 +300,42 @@ function VarianteProductoDialog({
 
           <div className="campo-formulario-producto">
             <label htmlFor="variante-clasificacion">Clasificación *</label>
-            <select
-              id="variante-clasificacion"
-              name="clasificacion"
-              value={formulario.clasificacion}
-              onChange={actualizarCampo}
-              disabled={enviando}
-            >
-              <option value="normal">Normal</option>
-              <option value="completa">Completa</option>
-              <option value="premium">Premium</option>
-            </select>
+             <div className="selector-formulario-producto selector-clasificacion-formulario-producto">
+               <button
+               id="variante-clasificacion"
+               className="boton-selector-formulario-producto"
+               type="button"
+               onClick={() => setSelectorClasificacionAbierto((abierto) => !abierto)}
+               disabled={enviando}
+               aria-expanded={selectorClasificacionAbierto}
+               aria-haspopup="listbox"
+               >
+                 {{ normal: 'Normal', completa: 'Completa', premium: 'Premium' }[formulario.clasificacion]}
+                 <ChevronDown size={17} strokeWidth={2} aria-hidden="true" />
+               </button>
+               {selectorClasificacionAbierto && (
+                 <div className="lista-formulario-producto" role="listbox" aria-label="Selecciona una clasificación">
+                   {[
+                     ['normal', 'Normal'],
+                     ['completa', 'Completa'],
+                     ['premium', 'Premium'],
+                   ].map(([valor, etiqueta]) => (
+                     <button
+                       key={valor}
+                       type="button"
+                       role="option"
+                       aria-selected={valor === formulario.clasificacion}
+                       onClick={() => {
+                         actualizarCampo({ target: { name: 'clasificacion', value: valor } })
+                         setSelectorClasificacionAbierto(false)
+                       }}
+                     >
+                       {etiqueta}
+                     </button>
+                   ))}
+                 </div>
+               )}
+             </div>
           </div>
 
           <div className="campo-formulario-producto campo-ancho-producto">
@@ -311,9 +366,15 @@ function VarianteProductoDialog({
                 name="activo"
                 type="checkbox"
                 checked={formulario.activo}
-                onChange={actualizarCampo}
+                onChange={(evento) => {
+                  if (!evento.target.checked && !window.confirm('¿Estás seguro que deseas desactivarla?')) {
+                    return
+                  }
+                  actualizarCampo(evento)
+                }}
                 disabled={enviando}
               />
+              <AlertTriangle size={22} strokeWidth={2} aria-hidden="true" />
             </label>
           )}
 
@@ -330,6 +391,7 @@ function VarianteProductoDialog({
               onClick={alCerrar}
               disabled={enviando}
             >
+              <X size={17} strokeWidth={2} aria-hidden="true" />
               Cancelar
             </button>
             <button
@@ -337,7 +399,9 @@ function VarianteProductoDialog({
               type="submit"
               disabled={enviando}
             >
-              {enviando
+               {!enviando && !editando && <PackagePlus size={17} strokeWidth={2} aria-hidden="true" />}
+               {!enviando && editando && <Save size={17} strokeWidth={2} aria-hidden="true" />}
+               {enviando
                 ? 'Guardando...'
                 : editando
                   ? 'Guardar cambios'

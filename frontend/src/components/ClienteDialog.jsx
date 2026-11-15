@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { AlertTriangle, Save, UserPlus, X } from 'lucide-react'
 import { actualizarCliente, crearCliente } from '../services/clientes'
+import {
+  obtenerUrlBandera,
+  PAISES_TELEFONO,
+  separarTelefono,
+} from '../utils/telefono'
 
 const FORMULARIO_INICIAL = {
   tipo: 'individual',
@@ -13,6 +19,12 @@ const FORMULARIO_INICIAL = {
 }
 
 const PATRON_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const obtenerErrorCorreo = (valor) => {
+  const correo = valor.trim()
+  return correo && (correo.length > 254 || !PATRON_EMAIL.test(correo))
+    ? 'Ingresa un correo válido.'
+    : ''
+}
 
 const crearFormulario = (cliente) =>
   cliente
@@ -59,6 +71,11 @@ function ClienteDialog({
   const [errores, setErrores] = useState({})
   const [errorEnvio, setErrorEnvio] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const telefonoInicial = separarTelefono(formulario.telefono)
+  const [paisTelefono, setPaisTelefono] = useState(telefonoInicial.codigo)
+  const [telefono, setTelefono] = useState(telefonoInicial.local)
+  const [selectorTipoAbierto, setSelectorTipoAbierto] = useState(false)
+  const [selectorPaisAbierto, setSelectorPaisAbierto] = useState(false)
   const campoInicialRef = useRef(null)
   const editando = Boolean(cliente)
 
@@ -116,11 +133,18 @@ function ClienteDialog({
     const nombreCompleto = formulario.nombre_completo.trim()
     const razonSocial = formulario.razon_social.trim()
     const nit = formulario.nit.trim().toUpperCase().replace(/[\s-]+/g, '')
-    const telefono = formulario.telefono.trim()
+    const telefonoNormalizado = telefono.replace(/\D/g, '')
+    const telefonoCompleto = telefonoNormalizado
+      ? `${paisTelefono}${telefonoNormalizado}`
+      : ''
     const correoElectronico = formulario.correo_electronico
       .trim()
       .toLowerCase()
     const direccion = formulario.direccion.trim().replace(/\s+/g, ' ')
+    const reglasNit = PAISES_TELEFONO.find((pais) => pais.codigo === paisTelefono) ?? PAISES_TELEFONO[0]
+    const nitTieneFormatoValido = reglasNit.nitNumerico
+      ? /^\d+$/.test(nit)
+      : /^[A-Z0-9]+$/.test(nit)
 
     if (formulario.tipo === 'individual' && !nombreCompleto) {
       nuevosErrores.nombre_completo = 'Ingresa el nombre completo.'
@@ -130,20 +154,25 @@ function ClienteDialog({
       nuevosErrores.razon_social = 'Ingresa la razón social.'
     }
 
-    if (!nit || nit.length > 30) {
-      nuevosErrores.nit = 'Ingresa un NIT válido de hasta 30 caracteres.'
+    if (!nit) {
+      nuevosErrores.nit = 'Ingresa el NIT.'
+    } else if (nit.length < reglasNit.nitMin) {
+      nuevosErrores.nit = `El NIT debe tener mínimo ${reglasNit.nitMin} ${reglasNit.nitNumerico ? 'dígitos' : 'caracteres'}.`
+    } else if (nit.length > reglasNit.nitMax) {
+      nuevosErrores.nit = `El NIT no puede superar ${reglasNit.nitMax} ${reglasNit.nitNumerico ? 'dígitos' : 'caracteres'}.`
+    } else if (!nitTieneFormatoValido) {
+      nuevosErrores.nit = reglasNit.nitNumerico
+        ? 'El NIT solo puede contener números.'
+        : 'El NIT solo puede contener letras y números.'
     }
 
-    if (telefono.length > 30) {
-      nuevosErrores.telefono = 'El teléfono no puede exceder 30 caracteres.'
+    if (telefonoNormalizado && telefonoNormalizado.length < 7) {
+      nuevosErrores.telefono = 'El teléfono debe tener mínimo 7 dígitos.'
+    } else if (telefonoNormalizado.length > 15) {
+      nuevosErrores.telefono = 'El teléfono no puede superar 15 dígitos.'
     }
 
-    if (
-      correoElectronico &&
-      (correoElectronico.length > 254 || !PATRON_EMAIL.test(correoElectronico))
-    ) {
-      nuevosErrores.correo_electronico = 'Ingresa un correo válido.'
-    }
+    nuevosErrores.correo_electronico = obtenerErrorCorreo(correoElectronico)
 
     if (!direccion || direccion.length > 500) {
       nuevosErrores.direccion = 'Ingresa una dirección de hasta 500 caracteres.'
@@ -159,7 +188,7 @@ function ClienteDialog({
           formulario.tipo === 'individual' ? nombreCompleto : null,
         razon_social: formulario.tipo === 'empresa' ? razonSocial : null,
         nit,
-        telefono: telefono || null,
+        telefono: telefonoCompleto || null,
         correo_electronico: correoElectronico || null,
         direccion,
         ...(editando ? { activo: formulario.activo } : {}),
@@ -175,17 +204,6 @@ function ClienteDialog({
     const validacion = validar()
 
     if (!validacion.valido) return
-
-    if (
-      editando &&
-      cliente.activo &&
-      !validacion.datos.activo &&
-      !window.confirm(
-        '¿Deseas desactivar este cliente? Su historial se conservará.',
-      )
-    ) {
-      return
-    }
 
     setEnviando(true)
     setErrorEnvio('')
@@ -214,6 +232,25 @@ function ClienteDialog({
   }
 
   const idTitulo = editando ? 'titulo-editar-cliente' : 'titulo-nuevo-cliente'
+  const paisSeleccionado = PAISES_TELEFONO.find((pais) => pais.codigo === paisTelefono) ?? PAISES_TELEFONO[0]
+  const cantidadDigitosTelefono = telefono.replace(/\D/g, '').length
+  const mensajeTelefono = cantidadDigitosTelefono > 15
+    ? 'El número no puede superar los 15 dígitos.'
+    : cantidadDigitosTelefono > 0 && cantidadDigitosTelefono < 7
+      ? `Aún faltan ${7 - cantidadDigitosTelefono} dígitos.`
+      : ''
+  const nitNormalizado = formulario.nit.trim().toUpperCase().replace(/[\s-]+/g, '')
+  const mensajeNit = !nitNormalizado
+    ? ''
+    : nitNormalizado.length < paisSeleccionado.nitMin
+      ? `Aún faltan ${paisSeleccionado.nitMin - nitNormalizado.length} ${paisSeleccionado.nitNumerico ? 'dígitos' : 'caracteres'}.`
+      : nitNormalizado.length > paisSeleccionado.nitMax
+        ? `El NIT no puede superar ${paisSeleccionado.nitMax} ${paisSeleccionado.nitNumerico ? 'dígitos' : 'caracteres'}.`
+        : paisSeleccionado.nitNumerico && !/^\d+$/.test(nitNormalizado)
+          ? 'El NIT solo puede contener números.'
+          : !paisSeleccionado.nitNumerico && !/^[A-Z0-9]+$/.test(nitNormalizado)
+            ? 'El NIT solo puede contener letras y números.'
+            : ''
 
   return (
     <div className="fondo-dialogo-cliente" onMouseDown={cerrarDesdeFondo}>
@@ -244,17 +281,44 @@ function ClienteDialog({
         <form className="formulario-cliente" onSubmit={manejarEnvio} noValidate>
           <div className="campo-formulario-cliente">
             <label htmlFor="cliente-tipo">Tipo de cliente *</label>
-            <select
-              ref={campoInicialRef}
-              id="cliente-tipo"
-              name="tipo"
-              value={formulario.tipo}
-              onChange={actualizarCampo}
-              disabled={enviando}
-            >
-              <option value="individual">Individual</option>
-              <option value="empresa">Empresa</option>
-            </select>
+            <div className="selector-tipo-cliente">
+              <button
+                ref={campoInicialRef}
+                id="cliente-tipo"
+                className="boton-selector-tipo-cliente"
+                type="button"
+                onClick={() => setSelectorTipoAbierto((abierto) => !abierto)}
+                onBlur={() => window.setTimeout(() => setSelectorTipoAbierto(false), 0)}
+                aria-haspopup="listbox"
+                aria-expanded={selectorTipoAbierto}
+                disabled={enviando}
+              >
+                {formulario.tipo === 'individual' ? 'Individual' : 'Empresa'}
+                <span aria-hidden="true">⌄</span>
+              </button>
+              {selectorTipoAbierto && (
+                <div className="lista-tipos-cliente" role="listbox" aria-label="Tipo de cliente">
+                  {[
+                    ['individual', 'Individual'],
+                    ['empresa', 'Empresa'],
+                  ].map(([valor, etiqueta]) => (
+                    <button
+                      key={valor}
+                      type="button"
+                      role="option"
+                      aria-selected={formulario.tipo === valor}
+                      onMouseDown={(evento) => evento.preventDefault()}
+                      onClick={() => {
+                        actualizarCampo({ target: { name: 'tipo', type: 'select-one', value: valor } })
+                        setSelectorTipoAbierto(false)
+                      }}
+                    >
+                      {etiqueta}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {formulario.tipo === 'individual' ? (
@@ -298,30 +362,86 @@ function ClienteDialog({
               name="nit"
               value={formulario.nit}
               onChange={actualizarCampo}
-              maxLength={40}
+              maxLength={paisSeleccionado.nitMax}
+              inputMode={paisSeleccionado.nitNumerico ? 'numeric' : 'text'}
               autoCapitalize="characters"
               disabled={enviando}
-              aria-invalid={Boolean(errores.nit)}
+              aria-invalid={Boolean(errores.nit || mensajeNit)}
+              aria-describedby="ayuda-nit-cliente"
             />
-            <small>Se guardará sin espacios ni guiones.</small>
+            <small
+              id="ayuda-nit-cliente"
+              className={mensajeNit ? 'ayuda-nit-cliente-error' : undefined}
+              role={mensajeNit ? 'alert' : undefined}
+            >
+              {mensajeNit || `Formato para ${paisSeleccionado.nombre}: ${paisSeleccionado.nitMin}-${paisSeleccionado.nitMax} ${paisSeleccionado.nitNumerico ? 'dígitos' : 'caracteres'}.`}
+            </small>
             {errores.nit && <p className="error-campo-cliente">{errores.nit}</p>}
           </div>
 
           <div className="campo-formulario-cliente">
             <label htmlFor="cliente-telefono">Teléfono</label>
-            <input
-              id="cliente-telefono"
-              name="telefono"
-              type="tel"
-              value={formulario.telefono}
-              onChange={actualizarCampo}
-              maxLength={30}
-              disabled={enviando}
-              aria-invalid={Boolean(errores.telefono)}
-            />
-            {errores.telefono && (
-              <p className="error-campo-cliente">{errores.telefono}</p>
-            )}
+            <div className="telefono-cliente-control">
+              <div className="selector-pais-cliente">
+                <button
+                  id="pais-telefono-cliente"
+                  className="boton-selector-pais-cliente"
+                  type="button"
+                  onClick={() => setSelectorPaisAbierto((abierto) => !abierto)}
+                  aria-label="Código de país"
+                  aria-expanded={selectorPaisAbierto}
+                  aria-haspopup="listbox"
+                  disabled={enviando}
+                >
+                  <img src={obtenerUrlBandera(paisSeleccionado.iso)} alt="" />
+                  <span>{paisSeleccionado.codigo}</span>
+                  <span aria-hidden="true">▾</span>
+                </button>
+                {selectorPaisAbierto && (
+                  <div className="lista-paises-cliente" role="listbox" aria-label="Selecciona un país">
+                    {PAISES_TELEFONO.map((pais) => (
+                      <button
+                        key={pais.codigo}
+                        type="button"
+                        role="option"
+                        aria-selected={pais.codigo === paisTelefono}
+                        onClick={() => {
+                          setPaisTelefono(pais.codigo)
+                          setSelectorPaisAbierto(false)
+                        }}
+                      >
+                        <img src={obtenerUrlBandera(pais.iso)} alt="" />
+                        <span>{pais.nombre}</span>
+                        <strong>{pais.codigo}</strong>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <input
+                id="cliente-telefono"
+                name="telefono"
+                type="tel"
+                value={telefono}
+                onChange={(evento) => {
+                  setTelefono(evento.target.value.replace(/\D/g, ''))
+                  setErrores((actuales) => ({ ...actuales, telefono: '' }))
+                  setErrorEnvio('')
+                }}
+                maxLength={15}
+                disabled={enviando}
+                aria-invalid={Boolean(errores.telefono || mensajeTelefono)}
+                aria-describedby="ayuda-telefono-cliente"
+              />
+            </div>
+            <span
+              id="ayuda-telefono-cliente"
+              className={`ayuda-telefono-cliente${mensajeTelefono ? ' ayuda-telefono-cliente-error' : ''}`}
+              role={mensajeTelefono ? 'alert' : undefined}
+            >
+              {mensajeTelefono || `Se guardará como ${paisTelefono}${telefono || 'XXXXXXXX'}`}
+            </span>
+            {errores.telefono && <p className="error-campo-cliente">{errores.telefono}</p>}
           </div>
 
           <div className="campo-formulario-cliente campo-ancho-cliente">
@@ -332,13 +452,15 @@ function ClienteDialog({
               type="email"
               value={formulario.correo_electronico}
               onChange={actualizarCampo}
+              onBlur={(evento) => setErrores((actuales) => ({ ...actuales, correo_electronico: obtenerErrorCorreo(evento.target.value) }))}
               maxLength={254}
               autoCapitalize="none"
               disabled={enviando}
               aria-invalid={Boolean(errores.correo_electronico)}
+              aria-describedby={errores.correo_electronico ? 'error-cliente-correo' : undefined}
             />
             {errores.correo_electronico && (
-              <p className="error-campo-cliente">
+              <p id="error-cliente-correo" className="error-campo-cliente" role="alert">
                 {errores.correo_electronico}
               </p>
             )}
@@ -362,19 +484,26 @@ function ClienteDialog({
           </div>
 
           {editando && (
-            <label className="control-estado-cliente campo-ancho-cliente">
+            <div className={`control-estado-cliente campo-ancho-cliente${formulario.activo ? '' : ' cliente-inactivo'}`}>
               <span>
-                <strong>Cliente activo</strong>
-                <small>Al desactivarlo se conserva todo su historial.</small>
+                <strong>{formulario.activo ? 'Cliente activo' : 'Cliente inactivo'}</strong>
+                <small>{formulario.activo ? 'Puedes desactivarlo si ya no debe aparecer como cliente activo.' : 'Este cliente está desactivado y conserva todo su historial.'}</small>
               </span>
-              <input
-                name="activo"
-                type="checkbox"
-                checked={formulario.activo}
-                onChange={actualizarCampo}
-                disabled={enviando}
-              />
-            </label>
+              {formulario.activo && (
+                <button
+                  className="boton-desactivar-cliente"
+                  type="button"
+                  onClick={() => {
+                    if (!window.confirm('¿Estás seguro de que deseas desactivar este cliente? Su historial se conservará.')) return
+                    actualizarCampo({ target: { name: 'activo', type: 'checkbox', checked: false, value: '' } })
+                  }}
+                  disabled={enviando}
+                >
+                  <AlertTriangle size={16} strokeWidth={2.1} aria-hidden="true" />
+                  Desactivar cliente
+                </button>
+              )}
+            </div>
           )}
 
           {errorEnvio && (
@@ -390,6 +519,7 @@ function ClienteDialog({
               onClick={alCerrar}
               disabled={enviando}
             >
+              <X size={16} strokeWidth={2.1} aria-hidden="true" />
               Cancelar
             </button>
             <button
@@ -397,6 +527,7 @@ function ClienteDialog({
               type="submit"
               disabled={enviando}
             >
+              {editando ? <Save size={16} strokeWidth={2.1} aria-hidden="true" /> : <UserPlus size={16} strokeWidth={2.1} aria-hidden="true" />}
               {enviando
                 ? 'Guardando...'
                 : editando

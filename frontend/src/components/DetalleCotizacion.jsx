@@ -1,4 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  ArrowLeft,
+  Ban,
+  ChevronDown,
+  Download,
+  Eye,
+  FilePenLine,
+  MoreHorizontal,
+  Printer,
+  Send,
+  Settings2,
+  ShoppingCart,
+} from 'lucide-react'
 import logoEfarm from '../assets/logo-efarm-brand.png'
 import EstadoEtiqueta from './EstadoEtiqueta'
 import {
@@ -93,7 +106,7 @@ function DetalleCotizacion({
     const confirmado = window.confirm(
       esEmision
         ? '¿Deseas emitir esta cotización? Después ya no podrá editarse.'
-        : '¿Deseas anular esta cotización? Esta acción no se puede revertir.',
+        : '¿Estás seguro de anular la cotización? Esta acción no se puede revertir.',
     )
     if (!confirmado) return
 
@@ -228,62 +241,88 @@ function DetalleCotizacion({
         </div>
         <div className="acciones-encabezado-cotizacion no-imprimir">
           <button className="boton-secundario-cotizaciones" type="button" onClick={alVolver}>
+            <ArrowLeft size={15} strokeWidth={2.1} aria-hidden="true" />
             Volver
           </button>
-          <button className="boton-secundario-cotizaciones" type="button" onClick={verDocumento}>
-            Vista previa
-          </button>
-          <button className="boton-secundario-cotizaciones" type="button" onClick={descargarDocumento}>
-            Descargar PDF
-          </button>
-          <button className="boton-primario-cotizaciones" type="button" onClick={imprimirTicketDocumento}>
-            Imprimir
-          </button>
-          <details className="opciones-documentos-efarm">
-            <summary>Más opciones</summary>
-            <button className="boton-secundario-cotizaciones" type="button" onClick={() => window.print()}>
-              Imprimir en carta
-            </button>
-          </details>
+          {puedeEditar && (esBorrador || puedeAnular) && (
+            <details className="opciones-documentos-efarm opciones-estado-cotizacion">
+              <summary>
+                <Settings2 size={16} strokeWidth={2.1} aria-hidden="true" />
+                <span>Acciones de estado</span>
+                <ChevronDown className="icono-chevron-opciones" size={14} strokeWidth={2.1} aria-hidden="true" />
+              </summary>
+              <div className="menu-opciones-documentos-efarm">
+                {esBorrador && (
+                  <button
+                    className="boton-primario-cotizaciones"
+                    type="button"
+                    onClick={() => cambiarEstado('emitida')}
+                    disabled={procesando}
+                  >
+                    <Send size={15} strokeWidth={2.1} aria-hidden="true" />
+                    {procesando ? 'Procesando...' : 'Emitir'}
+                  </button>
+                )}
+                {puedeAnular && (
+                  <button
+                    className="boton-peligro-cotizaciones"
+                    type="button"
+                    onClick={() => cambiarEstado('anulada')}
+                    disabled={procesando}
+                  >
+                    <Ban size={15} strokeWidth={2.1} aria-hidden="true" />
+                    Anular
+                  </button>
+                )}
+                {puedeConvertir && cotizacion.estado === 'emitida' && (
+                  <button
+                    className="boton-primario-cotizaciones"
+                    type="button"
+                    onClick={() => {
+                      setMostrarPagoConversion((actual) => !actual)
+                      setError('')
+                    }}
+                    disabled={procesando}
+                    aria-expanded={mostrarPagoConversion}
+                  >
+                    <ShoppingCart size={15} strokeWidth={2.1} aria-hidden="true" />
+                    Convertir a venta
+                  </button>
+                )}
+              </div>
+            </details>
+          )}
           {puedeEditar && esBorrador && (
             <button className="boton-secundario-cotizaciones" type="button" onClick={alEditar}>
+              <FilePenLine size={15} strokeWidth={2.1} aria-hidden="true" />
               Editar
             </button>
           )}
-          {puedeEditar && esBorrador && (
-            <button
-              className="boton-primario-cotizaciones"
-              type="button"
-              onClick={() => cambiarEstado('emitida')}
-              disabled={procesando}
-            >
-              {procesando ? 'Procesando...' : 'Emitir'}
-            </button>
-          )}
-          {puedeEditar && puedeAnular && (
-            <button
-              className="boton-peligro-cotizaciones"
-              type="button"
-              onClick={() => cambiarEstado('anulada')}
-              disabled={procesando}
-            >
-              Anular
-            </button>
-          )}
-          {puedeConvertir && cotizacion.estado === 'emitida' && (
-            <button
-              className="boton-primario-cotizaciones"
-              type="button"
-              onClick={() => {
-                setMostrarPagoConversion((actual) => !actual)
-                setError('')
-              }}
-              disabled={procesando}
-              aria-expanded={mostrarPagoConversion}
-            >
-              Convertir a venta
-            </button>
-          )}
+          <button className="boton-secundario-cotizaciones" type="button" onClick={verDocumento}>
+            <Eye size={15} strokeWidth={2.1} aria-hidden="true" />
+            Vista previa
+          </button>
+          <details className="opciones-documentos-efarm">
+            <summary>
+              <MoreHorizontal size={16} strokeWidth={2.1} aria-hidden="true" />
+              <span>Más opciones</span>
+              <ChevronDown className="icono-chevron-opciones" size={14} strokeWidth={2.1} aria-hidden="true" />
+            </summary>
+            <div className="menu-opciones-documentos-efarm">
+              <button className="boton-secundario-cotizaciones" type="button" onClick={descargarDocumento}>
+                <Download size={15} strokeWidth={2.1} aria-hidden="true" />
+                Descargar PDF
+              </button>
+              <button className="boton-primario-cotizaciones" type="button" onClick={imprimirTicketDocumento}>
+                <Printer size={15} strokeWidth={2.1} aria-hidden="true" />
+                Imprimir
+              </button>
+              <button className="boton-secundario-cotizaciones" type="button" onClick={() => window.print()}>
+                <Printer size={15} strokeWidth={2.1} aria-hidden="true" />
+                Imprimir en carta
+              </button>
+            </div>
+          </details>
         </div>
       </header>
 

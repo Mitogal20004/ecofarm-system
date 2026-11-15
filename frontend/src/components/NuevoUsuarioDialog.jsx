@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, Circle } from 'lucide-react'
+import {
+  Check,
+  ChevronDown,
+  Circle,
+  Eye,
+  EyeOff,
+  UserPlus,
+  X,
+} from 'lucide-react'
 import { crearUsuario } from '../services/usuarios'
 import { listarRolesActivos } from '../services/roles'
+import { obtenerUrlBandera, PAISES_TELEFONO } from '../utils/telefono'
 
 const PATRON_NOMBRE_USUARIO =
   /^[a-z0-9][a-z0-9._-]*[a-z0-9]$/
@@ -94,6 +103,11 @@ function NuevoUsuarioDialog({
   const [errorCreacion, setErrorCreacion] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [mostrarPassword, setMostrarPassword] = useState(false)
+  const [mostrarConfirmarPassword, setMostrarConfirmarPassword] = useState(false)
+  const [paisTelefono, setPaisTelefono] = useState(PAISES_TELEFONO[0].codigo)
+  const [telefono, setTelefono] = useState('')
+  const [selectorPaisAbierto, setSelectorPaisAbierto] = useState(false)
+  const [selectorRolAbierto, setSelectorRolAbierto] = useState(false)
   const campoInicialRef = useRef(null)
 
   useEffect(() => {
@@ -157,6 +171,9 @@ function NuevoUsuarioDialog({
         setErrores({})
         setErrorCreacion('')
         setMostrarPassword(false)
+        setMostrarConfirmarPassword(false)
+        setPaisTelefono(PAISES_TELEFONO[0].codigo)
+        setTelefono('')
         alCerrar()
       }
     }
@@ -192,7 +209,7 @@ function NuevoUsuarioDialog({
     const nombreCompleto = formulario.nombre_completo.trim()
     const nombreUsuario = formulario.nombre_usuario.trim().toLowerCase()
     const email = formulario.email.trim().toLowerCase()
-    const telefono = formulario.telefono.trim()
+    const telefonoNormalizado = telefono.replace(/\D/g, '')
     const serieDocumentos = formulario.serie_documentos.trim().toUpperCase()
 
     if (!nombreCompleto || nombreCompleto.length > 150) {
@@ -212,8 +229,10 @@ function NuevoUsuarioDialog({
       nuevosErrores.email = 'Ingresa un correo electrónico válido.'
     }
 
-    if (telefono.length > 30) {
-      nuevosErrores.telefono = 'El teléfono no puede exceder 30 caracteres.'
+    if (telefonoNormalizado && telefonoNormalizado.length < 7) {
+      nuevosErrores.telefono = 'El teléfono debe tener mínimo 7 dígitos.'
+    } else if (telefonoNormalizado.length > 15) {
+      nuevosErrores.telefono = 'El teléfono no puede superar 15 dígitos.'
     }
 
     if (
@@ -244,7 +263,7 @@ function NuevoUsuarioDialog({
         nombre_completo: nombreCompleto,
         nombre_usuario: nombreUsuario,
         email,
-        telefono: telefono || null,
+        telefono: telefonoNormalizado ? `${paisTelefono}${telefonoNormalizado}` : null,
         serie_documentos: serieDocumentos || null,
         password: formulario.password,
         rol_id: formulario.rol_id,
@@ -269,6 +288,9 @@ function NuevoUsuarioDialog({
       setFormulario(FORMULARIO_INICIAL)
       setErrores({})
       setMostrarPassword(false)
+      setMostrarConfirmarPassword(false)
+      setPaisTelefono(PAISES_TELEFONO[0].codigo)
+      setTelefono('')
       alCrear(resultado.usuario)
     } catch (error) {
       setErrorCreacion(obtenerMensajeCreacion(error))
@@ -288,6 +310,9 @@ function NuevoUsuarioDialog({
     setErrores({})
     setErrorCreacion('')
     setMostrarPassword(false)
+    setMostrarConfirmarPassword(false)
+    setPaisTelefono(PAISES_TELEFONO[0].codigo)
+    setTelefono('')
     alCerrar()
   }
 
@@ -296,6 +321,22 @@ function NuevoUsuarioDialog({
       cerrarDialogo()
     }
   }
+
+  const paisSeleccionado = PAISES_TELEFONO.find((pais) => pais.codigo === paisTelefono) ?? PAISES_TELEFONO[0]
+  const cantidadDigitosTelefono = telefono.replace(/\D/g, '').length
+  const mensajeTelefono = cantidadDigitosTelefono > 15
+    ? 'El número no puede superar los 15 dígitos.'
+    : cantidadDigitosTelefono < 7
+      ? `Aún faltan ${7 - cantidadDigitosTelefono} dígitos.`
+      : 'El teléfono debe tener entre 7 y 15 dígitos.'
+  const mensajeEmail = formulario.email &&
+    (!PATRON_EMAIL.test(formulario.email) || formulario.email.length > 254)
+    ? 'Ingresa un correo electrónico válido.'
+    : ''
+  const mensajeConfirmarPassword = formulario.confirmarPassword &&
+    formulario.password !== formulario.confirmarPassword
+    ? 'Las contraseñas no coinciden.'
+    : ''
 
   return (
     <div className="fondo-dialogo-usuario" onMouseDown={cerrarDesdeFondo}>
@@ -324,7 +365,7 @@ function NuevoUsuarioDialog({
 
         <form className="formulario-nuevo-usuario" onSubmit={manejarEnvio} noValidate>
           <div className="campo-formulario-usuario">
-            <label htmlFor="nuevo-nombre-completo">Nombre completo</label>
+            <label htmlFor="nuevo-nombre-completo">Nombre completo *</label>
             <input
               ref={campoInicialRef}
               id="nuevo-nombre-completo"
@@ -332,7 +373,9 @@ function NuevoUsuarioDialog({
               type="text"
               value={formulario.nombre_completo}
               onChange={actualizarCampo}
+              placeholder="Ej. Juan Pérez"
               maxLength={150}
+              required
               disabled={enviando}
               aria-invalid={Boolean(errores.nombre_completo)}
               aria-describedby={
@@ -347,7 +390,7 @@ function NuevoUsuarioDialog({
           </div>
 
           <div className="campo-formulario-usuario">
-            <label htmlFor="nuevo-nombre-usuario">Nombre de usuario</label>
+            <label htmlFor="nuevo-nombre-usuario">Nombre de usuario *</label>
             <input
               id="nuevo-nombre-usuario"
               name="nombre_usuario"
@@ -359,6 +402,7 @@ function NuevoUsuarioDialog({
               autoComplete="off"
               spellCheck="false"
               maxLength={50}
+              required
               disabled={enviando}
               aria-invalid={Boolean(errores.nombre_usuario)}
               aria-describedby={
@@ -373,7 +417,7 @@ function NuevoUsuarioDialog({
           </div>
 
           <div className="campo-formulario-usuario">
-            <label htmlFor="nuevo-email">Correo electrónico</label>
+            <label htmlFor="nuevo-email">Correo electrónico *</label>
             <input
               id="nuevo-email"
               name="email"
@@ -383,37 +427,87 @@ function NuevoUsuarioDialog({
               autoCapitalize="none"
               autoComplete="off"
               spellCheck="false"
+              placeholder="ejemplo@correo.com"
               maxLength={254}
+              required
               disabled={enviando}
-              aria-invalid={Boolean(errores.email)}
-              aria-describedby={errores.email ? 'error-nuevo-email' : undefined}
+              aria-invalid={Boolean(errores.email || mensajeEmail)}
+              aria-describedby={
+                errores.email || mensajeEmail ? 'error-nuevo-email' : undefined
+              }
             />
-            {errores.email && (
+            {(errores.email || mensajeEmail) && (
               <p id="error-nuevo-email" className="error-campo-usuario">
-                {errores.email}
+                {errores.email || mensajeEmail}
               </p>
             )}
           </div>
 
           <div className="campo-formulario-usuario">
             <label htmlFor="nuevo-telefono">Teléfono (opcional)</label>
-            <input
-              id="nuevo-telefono"
-              name="telefono"
-              type="tel"
-              value={formulario.telefono}
-              onChange={actualizarCampo}
-              maxLength={30}
-              disabled={enviando}
-              aria-invalid={Boolean(errores.telefono)}
-              aria-describedby={
-                errores.telefono ? 'error-nuevo-telefono' : undefined
-              }
-            />
-            {errores.telefono && (
-              <p id="error-nuevo-telefono" className="error-campo-usuario">
-                {errores.telefono}
-              </p>
+            <div className="telefono-usuario-control">
+              <div className="selector-pais-usuario">
+                <button
+                  id="pais-telefono-nuevo"
+                  className="boton-selector-pais-usuario"
+                  type="button"
+                  onClick={() => setSelectorPaisAbierto((abierto) => !abierto)}
+                  aria-label="Código de país"
+                  aria-expanded={selectorPaisAbierto}
+                  aria-haspopup="listbox"
+                  disabled={enviando}
+                >
+                  <img src={obtenerUrlBandera(paisSeleccionado.iso)} alt="" />
+                  <span>{paisSeleccionado.codigo}</span>
+                  <span aria-hidden="true">▾</span>
+                </button>
+                {selectorPaisAbierto && (
+                  <div className="lista-paises-usuario" role="listbox" aria-label="Selecciona un país">
+                  {PAISES_TELEFONO.map((pais) => (
+                    <button
+                      key={pais.codigo}
+                      type="button"
+                      role="option"
+                      aria-selected={pais.codigo === paisTelefono}
+                      onClick={() => {
+                        setPaisTelefono(pais.codigo)
+                        setSelectorPaisAbierto(false)
+                      }}
+                    >
+                      <img src={obtenerUrlBandera(pais.iso)} alt="" />
+                      <span>{pais.nombre}</span>
+                      <strong>{pais.codigo}</strong>
+                    </button>
+                  ))}
+                  </div>
+                )}
+              </div>
+              <input
+                id="nuevo-telefono"
+                type="tel"
+                value={telefono}
+                onChange={(evento) => {
+                  setTelefono(evento.target.value.replace(/\D/g, ''))
+                  setErrores((actuales) => ({ ...actuales, telefono: '' }))
+                  setErrorCreacion('')
+                }}
+                placeholder="55555555"
+                maxLength={15}
+                inputMode="numeric"
+                autoComplete="tel-national"
+                disabled={enviando}
+                aria-invalid={Boolean(errores.telefono || (telefono && cantidadDigitosTelefono !== 0 && (cantidadDigitosTelefono < 7 || cantidadDigitosTelefono > 15)))}
+                aria-describedby="ayuda-nuevo-telefono"
+              />
+            </div>
+            {telefono && (
+              <span
+                id="ayuda-nuevo-telefono"
+                className={`ayuda-telefono-usuario${errores.telefono ? ' ayuda-telefono-usuario-error' : ''}`}
+                role={errores.telefono ? 'alert' : undefined}
+              >
+                {errores.telefono || mensajeTelefono}
+              </span>
             )}
           </div>
 
@@ -452,7 +546,7 @@ function NuevoUsuarioDialog({
           </div>
 
           <div className="campo-formulario-usuario campo-password-usuario">
-            <label htmlFor="nuevo-password">Contraseña</label>
+            <label htmlFor="nuevo-password">Contraseña *</label>
             <div className="entrada-password-usuario">
               <input
                 id="nuevo-password"
@@ -460,8 +554,10 @@ function NuevoUsuarioDialog({
                 type={mostrarPassword ? 'text' : 'password'}
                 value={formulario.password}
                 onChange={actualizarCampo}
+                placeholder="Ingresa una contraseña segura"
                 autoComplete="new-password"
                 maxLength={1024}
+                required
                 disabled={enviando}
                 aria-invalid={Boolean(errores.password)}
                 aria-describedby="requisitos-nuevo-password error-nuevo-password"
@@ -471,21 +567,25 @@ function NuevoUsuarioDialog({
                 onClick={() => setMostrarPassword((visible) => !visible)}
                 disabled={enviando}
                 aria-pressed={mostrarPassword}
+                aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                title={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
-                {mostrarPassword ? 'Ocultar' : 'Mostrar'}
+                {mostrarPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
               </button>
             </div>
-            <ul id="requisitos-nuevo-password" className="requisitos-password">
-              {requisitosPassword.map((requisito) => (
-                <li
-                  className={requisito.cumple ? 'requisito-cumplido' : ''}
-                  key={requisito.id}
-                >
-                  <span aria-hidden="true">{requisito.cumple ? <Check size={14} strokeWidth={2.2} /> : <Circle size={10} strokeWidth={1.5} />}</span>
-                  {requisito.texto}
-                </li>
-              ))}
-            </ul>
+            {formulario.password && (
+              <ul id="requisitos-nuevo-password" className="requisitos-password">
+                {requisitosPassword.map((requisito) => (
+                  <li
+                    className={requisito.cumple ? 'requisito-cumplido' : ''}
+                    key={requisito.id}
+                  >
+                    <span aria-hidden="true">{requisito.cumple ? <Check size={14} strokeWidth={2.2} /> : <Circle size={10} strokeWidth={1.5} />}</span>
+                    {requisito.texto}
+                  </li>
+                ))}
+              </ul>
+            )}
             {errores.password && (
               <p id="error-nuevo-password" className="error-campo-usuario">
                 {errores.password}
@@ -494,52 +594,84 @@ function NuevoUsuarioDialog({
           </div>
 
           <div className="campo-formulario-usuario">
-            <label htmlFor="confirmar-nuevo-password">Confirmar contraseña</label>
-            <input
-              id="confirmar-nuevo-password"
-              name="confirmarPassword"
-              type={mostrarPassword ? 'text' : 'password'}
-              value={formulario.confirmarPassword}
-              onChange={actualizarCampo}
-              autoComplete="new-password"
-              maxLength={1024}
-              disabled={enviando}
-              aria-invalid={Boolean(errores.confirmarPassword)}
-              aria-describedby={
-                errores.confirmarPassword
-                  ? 'error-confirmar-password'
-                  : undefined
-              }
-            />
-            {errores.confirmarPassword && (
+            <label htmlFor="confirmar-nuevo-password">Confirmar contraseña *</label>
+            <div className="entrada-password-usuario">
+              <input
+                id="confirmar-nuevo-password"
+                name="confirmarPassword"
+                type={mostrarConfirmarPassword ? 'text' : 'password'}
+                value={formulario.confirmarPassword}
+                onChange={actualizarCampo}
+                placeholder="Repite la contraseña"
+                autoComplete="new-password"
+                maxLength={1024}
+                required
+                disabled={enviando}
+                aria-invalid={Boolean(errores.confirmarPassword || mensajeConfirmarPassword)}
+                aria-describedby={
+                  errores.confirmarPassword || mensajeConfirmarPassword
+                    ? 'error-confirmar-password'
+                    : undefined
+                }
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarConfirmarPassword((visible) => !visible)}
+                disabled={enviando}
+                aria-pressed={mostrarConfirmarPassword}
+                aria-label={mostrarConfirmarPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
+                title={mostrarConfirmarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {mostrarConfirmarPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+              </button>
+            </div>
+            {(errores.confirmarPassword || mensajeConfirmarPassword) && (
               <p id="error-confirmar-password" className="error-campo-usuario">
-                {errores.confirmarPassword}
+                {errores.confirmarPassword || mensajeConfirmarPassword}
               </p>
             )}
           </div>
 
           <div className="campo-formulario-usuario campo-rol-usuario">
-            <label htmlFor="nuevo-rol">Rol</label>
-            <select
-              id="nuevo-rol"
-              name="rol_id"
-              value={formulario.rol_id}
-              onChange={actualizarCampo}
-              disabled={enviando || cargandoRoles || Boolean(errorRoles)}
-              aria-invalid={Boolean(errores.rol_id)}
-              aria-describedby={
-                errores.rol_id || errorRoles ? 'estado-nuevo-rol' : undefined
-              }
-            >
-              <option value="">
-                {cargandoRoles ? 'Consultando roles...' : 'Selecciona un rol'}
-              </option>
-              {roles.map((rol) => (
-                <option key={rol.id} value={rol.id}>
-                  {rol.nombre}
-                </option>
-              ))}
-            </select>
+            <label htmlFor="nuevo-rol">Rol *</label>
+            <div className="selector-rol-usuario">
+              <button
+                id="nuevo-rol"
+                className="boton-selector-rol-usuario"
+                type="button"
+                onClick={() => setSelectorRolAbierto((abierto) => !abierto)}
+                disabled={enviando || cargandoRoles || Boolean(errorRoles)}
+                aria-haspopup="listbox"
+                aria-expanded={selectorRolAbierto}
+                aria-invalid={Boolean(errores.rol_id)}
+                aria-describedby={
+                  errores.rol_id || errorRoles ? 'estado-nuevo-rol' : undefined
+                }
+              >
+                {cargandoRoles
+                  ? 'Consultando roles...'
+                  : roles.find((rol) => rol.id === formulario.rol_id)?.nombre || 'Selecciona un rol'}
+                <ChevronDown size={17} strokeWidth={2} aria-hidden="true" />
+              </button>
+              {selectorRolAbierto && (
+                <div className="lista-roles-usuario" role="listbox" aria-label="Selecciona un rol">
+                  {roles.map((rol) => (
+                    <button
+                      key={rol.id}
+                      type="button"
+                      role="option"
+                      aria-selected={rol.id === formulario.rol_id}
+                      onClick={() => {
+                        actualizarCampo({ target: { name: 'rol_id', value: rol.id } })
+                        setSelectorRolAbierto(false)
+                      }}
+                    >
+                      {rol.nombre}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {(errores.rol_id || errorRoles) && (
               <p id="estado-nuevo-rol" className="error-campo-usuario">
                 {errores.rol_id || errorRoles}
@@ -560,7 +692,8 @@ function NuevoUsuarioDialog({
               onClick={cerrarDialogo}
               disabled={enviando}
             >
-              Cancelar
+                <X size={17} strokeWidth={2} aria-hidden="true" />
+                Cancelar
             </button>
             <button
               className="boton-primario-usuario"
@@ -569,6 +702,7 @@ function NuevoUsuarioDialog({
                 enviando || cargandoRoles || Boolean(errorRoles) || roles.length === 0
               }
             >
+              <UserPlus size={17} strokeWidth={2} aria-hidden="true" />
               {enviando ? 'Creando usuario...' : 'Crear usuario'}
             </button>
           </div>

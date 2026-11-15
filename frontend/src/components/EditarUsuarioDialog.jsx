@@ -4,6 +4,11 @@ import {
   actualizarPerfilUsuario,
   reemplazarRolesUsuario,
 } from '../services/usuarios'
+import {
+  obtenerUrlBandera,
+  PAISES_TELEFONO,
+  separarTelefono,
+} from '../utils/telefono'
 
 const PATRON_SERIE_DOCUMENTOS = /^[A-Z0-9]{1,8}$/
 
@@ -90,11 +95,14 @@ function EditarUsuarioDialog({
   alActualizar,
   alRefrescarAutorizacion,
 }) {
+  const telefonoInicial = separarTelefono(usuario.telefono)
   const [perfilBase, setPerfilBase] = useState(usuario)
   const [nombreCompleto, setNombreCompleto] = useState(
     usuario.nombre_completo ?? '',
   )
-  const [telefono, setTelefono] = useState(usuario.telefono ?? '')
+  const [paisTelefono, setPaisTelefono] = useState(telefonoInicial.codigo)
+  const [telefono, setTelefono] = useState(telefonoInicial.local)
+  const [selectorPaisAbierto, setSelectorPaisAbierto] = useState(false)
   const [serieDocumentos, setSerieDocumentos] = useState(
     usuario.serie_documentos ?? '',
   )
@@ -200,7 +208,10 @@ function EditarUsuarioDialog({
     if (envioPerfilRef.current || envioRolesRef.current) return
 
     const nombreNormalizado = nombreCompleto.trim()
-    const telefonoNormalizado = telefono.trim()
+    const telefonoLocal = telefono.replace(/\D/g, '')
+    const telefonoNormalizado = telefonoLocal
+      ? `${paisTelefono}${telefonoLocal}`
+      : ''
     const serieNormalizada = serieDocumentos.trim().toUpperCase()
     const nuevosErrores = {}
 
@@ -208,8 +219,10 @@ function EditarUsuarioDialog({
       nuevosErrores.nombre_completo = 'Ingresa un nombre completo válido.'
     }
 
-    if (telefonoNormalizado.length > 30) {
-      nuevosErrores.telefono = 'El teléfono no puede exceder 30 caracteres.'
+    if (telefonoLocal && telefonoLocal.length < 7) {
+      nuevosErrores.telefono = 'El teléfono debe tener mínimo 7 dígitos.'
+    } else if (telefonoLocal.length > 15) {
+      nuevosErrores.telefono = 'El teléfono no puede superar 15 dígitos.'
     }
 
     if (serieNormalizada && !PATRON_SERIE_DOCUMENTOS.test(serieNormalizada)) {
@@ -365,6 +378,13 @@ function EditarUsuarioDialog({
   }
 
   const hayRolesInactivos = rolesActuales.some((rol) => !rol.activo)
+  const paisSeleccionado = PAISES_TELEFONO.find((pais) => pais.codigo === paisTelefono) ?? PAISES_TELEFONO[0]
+  const cantidadDigitosTelefono = telefono.replace(/\D/g, '').length
+  const mensajeTelefono = cantidadDigitosTelefono > 15
+    ? 'El número no puede superar los 15 dígitos.'
+    : cantidadDigitosTelefono < 7
+      ? `Aún faltan ${7 - cantidadDigitosTelefono} dígitos.`
+      : 'El teléfono debe tener entre 7 y 15 dígitos.'
 
   return (
     <div className="fondo-dialogo-usuario" onMouseDown={cerrarDesdeFondo}>
@@ -406,7 +426,7 @@ function EditarUsuarioDialog({
           </div>
 
           <div className="campo-formulario-usuario">
-            <label htmlFor="editar-nombre-completo">Nombre completo</label>
+            <label htmlFor="editar-nombre-completo">Nombre completo *</label>
             <input
               ref={nombreRef}
               id="editar-nombre-completo"
@@ -421,7 +441,9 @@ function EditarUsuarioDialog({
                 setErrorPerfil('')
                 setMensajePerfil('')
               }}
+              placeholder="Ej. Juan Pérez"
               maxLength={150}
+              required
               disabled={enviando}
               aria-invalid={Boolean(erroresPerfil.nombre_completo)}
               aria-describedby={
@@ -439,40 +461,85 @@ function EditarUsuarioDialog({
 
           <div className="campo-formulario-usuario">
             <label htmlFor="editar-telefono">Teléfono (opcional)</label>
-            <input
-              id="editar-telefono"
-              type="tel"
-              value={telefono}
-              onChange={(evento) => {
-                setTelefono(evento.target.value)
-                setErroresPerfil((actuales) => ({
-                  ...actuales,
-                  telefono: '',
-                }))
-                setErrorPerfil('')
-                setMensajePerfil('')
-              }}
-              maxLength={30}
-              disabled={enviando}
-              aria-invalid={Boolean(erroresPerfil.telefono)}
-              aria-describedby={
-                erroresPerfil.telefono ? 'error-editar-telefono' : undefined
-              }
-            />
-            {erroresPerfil.telefono && (
-              <p id="error-editar-telefono" className="error-campo-usuario">
-                {erroresPerfil.telefono}
-              </p>
+            <div className="telefono-usuario-control">
+              <div className="selector-pais-usuario">
+                <button
+                  id="pais-telefono-editar"
+                  className="boton-selector-pais-usuario"
+                  type="button"
+                  onClick={() => setSelectorPaisAbierto((abierto) => !abierto)}
+                  aria-label="Código de país"
+                  aria-expanded={selectorPaisAbierto}
+                  aria-haspopup="listbox"
+                  disabled={enviando}
+                >
+                  <img src={obtenerUrlBandera(paisSeleccionado.iso)} alt="" />
+                  <span>{paisSeleccionado.codigo}</span>
+                  <span aria-hidden="true">▾</span>
+                </button>
+                {selectorPaisAbierto && (
+                  <div className="lista-paises-usuario" role="listbox" aria-label="Selecciona un país">
+                  {PAISES_TELEFONO.map((pais) => (
+                    <button
+                      key={pais.codigo}
+                      type="button"
+                      role="option"
+                      aria-selected={pais.codigo === paisTelefono}
+                      onClick={() => {
+                        setPaisTelefono(pais.codigo)
+                        setSelectorPaisAbierto(false)
+                      }}
+                    >
+                      <img src={obtenerUrlBandera(pais.iso)} alt="" />
+                      <span>{pais.nombre}</span>
+                      <strong>{pais.codigo}</strong>
+                    </button>
+                  ))}
+                  </div>
+                )}
+              </div>
+              <input
+                id="editar-telefono"
+                type="tel"
+                value={telefono}
+                onChange={(evento) => {
+                  setTelefono(evento.target.value.replace(/\D/g, ''))
+                  setErroresPerfil((actuales) => ({
+                    ...actuales,
+                    telefono: '',
+                  }))
+                  setErrorPerfil('')
+                  setMensajePerfil('')
+                }}
+                placeholder="55555555"
+                maxLength={15}
+                inputMode="numeric"
+                autoComplete="tel-national"
+                disabled={enviando}
+                aria-invalid={Boolean(erroresPerfil.telefono || (telefono && (cantidadDigitosTelefono < 7 || cantidadDigitosTelefono > 15)))}
+                aria-describedby="ayuda-editar-telefono"
+              />
+            </div>
+            {telefono && (
+              <span
+                id="ayuda-editar-telefono"
+                className={`ayuda-telefono-usuario${erroresPerfil.telefono ? ' ayuda-telefono-usuario-error' : ''}`}
+                role={erroresPerfil.telefono ? 'alert' : undefined}
+              >
+                {erroresPerfil.telefono || mensajeTelefono}
+              </span>
             )}
           </div>
 
           <div className="campo-formulario-usuario">
-            <label htmlFor="editar-email">Correo electrónico</label>
+            <label htmlFor="editar-email">Correo electrónico *</label>
             <input
               id="editar-email"
               type="email"
               value={perfilBase.email ?? ''}
+              placeholder="ejemplo@correo.com"
               readOnly
+              required
               aria-readonly="true"
             />
             <p className="ayuda-campo-usuario">

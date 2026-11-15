@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Card, CardBody, Chip, Input } from '@heroui/react'
-import { House } from 'lucide-react'
+import { House, Save, X } from 'lucide-react'
 import { actualizarPerfilUsuario } from '../services/usuarios'
 import './Perfil.css'
 
@@ -16,7 +16,7 @@ const PAISES_TELEFONO = [
   { codigo: '+507', iso: 'pa', nombre: 'Panamá' },
 ]
 
-const obtenerUrlBandera = (iso) => `https://flagcdn.com/24x18/${iso}.png`
+const obtenerUrlBandera = (iso) => `https://flagcdn.com/${iso}.svg`
 
 function separarTelefono(telefono) {
   const valor = String(telefono ?? '').replace(/[^\d+]/g, '')
@@ -218,8 +218,14 @@ function Perfil({ perfil, alGuardar, alVolver, alRefrescarAutorizacion }) {
             {error && <p className="perfil-mensaje-error" role="alert">{error}</p>}
 
             <div className="perfil-formulario-acciones">
-              <Button type="button" variant="bordered" className="perfil-boton-secundario" onPress={alVolver}>Cancelar</Button>
-              <Button type="submit" color="success" className="perfil-boton-guardar" isLoading={guardando}>Guardar cambios</Button>
+              <Button type="button" variant="bordered" className="perfil-boton-secundario" onPress={alVolver}>
+                <X size={16} strokeWidth={2.2} aria-hidden="true" />
+                Cancelar
+              </Button>
+              <Button type="submit" color="success" className="perfil-boton-guardar" isLoading={guardando}>
+                {!guardando && <Save size={16} strokeWidth={2.2} aria-hidden="true" />}
+                Guardar cambios
+              </Button>
             </div>
           </form>
         </CardBody>

@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import IconoInterfaz from '../components/IconoInterfaz'
-import { Eraser, Eye, Filter, LockKeyhole, RefreshCw, X } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Eraser,
+  Eye,
+  LockKeyhole,
+  RefreshCw,
+  X,
+} from 'lucide-react'
 import {
   abrirCaja,
   cerrarCaja,
@@ -11,6 +20,7 @@ import {
   obtenerCajaActual,
   obtenerResumenCajaActual,
 } from '../services/caja'
+import { listarUsuarios } from '../services/usuarios'
 import './Caja.css'
 
 const LIMITE_HISTORIAL = 10
@@ -25,6 +35,46 @@ const FILTROS_INICIALES = {
   fecha_hasta: '',
   estado: '',
   usuario_id: '',
+}
+
+function SelectorFiltroCaja({ value, options, onChange, disabled, ariaLabel }) {
+  const [abierto, setAbierto] = useState(false)
+  const seleccionado = options.find(([valor]) => valor === value)
+
+  return (
+    <div className="selector-filtro-caja">
+      <button
+        className="boton-selector-filtro-caja"
+        type="button"
+        onClick={() => setAbierto((actual) => !actual)}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={abierto}
+      >
+        {seleccionado?.[1] ?? 'Selecciona una opción'}
+        <ChevronDown size={17} strokeWidth={2} aria-hidden="true" />
+      </button>
+      {abierto && (
+        <div className="lista-opciones-filtro-caja" role="listbox" aria-label={ariaLabel}>
+          {options.map(([opcion, etiqueta]) => (
+            <button
+              key={opcion}
+              type="button"
+              role="option"
+              aria-selected={opcion === value}
+              onClick={() => {
+                onChange(opcion)
+                setAbierto(false)
+              }}
+            >
+              {etiqueta}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const PAGINACION_INICIAL = {
@@ -267,10 +317,12 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
   const [resultadoCierre, setResultadoCierre] = useState(null)
   const [filtrosEdicion, setFiltrosEdicion] = useState(FILTROS_INICIALES)
   const [filtros, setFiltros] = useState(FILTROS_INICIALES)
+  const [cajeros, setCajeros] = useState([])
   const [pagina, setPagina] = useState(1)
   const [turnos, setTurnos] = useState([])
   const [paginacion, setPaginacion] = useState(PAGINACION_INICIAL)
   const [cargandoHistorial, setCargandoHistorial] = useState(true)
+  const [ultimaActualizacion, setUltimaActualizacion] = useState(null)
   const [errorHistorial, setErrorHistorial] = useState('')
   const [detalle, setDetalle] = useState(null)
   const [cargandoDetalle, setCargandoDetalle] = useState(false)
@@ -284,6 +336,51 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
   const activadorDetalleRef = useRef(null)
   const activadorCierreRef = useRef(null)
   const puedeConsultar = puedeOperar || puedeVer
+
+  useEffect(() => {
+    if (!cargandoActual && !cargandoHistorial) {
+      setUltimaActualizacion(new Date())
+    }
+  }, [cargandoActual, cargandoHistorial])
+
+  useEffect(() => {
+    if (!puedeVer) return undefined
+    let vigente = true
+
+    listarUsuarios({ pagina: 1, limite: 100, activo: true })
+      .then((resultado) => {
+        if (vigente) setCajeros(resultado.usuarios)
+      })
+      .catch(() => {
+        if (vigente) setCajeros([])
+      })
+
+    return () => {
+      vigente = false
+    }
+  }, [puedeVer])
+
+  useEffect(() => {
+    const temporizador = window.setTimeout(() => {
+      if (
+        filtrosEdicion.fecha_desde &&
+        filtrosEdicion.fecha_hasta &&
+        filtrosEdicion.fecha_desde > filtrosEdicion.fecha_hasta
+      ) {
+        setErrorHistorial('La fecha inicial no puede ser posterior a la fecha final.')
+        return
+      }
+
+      setErrorHistorial('')
+      setPagina(1)
+      setFiltros({
+        ...filtrosEdicion,
+        usuario_id: puedeVer ? filtrosEdicion.usuario_id : '',
+      })
+    }, 1000)
+
+    return () => window.clearTimeout(temporizador)
+  }, [filtrosEdicion, puedeVer])
 
   const actualizarOperacionApertura = useCallback((operacion) => {
     const operacionPropia = operacion
@@ -823,30 +920,6 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
     }
   }
 
-  const aplicarFiltros = (evento) => {
-    evento.preventDefault()
-    if (
-      filtrosEdicion.fecha_desde &&
-      filtrosEdicion.fecha_hasta &&
-      filtrosEdicion.fecha_desde > filtrosEdicion.fecha_hasta
-    ) {
-      setErrorHistorial('La fecha inicial no puede ser posterior a la fecha final.')
-      return
-    }
-    if (
-      filtrosEdicion.usuario_id &&
-      !PATRON_UUID.test(filtrosEdicion.usuario_id.trim())
-    ) {
-      setErrorHistorial('El ID del cajero debe ser un UUID válido.')
-      return
-    }
-    setPagina(1)
-    setFiltros({
-      ...filtrosEdicion,
-      usuario_id: puedeVer ? filtrosEdicion.usuario_id.trim() : '',
-    })
-  }
-
   const limpiarFiltros = () => {
     setFiltrosEdicion(FILTROS_INICIALES)
     setFiltros(FILTROS_INICIALES)
@@ -897,15 +970,25 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
             </EstadoEtiqueta>
           )}
         </div>
-        <button
-          className="boton-secundario-caja"
-          type="button"
-          onClick={() => setRefresco((valor) => valor + 1)}
-          disabled={cargandoActual || cargandoHistorial}
-        >
-          <RefreshCw size={15} strokeWidth={2.2} aria-hidden="true" />
-          Actualizar
-        </button>
+        <div className="acciones-encabezado-caja">
+          {ultimaActualizacion && (
+            <small className="ultima-actualizacion-caja">
+              Última actualización: {ultimaActualizacion.toLocaleTimeString('es-GT', {
+                hour: 'numeric',
+                minute: '2-digit',
+              })}
+            </small>
+          )}
+          <button
+            className="boton-secundario-caja"
+            type="button"
+            onClick={() => setRefresco((valor) => valor + 1)}
+            disabled={cargandoActual || cargandoHistorial}
+          >
+            <RefreshCw size={15} strokeWidth={2.2} aria-hidden="true" />
+            Actualizar
+          </button>
+        </div>
       </header>
 
       {mensaje && (
@@ -1002,15 +1085,15 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
             <small>{paginacion.total} turnos encontrados</small>
           </div>
         </div>
-        <form className="filtros-caja" onSubmit={aplicarFiltros}>
+        <div className="filtros-caja">
           <label><span>Desde</span><input type="date" value={filtrosEdicion.fecha_desde} onChange={(evento) => setFiltrosEdicion((actual) => ({ ...actual, fecha_desde: evento.target.value }))} /></label>
           <label><span>Hasta</span><input type="date" value={filtrosEdicion.fecha_hasta} onChange={(evento) => setFiltrosEdicion((actual) => ({ ...actual, fecha_hasta: evento.target.value }))} /></label>
-          <label><span>Estado</span><select value={filtrosEdicion.estado} onChange={(evento) => setFiltrosEdicion((actual) => ({ ...actual, estado: evento.target.value }))}><option value="">Todos</option><option value="abierta">Abierta</option><option value="cerrada">Cerrada</option></select></label>
+          <label><span>Estado</span><SelectorFiltroCaja value={filtrosEdicion.estado} options={[['', 'Todos'], ['abierta', 'Abierta'], ['cerrada', 'Cerrada']]} onChange={(valor) => setFiltrosEdicion((actual) => ({ ...actual, estado: valor }))} disabled={cargandoHistorial} ariaLabel="Estado de caja" /></label>
           {puedeVer && (
-            <label className="filtro-usuario-caja"><span>ID del cajero</span><input value={filtrosEdicion.usuario_id} onChange={(evento) => setFiltrosEdicion((actual) => ({ ...actual, usuario_id: evento.target.value }))} placeholder="UUID opcional" /></label>
+            <label className="filtro-usuario-caja"><span>Cajero</span><SelectorFiltroCaja value={filtrosEdicion.usuario_id} options={[['', 'Todos los cajeros'], ...cajeros.map((cajero) => [cajero.id, cajero.nombre_completo])]} onChange={(valor) => setFiltrosEdicion((actual) => ({ ...actual, usuario_id: valor }))} disabled={cargandoHistorial} ariaLabel="Cajero" /></label>
           )}
-          <div className="acciones-filtros-caja"><button className="boton-secundario-caja" type="button" onClick={limpiarFiltros}><Eraser size={14} strokeWidth={2.2} aria-hidden="true" />Limpiar</button><button className="boton-primario-caja" type="submit"><Filter size={14} strokeWidth={2.2} aria-hidden="true" />Aplicar filtros</button></div>
-        </form>
+          <div className="acciones-filtros-caja"><button className="boton-secundario-caja" type="button" onClick={limpiarFiltros}><Eraser size={14} strokeWidth={2.2} aria-hidden="true" />Limpiar</button></div>
+        </div>
 
         {cargandoHistorial ? (
           <p className="estado-caja" aria-live="polite">Cargando historial...</p>
@@ -1039,8 +1122,8 @@ function Caja({ permisos = [], usuarioActualId, alRefrescarAutorizacion }) {
             </table>
           </div>
         )}
-        {!cargandoHistorial && !errorHistorial && paginacion.total_paginas > 0 && (
-          <nav className="paginacion-caja" aria-label="Paginación de cajas"><button className="boton-secundario-caja" type="button" disabled={pagina <= 1} onClick={() => setPagina((valor) => Math.max(1, valor - 1))}>Anterior</button><span>Página {paginacion.pagina} de {paginacion.total_paginas}</span><button className="boton-secundario-caja" type="button" disabled={pagina >= paginacion.total_paginas} onClick={() => setPagina((valor) => valor + 1)}>Siguiente</button></nav>
+         {!cargandoHistorial && !errorHistorial && paginacion.total_paginas > 0 && (
+           <nav className="paginacion-caja" aria-label="Paginación de cajas"><button className="boton-secundario-caja" type="button" aria-label="Página anterior" title="Página anterior" disabled={pagina <= 1} onClick={() => setPagina((valor) => Math.max(1, valor - 1))}><ChevronLeft size={18} strokeWidth={2} aria-hidden="true" /></button><span>Página {paginacion.pagina} de {paginacion.total_paginas}</span><button className="boton-secundario-caja" type="button" aria-label="Página siguiente" title="Página siguiente" disabled={pagina >= paginacion.total_paginas} onClick={() => setPagina((valor) => valor + 1)}><ChevronRight size={18} strokeWidth={2} aria-hidden="true" /></button></nav>
         )}
       </section>
 

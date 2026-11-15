@@ -5,9 +5,23 @@ import IconoInterfaz from '../components/IconoInterfaz'
 import MovimientoInventarioDialog from '../components/MovimientoInventarioDialog'
 import StockMinimoDialog from '../components/StockMinimoDialog'
 import { listarInventario } from '../services/inventario'
+import { UNIDADES_LONGITUD, obtenerUnidadLongitud } from '../utils/medidas'
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Eraser,
+  Gauge,
+  History,
+  MoreHorizontal,
+  SlidersHorizontal,
+} from 'lucide-react'
 import './Inventario.css'
 
 const LIMITE_INVENTARIO = 10
+const LIMITES_LONGITUD = { mm: 5000, cm: 500, m: 5, in: 200, ft: 20 }
 const PAGINACION_INICIAL = {
   pagina: 1,
   limite: LIMITE_INVENTARIO,
@@ -19,6 +33,47 @@ const RESUMEN_INICIAL = {
   variantes_con_stock: 0,
   variantes_stock_bajo: 0,
   variantes_sin_stock: 0,
+}
+
+function SelectorFiltroInventario({ id, value, options, onChange, disabled, ariaLabel }) {
+  const [abierto, setAbierto] = useState(false)
+  const opcionSeleccionada = options.find(([valor]) => valor === value)
+
+  return (
+    <div className="selector-filtro-inventario">
+      <button
+        id={id}
+        className="boton-selector-filtro-inventario"
+        type="button"
+        onClick={() => setAbierto((actual) => !actual)}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={abierto}
+      >
+        {opcionSeleccionada?.[1] ?? value}
+        <ChevronDown size={17} strokeWidth={2} aria-hidden="true" />
+      </button>
+      {abierto && (
+        <div className="lista-opciones-filtro-inventario" role="listbox" aria-label={ariaLabel}>
+          {options.map(([valor, etiqueta]) => (
+            <button
+              key={valor}
+              type="button"
+              role="option"
+              aria-selected={valor === value}
+              onClick={() => {
+                onChange(valor)
+                setAbierto(false)
+              }}
+            >
+              {etiqueta}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const nombreClasificacion = {
@@ -165,7 +220,7 @@ function MenuAccionesInventario({
         onClick={alternarMenu}
       >
         Más
-        <span aria-hidden="true">⌄</span>
+        <MoreHorizontal size={15} strokeWidth={2.25} aria-hidden="true" />
       </button>
 
       {abierto && (
@@ -184,6 +239,7 @@ function MenuAccionesInventario({
                 role="menuitem"
                 onClick={() => ejecutarAccion(alAjustar)}
               >
+                <SlidersHorizontal size={16} strokeWidth={2} aria-hidden="true" />
                 Ajuste físico
               </button>
               <button
@@ -191,6 +247,7 @@ function MenuAccionesInventario({
                 role="menuitem"
                 onClick={() => ejecutarAccion(alEditarStockMinimo)}
               >
+                <Gauge size={16} strokeWidth={2} aria-hidden="true" />
                 Stock mínimo
               </button>
             </>
@@ -201,6 +258,7 @@ function MenuAccionesInventario({
               role="menuitem"
               onClick={() => ejecutarAccion(alVerHistorial)}
             >
+              <History size={16} strokeWidth={2} aria-hidden="true" />
               Historial
             </button>
           )}
@@ -218,7 +276,14 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
   const [pagina, setPagina] = useState(1)
   const [busqueda, setBusqueda] = useState('')
   const [busquedaAplicada, setBusquedaAplicada] = useState('')
-  const [filtroLongitud, setFiltroLongitud] = useState('')
+  const [opcionesBusqueda, setOpcionesBusqueda] = useState([])
+  const [listaBusquedaAbierta, setListaBusquedaAbierta] = useState(false)
+  const [unidadLongitud, setUnidadLongitud] = useState('cm')
+  const [filtroLongitudMin, setFiltroLongitudMin] = useState(0)
+  const [filtroLongitudMax, setFiltroLongitudMax] = useState(LIMITES_LONGITUD.cm)
+  const [filtroLongitudMinAplicado, setFiltroLongitudMinAplicado] = useState(0)
+  const [filtroLongitudMaxAplicado, setFiltroLongitudMaxAplicado] = useState(LIMITES_LONGITUD.cm)
+  const [unidadLongitudAplicada, setUnidadLongitudAplicada] = useState('cm')
   const [filtroClasificacion, setFiltroClasificacion] = useState('todas')
   const [filtroEstado, setFiltroEstado] = useState('todos')
   const [filtroActivo, setFiltroActivo] = useState('todos')
@@ -246,14 +311,10 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
       setError('')
 
       try {
-        const longitudNumero = Number(filtroLongitud)
-        const longitudValida =
-          /^\d+$/.test(filtroLongitud) && longitudNumero > 0
         const resultado = await listarInventario({
-          pagina,
-          limite: LIMITE_INVENTARIO,
+          pagina: 1,
+          limite: 100,
           busqueda: busquedaAplicada || undefined,
-          longitud_cm: longitudValida ? longitudNumero : undefined,
           clasificacion:
             filtroClasificacion === 'todas'
               ? undefined
@@ -266,10 +327,48 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
         })
 
         if (!vistaActiva) return
-        setInventario(resultado.inventario)
+        const inventarioFiltrado = resultado.inventario.filter(
+          (item) => {
+            const factorCm = obtenerUnidadLongitud(unidadLongitudAplicada).factorCm
+            const minimoCm = filtroLongitudMinAplicado * factorCm
+            const maximoCm = filtroLongitudMaxAplicado * factorCm
+            return item.longitud_cm >= minimoCm && item.longitud_cm <= maximoCm
+          },
+        )
+        const totalPaginas = Math.max(
+          1,
+          Math.ceil(inventarioFiltrado.length / LIMITE_INVENTARIO),
+        )
+        const inicio = (pagina - 1) * LIMITE_INVENTARIO
+        const inventarioVisible = inventarioFiltrado.slice(
+          inicio,
+          inicio + LIMITE_INVENTARIO,
+        )
+        const resumenFiltrado = {
+          total_manojos: inventarioFiltrado.reduce(
+            (total, item) => total + item.stock_manojos,
+            0,
+          ),
+          variantes_con_stock: inventarioFiltrado.filter(
+            (item) => item.stock_manojos > 0,
+          ).length,
+          variantes_stock_bajo: inventarioFiltrado.filter(
+            (item) => item.estado_stock === 'stock_bajo',
+          ).length,
+          variantes_sin_stock: inventarioFiltrado.filter(
+            (item) => item.estado_stock === 'sin_stock',
+          ).length,
+        }
+
+        setInventario(inventarioVisible)
         setPresentaciones(resultado.presentaciones)
-        setResumen(resultado.resumen)
-        setPaginacion(resultado.paginacion)
+        setResumen(resumenFiltrado)
+        setPaginacion({
+          pagina,
+          limite: LIMITE_INVENTARIO,
+          total: inventarioFiltrado.length,
+          total_paginas: totalPaginas,
+        })
       } catch (errorConsulta) {
         if (!vistaActiva) return
         setInventario([])
@@ -300,13 +399,82 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
     filtroActivo,
     filtroClasificacion,
     filtroEstado,
-    filtroLongitud,
+    filtroLongitudMaxAplicado,
+    filtroLongitudMinAplicado,
+    unidadLongitudAplicada,
     pagina,
     versionListado,
   ])
 
+  useEffect(() => {
+    let vistaActiva = true
+
+    const consultarOpcionesBusqueda = async () => {
+      try {
+        const resultado = await listarInventario({ pagina: 1, limite: 100 })
+        if (!vistaActiva) return
+
+        const opciones = new Set()
+        resultado.inventario.forEach((item) => {
+          if (item.codigo_sku) opciones.add(item.codigo_sku)
+          if (item.color) opciones.add(item.color)
+        })
+        setOpcionesBusqueda([...opciones].sort((a, b) => a.localeCompare(b)))
+      } catch (errorConsulta) {
+        if (vistaActiva && [401, 403].includes(errorConsulta?.status)) {
+          alRefrescarAutorizacion()
+        }
+      }
+    }
+
+    consultarOpcionesBusqueda()
+    return () => {
+      vistaActiva = false
+    }
+  }, [alRefrescarAutorizacion])
+
+  useEffect(() => {
+    const valorBusqueda = busqueda.trim()
+    if (valorBusqueda === busquedaAplicada) return undefined
+
+    const temporizador = window.setTimeout(() => {
+      setPagina(1)
+      setBusquedaAplicada(valorBusqueda)
+      setListaBusquedaAbierta(false)
+    }, 1000)
+
+    return () => window.clearTimeout(temporizador)
+  }, [busqueda, busquedaAplicada])
+
+  useEffect(() => {
+    if (
+      filtroLongitudMin === filtroLongitudMinAplicado &&
+      filtroLongitudMax === filtroLongitudMaxAplicado &&
+      unidadLongitud === unidadLongitudAplicada
+    ) {
+      return undefined
+    }
+
+    const temporizador = window.setTimeout(() => {
+      setPagina(1)
+      setFiltroLongitudMinAplicado(filtroLongitudMin)
+      setFiltroLongitudMaxAplicado(filtroLongitudMax)
+      setUnidadLongitudAplicada(unidadLongitud)
+    }, 1000)
+
+    return () => window.clearTimeout(temporizador)
+  }, [
+    filtroLongitudMax,
+    filtroLongitudMaxAplicado,
+    filtroLongitudMin,
+    filtroLongitudMinAplicado,
+    unidadLongitud,
+    unidadLongitudAplicada,
+  ])
+
   const manejarBusqueda = (evento) => {
     evento.preventDefault()
+    setListaBusquedaAbierta(false)
     setPagina(1)
     setBusquedaAplicada(busqueda.trim())
   }
@@ -335,7 +503,12 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
   const limpiarFiltros = () => {
     setBusqueda('')
     setBusquedaAplicada('')
-    setFiltroLongitud('')
+    setUnidadLongitud('cm')
+    setFiltroLongitudMin(0)
+    setFiltroLongitudMax(LIMITES_LONGITUD.cm)
+    setFiltroLongitudMinAplicado(0)
+    setFiltroLongitudMaxAplicado(LIMITES_LONGITUD.cm)
+    setUnidadLongitudAplicada('cm')
     setFiltroClasificacion('todas')
     setFiltroEstado('todos')
     setFiltroActivo('todos')
@@ -347,9 +520,10 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
   const puedeAjustar = permisos.includes('inventario.ajustar')
   const tieneAccionesSecundarias = puedeAjustar || puedeVerMovimientos
   const hayFiltrosActivos = Boolean(
-    busqueda.trim() ||
+      busqueda.trim() ||
       busquedaAplicada ||
-      filtroLongitud ||
+      filtroLongitudMin > 0 ||
+      filtroLongitudMax < LIMITES_LONGITUD[unidadLongitud] ||
       filtroClasificacion !== 'todas' ||
       filtroEstado !== 'todos' ||
       filtroActivo !== 'todos',
@@ -362,6 +536,9 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
     paginacion.total_paginas > 0 &&
     pagina < paginacion.total_paginas &&
     !cargando
+  const opcionesBusquedaVisibles = opcionesBusqueda.filter((opcion) =>
+    opcion.toLocaleLowerCase().includes(busqueda.trim().toLocaleLowerCase()),
+  )
 
   return (
     <section className="pagina-inventario" aria-labelledby="titulo-inventario">
@@ -373,6 +550,7 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
             type="button"
             onClick={() => abrirHistorial()}
           >
+            <History size={16} strokeWidth={2.25} aria-hidden="true" />
             Historial de movimientos
           </button>
         )}
@@ -480,89 +658,161 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
               onClick={limpiarFiltros}
               disabled={cargando}
             >
+              <Eraser size={15} strokeWidth={2.25} aria-hidden="true" />
               Limpiar filtros
             </button>
           )}
         </header>
         <div className="control-busqueda-inventario">
           <label htmlFor="busqueda-inventario">Buscar variante</label>
-          <div>
+          <div className="entrada-busqueda-inventario">
             <input
               id="busqueda-inventario"
               type="search"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={listaBusquedaAbierta}
+              aria-controls="opciones-busqueda-inventario"
               value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
+              onFocus={() => setListaBusquedaAbierta(true)}
+              onBlur={() => {
+                window.setTimeout(() => setListaBusquedaAbierta(false), 0)
+              }}
+              onChange={(evento) => {
+                setBusqueda(evento.target.value)
+                setListaBusquedaAbierta(true)
+              }}
               placeholder="SKU o color"
               maxLength={150}
             />
-            <button type="submit" disabled={cargando}>Buscar</button>
+            {listaBusquedaAbierta && opcionesBusquedaVisibles.length > 0 && (
+              <div
+                id="opciones-busqueda-inventario"
+                className="lista-opciones-busqueda-inventario"
+                role="listbox"
+              >
+                {opcionesBusquedaVisibles.map((opcion) => (
+                  <button
+                    key={opcion}
+                    type="button"
+                    role="option"
+                    aria-selected={opcion === busqueda}
+                    onMouseDown={(evento) => evento.preventDefault()}
+                    onClick={() => {
+                      setBusqueda(opcion)
+                      setBusquedaAplicada(opcion)
+                      setPagina(1)
+                      setListaBusquedaAbierta(false)
+                    }}
+                  >
+                    {opcion}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="control-filtro-inventario control-longitud-inventario">
+          <div className="encabezado-rango-longitud-inventario">
+            <label htmlFor="filtro-longitud-min-inventario">Longitud</label>
+            <SelectorFiltroInventario
+              id="unidad-longitud-inventario"
+              value={unidadLongitud}
+              options={UNIDADES_LONGITUD.map((unidad) => [unidad.valor, unidad.valor])}
+              onChange={(nuevaUnidad) => {
+                setUnidadLongitud(nuevaUnidad)
+                setFiltroLongitudMin(0)
+                setFiltroLongitudMax(LIMITES_LONGITUD[nuevaUnidad])
+                setPagina(1)
+              }}
+              disabled={cargando}
+              ariaLabel="Unidad para filtrar longitud"
+            />
+          </div>
+          <div className="rango-longitud-inventario">
+            <input
+              id="filtro-longitud-min-inventario"
+              type="range"
+              min="0"
+              max={LIMITES_LONGITUD[unidadLongitud]}
+              step={unidadLongitud === 'm' ? '0.01' : '1'}
+              value={filtroLongitudMin}
+              onChange={(evento) => {
+                setFiltroLongitudMin(
+                  Math.min(Number(evento.target.value), filtroLongitudMax),
+                )
+                setPagina(1)
+              }}
+              disabled={cargando}
+              aria-label="Longitud mínima"
+            />
+            <input
+              type="range"
+              min="0"
+              max={LIMITES_LONGITUD[unidadLongitud]}
+              step={unidadLongitud === 'm' ? '0.01' : '1'}
+              value={filtroLongitudMax}
+              onChange={(evento) => {
+                setFiltroLongitudMax(
+                  Math.max(Number(evento.target.value), filtroLongitudMin),
+                )
+                setPagina(1)
+              }}
+              disabled={cargando}
+              aria-label="Longitud máxima"
+            />
+            <div className="valores-rango-longitud-inventario">
+              <span>{filtroLongitudMin || 'Min'} {unidadLongitud}</span>
+              <span>
+                {filtroLongitudMax === LIMITES_LONGITUD[unidadLongitud]
+                  ? 'Max'
+                  : filtroLongitudMax}{' '}
+                {unidadLongitud}
+              </span>
+            </div>
           </div>
         </div>
         <div className="control-filtro-inventario">
-          <label htmlFor="longitud-inventario">Longitud (cm)</label>
-          <input
-            id="longitud-inventario"
-            type="number"
-            min="1"
-            step="1"
-            value={filtroLongitud}
-            onChange={(evento) => {
-              setFiltroLongitud(evento.target.value)
+          <label htmlFor="clasificacion-inventario">Clasificación</label>
+          <SelectorFiltroInventario
+            id="clasificacion-inventario"
+            value={filtroClasificacion}
+            options={[['todas', 'Todas'], ['normal', 'Normal'], ['completa', 'Completa'], ['premium', 'Premium']]}
+            onChange={(valor) => {
+              setFiltroClasificacion(valor)
               setPagina(1)
             }}
-            placeholder="Todas"
             disabled={cargando}
+            ariaLabel="Clasificación"
           />
         </div>
         <div className="control-filtro-inventario">
-          <label htmlFor="clasificacion-inventario">Clasificación</label>
-          <select
-            id="clasificacion-inventario"
-            value={filtroClasificacion}
-            onChange={(evento) => {
-              setFiltroClasificacion(evento.target.value)
-              setPagina(1)
-            }}
-            disabled={cargando}
-          >
-            <option value="todas">Todas</option>
-            <option value="normal">Normal</option>
-            <option value="completa">Completa</option>
-            <option value="premium">Premium</option>
-          </select>
-        </div>
-        <div className="control-filtro-inventario">
           <label htmlFor="estado-inventario">Estado de stock</label>
-          <select
+          <SelectorFiltroInventario
             id="estado-inventario"
             value={filtroEstado}
-            onChange={(evento) => {
-              setFiltroEstado(evento.target.value)
+            options={[['todos', 'Todos'], ['disponible', 'Disponible'], ['stock_bajo', 'Stock bajo'], ['sin_stock', 'Sin stock']]}
+            onChange={(valor) => {
+              setFiltroEstado(valor)
               setPagina(1)
             }}
             disabled={cargando}
-          >
-            <option value="todos">Todos</option>
-            <option value="disponible">Disponible</option>
-            <option value="stock_bajo">Stock bajo</option>
-            <option value="sin_stock">Sin stock</option>
-          </select>
+            ariaLabel="Estado de stock"
+          />
         </div>
         <div className="control-filtro-inventario">
           <label htmlFor="activo-inventario">Estado de variante</label>
-          <select
+          <SelectorFiltroInventario
             id="activo-inventario"
             value={filtroActivo}
-            onChange={(evento) => {
-              setFiltroActivo(evento.target.value)
+            options={[['todos', 'Todas'], ['activos', 'Activas'], ['inactivos', 'Inactivas']]}
+            onChange={(valor) => {
+              setFiltroActivo(valor)
               setPagina(1)
             }}
             disabled={cargando}
-          >
-            <option value="todos">Todas</option>
-            <option value="activos">Activas</option>
-            <option value="inactivos">Inactivas</option>
-          </select>
+            ariaLabel="Estado de variante"
+          />
         </div>
       </form>
 
@@ -653,6 +903,7 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
                               type="button"
                               onClick={() => setOperacion({ tipo: 'entrada', item })}
                             >
+                              <ArrowDownToLine size={15} strokeWidth={2.25} aria-hidden="true" />
                               Entrada
                             </button>
                             <button
@@ -660,6 +911,7 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
                               type="button"
                               onClick={() => setOperacion({ tipo: 'salida', item })}
                             >
+                              <ArrowUpFromLine size={15} strokeWidth={2.25} aria-hidden="true" />
                               Salida
                             </button>
                           </>
@@ -692,8 +944,10 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
               type="button"
               onClick={() => setPagina((actual) => actual - 1)}
               disabled={!puedeRetroceder}
+              aria-label="Página anterior"
+              title="Página anterior"
             >
-              Anterior
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
             </button>
             <span>
               Página {paginacion.pagina} de {Math.max(paginacion.total_paginas, 1)}
@@ -703,8 +957,10 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
               type="button"
               onClick={() => setPagina((actual) => actual + 1)}
               disabled={!puedeAvanzar}
+              aria-label="Página siguiente"
+              title="Página siguiente"
             >
-              Siguiente
+              <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
             </button>
           </footer>
         )}
@@ -734,6 +990,7 @@ function Inventario({ permisos, alRefrescarAutorizacion }) {
       {historialAbierto && (
         <HistorialInventarioDialog
           varianteInicial={varianteHistorial}
+          opcionesBusqueda={opcionesBusqueda}
           alCerrar={cerrarHistorial}
           alRefrescarAutorizacion={alRefrescarAutorizacion}
         />

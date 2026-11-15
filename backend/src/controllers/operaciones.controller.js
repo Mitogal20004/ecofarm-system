@@ -7,6 +7,7 @@ import {
   crearPedido as crearPedidoServicio,
   crearProveedor as crearProveedorServicio,
   eliminarProveedor as eliminarProveedorServicio,
+  eliminarInsumo as eliminarInsumoServicio,
   actualizarProveedor as actualizarProveedorServicio,
   actualizarInsumo as actualizarInsumoServicio,
   listarCompras as listarComprasServicio,
@@ -34,6 +35,8 @@ import {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const CAMPOS_PROVEEDOR = ['nombre', 'nit', 'contacto', 'telefono', 'correo']
+const CAMPOS_INSUMO = ['codigo', 'nombre', 'categoria', 'unidad_medida', 'costo_referencia', 'stock_actual', 'stock_minimo']
 
 const objeto = (valor) => valor && typeof valor === 'object' && !Array.isArray(valor)
 const texto = (valor, max = 200) => typeof valor === 'string' && valor.trim() !== '' && valor.trim().length <= max
@@ -42,6 +45,40 @@ const entero = (valor, minimo = 0) => Number.isSafeInteger(valor) && valor >= mi
 
 function exigirObjeto(body, campos) {
   if (!objeto(body) || Object.keys(body).some((campo) => !campos.includes(campo))) throw new Error('Solicitud inválida')
+}
+
+function normalizarProveedor(body, parcial = false) {
+  exigirObjeto(body, CAMPOS_PROVEEDOR)
+  if (!parcial && !texto(body.nombre, 200)) throw new Error('Solicitud inválida')
+  if (parcial && !Object.keys(body).length) throw new Error('Solicitud inválida')
+
+  const datos = {}
+  if (Object.hasOwn(body, 'nombre')) {
+    const nombre = typeof body.nombre === 'string' ? body.nombre.trim() : body.nombre
+    if (!texto(nombre, 200)) throw new Error('Solicitud inválida')
+    datos.nombre = nombre
+  }
+  if (Object.hasOwn(body, 'nit')) {
+    const nit = typeof body.nit === 'string' ? body.nit.trim() : body.nit
+    if (nit !== null && nit !== undefined && (!texto(nit, 30) || !/^\d+(?:-\d)?$/.test(nit))) throw new Error('Solicitud inválida')
+    datos.nit = nit || null
+  }
+  if (Object.hasOwn(body, 'contacto')) {
+    const contacto = typeof body.contacto === 'string' ? body.contacto.trim() : body.contacto
+    if (contacto !== null && contacto !== undefined && (!texto(contacto, 150) || !/^[\p{L}\s.'-]+$/u.test(contacto))) throw new Error('Solicitud inválida')
+    datos.contacto = contacto || null
+  }
+  if (Object.hasOwn(body, 'telefono')) {
+    const telefono = typeof body.telefono === 'string' ? body.telefono.trim() : body.telefono
+    if (telefono !== null && telefono !== undefined && (!texto(telefono, 20) || !/^\+?\d{7,15}$/.test(telefono))) throw new Error('Solicitud inválida')
+    datos.telefono = telefono || null
+  }
+  if (Object.hasOwn(body, 'correo')) {
+    const correo = typeof body.correo === 'string' ? body.correo.trim() : body.correo
+    if (correo !== null && correo !== undefined && (!texto(correo, 254) || !EMAIL.test(correo))) throw new Error('Solicitud inválida')
+    datos.correo = correo?.toLowerCase() || null
+  }
+  return datos
 }
 
 function responderError(res, error) {
@@ -53,7 +90,11 @@ function responderError(res, error) {
   }
 
   if (error instanceof Error && error.message === 'Solicitud inválida') return res.status(400).json({ ok: false, message: error.message })
-  if (error instanceof ErrorServicioOperaciones && error.codigo === '23505') return res.status(409).json({ ok: false, message: 'El registro ya existe.' })
+  if (error instanceof ErrorServicioOperaciones && error.codigo === '23505') {
+    if (error.restriccion === 'proveedores_nit_unico') return res.status(409).json({ ok: false, message: 'Ya existe un proveedor con ese NIT.' })
+    if (error.restriccion === 'proveedores_contacto_unico') return res.status(409).json({ ok: false, message: 'Ya existe un proveedor con esa persona de contacto.' })
+    return res.status(409).json({ ok: false, message: 'El registro ya existe.' })
+  }
   if (error instanceof ErrorServicioOperaciones && error.codigo === '23514') return res.status(400).json({ ok: false, message: 'Los datos no cumplen las reglas del sistema.' })
   if (error instanceof ErrorServicioOperaciones && error.codigo === '23503') return res.status(400).json({ ok: false, message: 'La referencia indicada no existe.' })
   return res.status(500).json({ ok: false, message: 'No fue posible completar la operación.' })
@@ -73,9 +114,9 @@ export async function crearLote(req, res) {
 export async function listarInsumos(req, res) { try { return res.json({ insumos: await listarInsumosServicio() }) } catch (e) { return responderError(res, e) } }
 export async function crearInsumo(req, res) {
   try {
-    exigirObjeto(req.body, ['codigo', 'nombre', 'categoria', 'unidad_medida', 'costo_referencia', 'stock_minimo'])
+    exigirObjeto(req.body, CAMPOS_INSUMO)
     const b = req.body
-    if (!texto(b.codigo, 40) || !texto(b.nombre, 150) || !texto(b.categoria, 50) || !texto(b.unidad_medida, 20) || typeof b.costo_referencia !== 'number' || b.costo_referencia < 0 || typeof b.stock_minimo !== 'number' || b.stock_minimo < 0) throw new Error('Solicitud inválida')
+    if (!texto(b.codigo, 40) || !texto(b.nombre, 150) || !texto(b.categoria, 50) || !texto(b.unidad_medida, 20) || typeof b.costo_referencia !== 'number' || b.costo_referencia < 0 || typeof b.stock_actual !== 'number' || b.stock_actual < 0 || typeof b.stock_minimo !== 'number' || b.stock_minimo < 0) throw new Error('Solicitud inválida')
     return res.status(201).json({ insumo: await crearInsumoServicio({ ...b, codigo: b.codigo.trim().toUpperCase() }) })
   } catch (e) { return responderError(res, e) }
 }
@@ -90,11 +131,44 @@ export async function actualizarInsumo(req, res) {
 export async function listarProveedores(req, res) { try { return res.json({ proveedores: await listarProveedoresServicio() }) } catch (e) { return responderError(res, e) } }
 export async function crearProveedor(req, res) {
   try {
-    exigirObjeto(req.body, ['nombre', 'nit', 'contacto', 'telefono', 'correo'])
-    const b = req.body
-    if (!texto(b.nombre, 200) || (b.correo !== null && b.correo !== undefined && (!texto(b.correo, 254) || !EMAIL.test(b.correo)))) throw new Error('Solicitud inválida')
-    return res.status(201).json({ proveedor: await crearProveedorServicio(b) })
+    return res.status(201).json({ proveedor: await crearProveedorServicio(normalizarProveedor(req.body)) })
   } catch (e) { return responderError(res, e) }
+}
+
+export async function actualizarInsumoDatos(req, res) {
+  try {
+    if (!uuid(req.params.insumoId)) throw new Error('Solicitud inválida')
+    exigirObjeto(req.body, CAMPOS_INSUMO)
+    if (!Object.keys(req.body).length) throw new Error('Solicitud inválida')
+    const datos = {}
+    const limitesTextoInsumo = { codigo: 40, nombre: 150, categoria: 50, unidad_medida: 20 }
+    for (const campo of Object.keys(limitesTextoInsumo)) {
+      if (Object.hasOwn(req.body, campo)) {
+        if (!texto(req.body[campo], limitesTextoInsumo[campo])) throw new Error('Solicitud inválida')
+        datos[campo] = req.body[campo].trim()
+      }
+    }
+    if (Object.hasOwn(req.body, 'codigo')) datos.codigo = datos.codigo.toUpperCase()
+    for (const campo of ['costo_referencia', 'stock_actual', 'stock_minimo']) {
+      if (Object.hasOwn(req.body, campo)) {
+        if (typeof req.body[campo] !== 'number' || !Number.isFinite(req.body[campo]) || req.body[campo] < 0) throw new Error('Solicitud inválida')
+        datos[campo] = req.body[campo]
+      }
+    }
+    datos.fecha_actualizacion = new Date().toISOString()
+    return res.json({ insumo: await actualizarInsumoServicio(req.params.insumoId, datos) })
+  } catch (e) { return responderError(res, e) }
+}
+
+export async function eliminarInsumo(req, res) {
+  try {
+    if (!uuid(req.params.insumoId)) throw new Error('Solicitud inválida')
+    await eliminarInsumoServicio(req.params.insumoId)
+    return res.status(204).send()
+  } catch (e) {
+    if (e instanceof ErrorServicioOperaciones && e.codigo === '23503') return res.status(400).json({ ok: false, message: 'No se puede eliminar el insumo porque está siendo utilizado en otros registros.' })
+    return responderError(res, e)
+  }
 }
 
 export async function eliminarProveedor(req, res) {
@@ -105,10 +179,19 @@ export async function eliminarProveedor(req, res) {
   } catch (e) { return responderError(res, e) }
 }
 
-export async function actualizarProveedor(req, res) {
+export async function actualizarProveedorEstado(req, res) {
   try {
     if (!uuid(req.params.proveedorId) || !objeto(req.body) || typeof req.body.activo !== 'boolean') throw new Error('Solicitud inválida')
     return res.json({ proveedor: await actualizarProveedorServicio(req.params.proveedorId, { activo: req.body.activo, fecha_actualizacion: new Date().toISOString() }) })
+  } catch (e) { return responderError(res, e) }
+}
+
+export async function actualizarProveedor(req, res) {
+  try {
+    if (!uuid(req.params.proveedorId)) throw new Error('Solicitud inválida')
+    const datos = normalizarProveedor(req.body, true)
+    datos.fecha_actualizacion = new Date().toISOString()
+    return res.json({ proveedor: await actualizarProveedorServicio(req.params.proveedorId, datos) })
   } catch (e) { return responderError(res, e) }
 }
 

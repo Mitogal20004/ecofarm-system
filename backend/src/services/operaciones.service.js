@@ -6,6 +6,7 @@ export class ErrorServicioOperaciones extends Error {
     super(mensaje, { cause: causa })
     this.name = 'ErrorServicioOperaciones'
     this.codigo = causa?.code ?? null
+    this.restriccion = causa?.constraint ?? null
   }
 }
 
@@ -44,6 +45,9 @@ export const eliminarProveedor = (id) => ejecutar(
 )
 export const actualizarProveedor = (id, datos) => actualizar('proveedores', id, datos)
 export const actualizarInsumo = (id, datos) => actualizar('insumos', id, datos)
+export const eliminarInsumo = (id) => ejecutar(
+  supabaseAdmin.from('insumos').delete().eq('id', id),
+)
 export const listarCompras = () => listar('compras')
 export const crearCompra = (datos) => crear('compras', datos)
 export const crearCompraDetalle = (datos) => crear('compra_detalles', datos)

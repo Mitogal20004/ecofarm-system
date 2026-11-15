@@ -3,6 +3,7 @@ import CotizacionFormulario from '../components/CotizacionFormulario'
 import DetalleCotizacion from '../components/DetalleCotizacion'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
 import { listarCotizaciones } from '../services/cotizaciones'
+import { ArrowLeft, ArrowRight, ChevronDown, Eraser, Eye, FilePlus2, Pencil } from 'lucide-react'
 import './Cotizaciones.css'
 
 const LIMITE_COTIZACIONES = 10
@@ -57,6 +58,7 @@ function Cotizaciones({
   const [vista, setVista] = useState('listado')
   const [cotizacionId, setCotizacionId] = useState(null)
   const [versionListado, setVersionListado] = useState(0)
+  const [estadoAbierto, setEstadoAbierto] = useState(false)
 
   const puedeCrear = permisos.includes('cotizacion.crear')
   const puedeEditar = permisos.includes('cotizacion.editar')
@@ -102,9 +104,7 @@ function Cotizaciones({
     setFiltrosEdicion((actuales) => ({ ...actuales, [name]: value }))
   }
 
-  const aplicarFiltros = (evento) => {
-    evento.preventDefault()
-
+  const aplicarFiltros = useCallback(() => {
     if (
       filtrosEdicion.fecha_desde &&
       filtrosEdicion.fecha_hasta &&
@@ -120,7 +120,14 @@ function Cotizaciones({
       ...filtrosEdicion,
       busqueda: filtrosEdicion.busqueda.trim(),
     })
-  }
+  }, [filtrosEdicion])
+
+  useEffect(() => {
+    if (JSON.stringify(filtrosEdicion) === JSON.stringify(filtrosAplicados)) return undefined
+
+    const temporizador = window.setTimeout(aplicarFiltros, 1000)
+    return () => window.clearTimeout(temporizador)
+  }, [aplicarFiltros, filtrosAplicados, filtrosEdicion])
 
   const limpiarFiltros = () => {
     setFiltrosEdicion(FILTROS_INICIALES)
@@ -144,6 +151,11 @@ function Cotizaciones({
     setCotizacionId(null)
   }
 
+  const abrirDetalleDesdeFila = (evento, id) => {
+    if (evento.target.closest('td:last-child')) return
+    abrirDetalle(id)
+  }
+
   const mostrarDetalleGuardado = async (id) => {
     setVersionListado((version) => version + 1)
     setCotizacionId(id)
@@ -156,6 +168,7 @@ function Cotizaciones({
         cotizacionId={cotizacionId}
         alCancelar={cotizacionId ? () => setVista('detalle') : volverAlListado}
         alGuardado={mostrarDetalleGuardado}
+        alRefrescarAutorizacion={alRefrescarAutorizacion}
       />
     )
   }
@@ -189,12 +202,13 @@ function Cotizaciones({
             type="button"
             onClick={() => abrirFormulario()}
           >
+            <FilePlus2 size={16} strokeWidth={2.1} aria-hidden="true" />
             Nueva cotización
           </button>
         )}
       </header>
 
-      <form className="filtros-cotizaciones" onSubmit={aplicarFiltros}>
+      <form className="filtros-cotizaciones" onSubmit={(evento) => { evento.preventDefault(); aplicarFiltros() }}>
         <div className="encabezado-filtros-cotizaciones">
           <strong>Buscar cotizaciones</strong>
           <button
@@ -202,6 +216,7 @@ function Cotizaciones({
             type="button"
             onClick={limpiarFiltros}
           >
+            <Eraser size={16} strokeWidth={2.1} aria-hidden="true" />
             Limpiar filtros
           </button>
         </div>
@@ -216,20 +231,41 @@ function Cotizaciones({
             placeholder="Número, comprador o NIT"
           />
         </div>
-        <div className="campo-filtro-cotizaciones">
-          <label htmlFor="estado-cotizaciones">Estado</label>
-          <select
-            id="estado-cotizaciones"
-            name="estado"
-            value={filtrosEdicion.estado}
-            onChange={actualizarFiltro}
-          >
-            <option value="">Todos</option>
-            <option value="borrador">Borrador</option>
-            <option value="emitida">Emitida</option>
-            <option value="anulada">Anulada</option>
-            <option value="convertida">Convertida</option>
-          </select>
+          <div className="campo-filtro-cotizaciones">
+            <label htmlFor="estado-cotizaciones">Estado</label>
+            <div className="selector-estado-cotizaciones">
+              <button
+                id="estado-cotizaciones"
+                className="boton-selector-estado-cotizaciones"
+                type="button"
+                onClick={() => setEstadoAbierto((abierto) => !abierto)}
+                onBlur={() => window.setTimeout(() => setEstadoAbierto(false), 0)}
+                aria-haspopup="listbox"
+                aria-expanded={estadoAbierto}
+              >
+                {etiquetasEstado[filtrosEdicion.estado] ?? 'Todos'}
+                <ChevronDown size={16} strokeWidth={2.1} aria-hidden="true" />
+              </button>
+              {estadoAbierto && (
+                <div className="lista-estados-cotizaciones" role="listbox" aria-label="Estado de cotización">
+                  {[['', 'Todos'], ...Object.entries(etiquetasEstado)].map(([valor, etiqueta]) => (
+                    <button
+                      key={valor || 'todos'}
+                      type="button"
+                      role="option"
+                      aria-selected={filtrosEdicion.estado === valor}
+                      onMouseDown={(evento) => evento.preventDefault()}
+                      onClick={() => {
+                        actualizarFiltro({ target: { name: 'estado', value: valor } })
+                        setEstadoAbierto(false)
+                      }}
+                    >
+                      {etiqueta}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
         </div>
         <div className="campo-filtro-cotizaciones">
           <label htmlFor="fecha-desde-cotizaciones">Desde</label>
@@ -251,9 +287,6 @@ function Cotizaciones({
             onChange={actualizarFiltro}
           />
         </div>
-        <button className="boton-primario-cotizaciones boton-buscar-cotizaciones" type="submit">
-          Buscar
-        </button>
       </form>
 
       <section className="seccion-listado-cotizaciones" aria-labelledby="listado-cotizaciones">
@@ -290,7 +323,19 @@ function Cotizaciones({
                 </thead>
                 <tbody>
                   {cotizaciones.map((cotizacion) => (
-                    <tr key={cotizacion.id}>
+                    <tr
+                      key={cotizacion.id}
+                      className="fila-cotizacion-clickeable"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(evento) => abrirDetalleDesdeFila(evento, cotizacion.id)}
+                      onKeyDown={(evento) => {
+                        if (evento.key === 'Enter' || evento.key === ' ') {
+                          evento.preventDefault()
+                          abrirDetalle(cotizacion.id)
+                        }
+                      }}
+                    >
                       <td data-label="Cotización">
                         <strong className="numero-cotizacion">{cotizacion.numero}</strong>
                         <small>{cotizacion.tipo_comprador === 'registrado' ? 'Cliente registrado' : 'Comprador ocasional'}</small>
@@ -319,16 +364,24 @@ function Cotizaciones({
                           <button
                             className="boton-secundario-cotizaciones"
                             type="button"
-                            onClick={() => abrirDetalle(cotizacion.id)}
+                            onClick={(evento) => {
+                              evento.stopPropagation()
+                              abrirDetalle(cotizacion.id)
+                            }}
                           >
+                            <Eye size={15} strokeWidth={2.1} aria-hidden="true" />
                             Ver detalle
                           </button>
                           {puedeEditar && cotizacion.estado === 'borrador' && (
                             <button
                               className="boton-texto-cotizaciones"
                               type="button"
-                              onClick={() => abrirFormulario(cotizacion.id)}
+                              onClick={(evento) => {
+                                evento.stopPropagation()
+                                abrirFormulario(cotizacion.id)
+                              }}
                             >
+                              <Pencil size={15} strokeWidth={2.1} aria-hidden="true" />
                               Editar
                             </button>
                           )}
@@ -346,10 +399,11 @@ function Cotizaciones({
               <button
                 className="boton-secundario-cotizaciones"
                 type="button"
+                aria-label="Página anterior"
                 disabled={pagina <= 1}
                 onClick={() => setPagina((actual) => Math.max(1, actual - 1))}
               >
-                Anterior
+                <ArrowLeft size={17} strokeWidth={2.1} aria-hidden="true" />
               </button>
               <span>
                 Página {paginacion.pagina} de {paginacion.total_paginas}
@@ -357,10 +411,11 @@ function Cotizaciones({
               <button
                 className="boton-secundario-cotizaciones"
                 type="button"
+                aria-label="Página siguiente"
                 disabled={pagina >= paginacion.total_paginas}
                 onClick={() => setPagina((actual) => actual + 1)}
               >
-                Siguiente
+                <ArrowRight size={17} strokeWidth={2.1} aria-hidden="true" />
               </button>
             </nav>
           )}

@@ -57,6 +57,21 @@
   background: var(--color-verde-principal);
 }
 
+.encabezado-formulario-cotizacion > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.boton-primario-cotizaciones,
+.boton-limpiar-cotizaciones {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
 .boton-primario-cotizaciones:hover:not(:disabled) {
   border-color: var(--color-verde-hover);
   background: var(--color-verde-hover);
@@ -121,7 +136,7 @@
 
 .filtros-cotizaciones {
   display: grid;
-  grid-template-columns: minmax(230px, 1fr) repeat(3, minmax(135px, 170px)) auto;
+  grid-template-columns: minmax(230px, 1fr) repeat(3, minmax(135px, 170px));
   align-items: end;
   gap: 14px;
   padding: 18px;
@@ -181,7 +196,6 @@
 }
 
 .campo-filtro-cotizaciones input:focus,
-.campo-filtro-cotizaciones select:focus,
 .campo-cotizacion input:focus,
 .campo-cotizacion select:focus,
 .campo-cotizacion textarea:focus,
@@ -190,9 +204,74 @@
   box-shadow: 0 0 0 3px var(--color-focus);
 }
 
+.selector-estado-cotizaciones {
+  position: relative;
+}
+
+.boton-selector-estado-cotizaciones {
+  width: 100%;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 11px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  font: inherit;
+  text-align: left;
+}
+
+.boton-selector-estado-cotizaciones:focus-visible,
+.boton-selector-estado-cotizaciones[aria-expanded='true'] {
+  border-color: var(--color-verde-principal);
+  box-shadow: 0 0 0 3px var(--color-focus);
+  outline: none;
+}
+
+.lista-estados-cotizaciones {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  display: grid;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 7px;
+  background: var(--color-superficie);
+  box-shadow: 0 8px 18px rgb(31 58 61 / 14%);
+}
+
+.lista-estados-cotizaciones button {
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--color-texto);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+
+.lista-estados-cotizaciones button:hover,
+.lista-estados-cotizaciones button:focus-visible,
+.lista-estados-cotizaciones button[aria-selected='true'] {
+  color: #fff;
+  background: var(--color-verde-principal);
+  outline: none;
+}
+
 .campo-cotizacion small {
   color: var(--color-texto-secundario);
   font-size: 12px;
+}
+
+.ayuda-nit-cotizacion-error {
+  color: var(--color-error) !important;
 }
 
 .control-con-boton-cotizacion {
@@ -282,6 +361,19 @@
   background: #fbfcfb;
 }
 
+.fila-cotizacion-clickeable {
+  cursor: pointer;
+}
+
+.fila-cotizacion-clickeable td:last-child {
+  cursor: default;
+}
+
+.fila-cotizacion-clickeable:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
 .contenedor-tabla-cotizaciones td strong,
 .contenedor-tabla-cotizaciones td small {
   display: block;
@@ -344,6 +436,38 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.acciones-formulario-cotizacion button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.acciones-fila-cotizaciones button,
+.paginacion-cotizaciones button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.acciones-fila-cotizaciones .boton-texto-cotizaciones {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+  color: var(--color-verde-principal);
+  background: var(--color-superficie);
+  font: inherit;
+  font-weight: 700;
+}
+
+.acciones-fila-cotizaciones .boton-texto-cotizaciones:hover:not(:disabled) {
+  border-color: var(--color-verde-principal);
+  color: #fff;
+  background: var(--color-verde-principal);
 }
 
 .estado-cotizaciones {
@@ -555,7 +679,7 @@
   padding: 10px 13px;
   border: 1px solid var(--color-borde);
   border-radius: 7px;
-  background: var(--color-superficie-secundaria);
+  background: var(--color-superficie);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -578,26 +702,487 @@
   gap: 15px;
 }
 
+.pasos-formulario-cotizacion {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.pasos-formulario-cotizacion span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pasos-formulario-cotizacion strong {
+  width: 23px;
+  height: 23px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 50%;
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie);
+  font-size: 11px;
+}
+
+.pasos-formulario-cotizacion .paso-cotizacion-activo {
+  color: var(--color-verde-principal);
+}
+
+.pasos-formulario-cotizacion .paso-cotizacion-activo strong {
+  border-color: var(--color-verde-principal);
+  color: #fff;
+  background: var(--color-verde-principal);
+}
+
+.resumen-paso-cotizacion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  color: var(--color-exito);
+  background: var(--color-superficie);
+}
+
+.resumen-paso-cotizacion > div {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.resumen-paso-cotizacion span {
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+}
+
+.resumen-paso-cotizacion strong { color: var(--color-texto); }
+.resumen-paso-cotizacion small { color: var(--color-texto-secundario); }
+
+.acciones-paso-cotizacion {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.acciones-paso-cotizacion button,
+.resumen-paso-cotizacion button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.comprador-registrado-cotizacion {
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.5fr);
+  align-items: start;
+}
+
+.clientes-lista-cotizacion {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.cliente-seleccionado-cotizacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-exito-borde);
+  border-radius: 7px;
+  background: var(--color-verde-suave);
+}
+
+.cliente-seleccionado-cotizacion > div {
+  display: grid;
+  gap: 3px;
+}
+
+.cliente-seleccionado-cotizacion span,
+.cliente-seleccionado-cotizacion small {
+  color: var(--color-texto-secundario);
+  font-size: 11px;
+}
+
+.boton-quitar-cliente-cotizacion {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 32px;
+  border: 1px solid #c99993;
+  border-radius: 6px;
+  color: var(--color-error);
+  background: #fff;
+}
+
+.boton-quitar-cliente-cotizacion:hover,
+.boton-quitar-cliente-cotizacion:focus-visible {
+  color: #fff;
+  background: var(--color-error);
+  outline: none;
+}
+
+.cabecera-lista-clientes-cotizacion {
+  display: grid;
+  gap: 6px;
+}
+
+.cabecera-lista-clientes-cotizacion label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cabecera-lista-clientes-cotizacion input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+  color: var(--color-texto);
+  background: #fff;
+  font: inherit;
+}
+
+.opciones-clientes-cotizacion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  max-height: 190px;
+  overflow-y: auto;
+}
+
+.opcion-cliente-cotizacion {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  color: var(--color-texto);
+  background: #fff;
+  text-align: left;
+}
+
+.opcion-cliente-cotizacion:hover,
+.opcion-cliente-cotizacion:focus-visible,
+.opcion-cliente-seleccionada-cotizacion {
+  border-color: var(--color-verde-principal);
+  color: var(--color-verde-principal);
+  background: var(--color-verde-suave);
+  outline: none;
+}
+
+.avatar-cliente-cotizacion {
+  width: 27px;
+  height: 27px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 27px;
+  border-radius: 50%;
+  color: var(--color-verde-principal);
+  background: var(--color-verde-suave);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.opcion-cliente-cotizacion > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.opcion-cliente-cotizacion strong,
+.opcion-cliente-cotizacion small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opcion-cliente-cotizacion strong { font-size: 11px; }
+.opcion-cliente-cotizacion small { color: var(--color-texto-secundario); font-size: 10px; }
+.lista-clientes-vacia-cotizacion { margin: 6px 0; color: var(--color-texto-secundario); font-size: 12px; }
+
+.card-crear-cliente-cotizacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px dashed #a9c8ae;
+  border-radius: 8px;
+  background: #f5faf5;
+}
+
+.card-crear-cliente-cotizacion > div {
+  display: grid;
+  gap: 2px;
+}
+
+.card-crear-cliente-cotizacion strong { color: #315d40; font-size: 12px; }
+.card-crear-cliente-cotizacion span { color: #718078; font-size: 11px; }
+
+.card-crear-cliente-cotizacion button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid #9bc0a3;
+  border-radius: 6px;
+  color: #2d6845;
+  background: #f0f8f1;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.card-crear-cliente-cotizacion button:hover,
+.card-crear-cliente-cotizacion button:focus-visible {
+  border-color: #4b8b61;
+  color: #fff;
+  background: #2d6845;
+  outline: none;
+}
+
+.campos-cliente-cotizacion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.acciones-comprador-cotizacion {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.acciones-comprador-cotizacion button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
 .campo-ancho-cotizacion {
   grid-column: 1 / -1;
 }
 
 .agregador-productos-cotizacion {
   display: grid;
-  grid-template-columns: minmax(180px, 1.25fr) minmax(170px, 1fr) minmax(170px, 1fr) minmax(100px, 0.45fr);
+  grid-template-columns: minmax(180px, 1.25fr) minmax(170px, 1fr) minmax(170px, 1fr) minmax(190px, 0.55fr);
   gap: 14px;
   padding: 16px;
   border: 1px solid var(--color-borde);
   border-radius: 7px;
-  background: var(--color-superficie-secundaria);
+  background: var(--color-superficie);
+}
+
+.titulo-productos-cotizacion {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.titulo-productos-cotizacion h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.filtro-precio-cotizacion {
+  min-width: 245px;
+  display: grid;
+  gap: 4px;
+  padding: 9px 11px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: #f5faf7;
+}
+
+.filtro-precio-cotizacion > span,
+.filtro-precio-cotizacion > strong {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--color-verde-principal);
+  font-size: 11px;
+}
+
+.filtro-precio-cotizacion > span {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+}
+
+.filtro-precio-cotizacion > div {
+  position: relative;
+  height: 12px;
+}
+
+.filtro-precio-cotizacion input[type='range'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 12px;
+  margin: 0;
+  pointer-events: none;
+  accent-color: var(--color-verde-principal);
+}
+
+.filtro-precio-cotizacion input[type='range']::-webkit-slider-thumb {
+  pointer-events: auto;
+}
+
+.filtro-precio-cotizacion input[type='range']::-moz-range-thumb {
+  pointer-events: auto;
+}
+
+.campo-busqueda-producto-cotizacion label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.selector-cotizacion {
+  position: relative;
+  display: grid;
+  gap: 7px;
+}
+
+.selector-cotizacion > label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.boton-selector-cotizacion {
+  width: 100%;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 11px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  font: inherit;
+  text-align: left;
+}
+
+.boton-selector-cotizacion:focus-visible,
+.boton-selector-cotizacion[aria-expanded='true'] {
+  border-color: var(--color-verde-principal);
+  box-shadow: 0 0 0 3px var(--color-focus);
+  outline: none;
+}
+
+.lista-selector-cotizacion {
+  position: absolute;
+  z-index: 35;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  display: grid;
+  gap: 2px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 7px;
+  background: var(--color-superficie);
+  box-shadow: 0 10px 22px rgb(31 58 61 / 18%);
+}
+
+.lista-selector-cotizacion button {
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--color-texto);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+}
+
+.lista-selector-cotizacion button:hover,
+.lista-selector-cotizacion button:focus-visible,
+.lista-selector-cotizacion button[aria-selected='true'] {
+  color: #fff;
+  background: var(--color-verde-principal);
+  outline: none;
+}
+
+.campo-busqueda-producto-cotizacion small {
+  color: var(--color-texto-secundario);
+  font-size: 11px;
+}
+
+.agregador-productos-cotizacion > .campo-cotizacion {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #dce8df;
+  border-radius: 8px;
+  background: #f7faf8;
+}
+
+.agregador-productos-cotizacion > .cantidad-producto-cotizacion {
+  grid-column: 4;
+  grid-row: 1 / span 2;
+  align-content: start;
+  background: var(--color-superficie);
+}
+
+.cantidad-producto-cotizacion input {
+  min-height: 42px;
+  font-size: 17px;
+  font-weight: 750;
+  text-align: right;
+}
+
+.cantidad-producto-cotizacion button {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.vista-previa-linea-cotizacion {
+  grid-column: 1 / 4;
+  align-self: end;
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--color-borde);
 }
 
 .campo-busqueda-producto-cotizacion,
 .vista-previa-linea-cotizacion {
-  grid-column: 1 / -1;
+  grid-column: 1;
 }
 
 .vista-previa-linea-cotizacion {
+  grid-column: 1 / 4;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -629,6 +1214,27 @@
   min-width: 880px;
 }
 
+.tabla-lineas-cotizacion th {
+  background: #f5faf7;
+}
+
+.tabla-lineas-cotizacion .boton-texto-peligro-cotizaciones {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #e0b3ae;
+  border-radius: 6px;
+}
+
+.tabla-lineas-cotizacion .boton-texto-peligro-cotizaciones:hover:not(:disabled),
+.tabla-lineas-cotizacion .boton-texto-peligro-cotizaciones:focus-visible {
+  color: #fff;
+  background: var(--color-error);
+  outline: none;
+}
+
 .cantidad-linea-cotizacion {
   width: 90px;
   min-height: 36px;
@@ -641,9 +1247,10 @@
   align-content: start;
   gap: 9px 18px;
   padding: 18px;
-  border: 1px solid var(--color-borde);
+  border: 1px solid #dce8df;
   border-radius: 7px;
-  background: var(--color-superficie-secundaria);
+  background: var(--color-superficie);
+  box-shadow: 0 4px 12px rgb(31 58 61 / 6%);
 }
 
 .total-formulario-cotizacion > span {
@@ -901,6 +1508,16 @@
   .agregador-productos-cotizacion {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .agregador-productos-cotizacion > .campo-busqueda-producto-cotizacion,
+  .agregador-productos-cotizacion > .vista-previa-linea-cotizacion {
+    grid-column: 1 / -1;
+  }
+
+  .agregador-productos-cotizacion > .cantidad-producto-cotizacion {
+    grid-column: auto;
+    grid-row: auto;
+  }
 }
 
 @media (max-width: 760px) {
@@ -914,11 +1531,30 @@
 
   .filtros-cotizaciones,
   .contenido-comprador-cotizacion,
+  .campos-cliente-cotizacion,
   .agregador-productos-cotizacion,
   .resumen-formulario-cotizacion,
   .datos-detalle-cotizacion,
   .cierre-detalle-cotizacion {
     grid-template-columns: 1fr;
+  }
+
+  .card-crear-cliente-cotizacion {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .card-crear-cliente-cotizacion button {
+    width: 100%;
+  }
+
+  .resumen-paso-cotizacion {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .resumen-paso-cotizacion button {
+    width: 100%;
   }
 
   .cabecera-impresion-cotizacion {

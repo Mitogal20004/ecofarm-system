@@ -265,7 +265,7 @@
     letter-spacing: -0.035em;
   }
 
-  /* Tarjetas únicamente funcionales: panel plano, sin iconos decorativos. */
+  /* Tarjetas funcionales con iconos compactos y sin efectos decorativos. */
   .aplicacion-administrativa .contenido-panel :is(
     .tarjeta-kpi,
     .tarjeta-caja,
@@ -291,7 +291,6 @@
   }
 
   .aplicacion-administrativa .contenido-panel :is(
-    .icono-tarjeta-kpi,
     .icono-resumen-reporte
   ) {
     display: none;

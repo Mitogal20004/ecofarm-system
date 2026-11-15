@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, Pencil, UserPlus } from 'lucide-react'
 import './Usuarios.css'
 import EditarUsuarioDialog from '../components/EditarUsuarioDialog'
 import EstadoEtiqueta from '../components/EstadoEtiqueta'
@@ -36,6 +37,7 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
   const [busqueda, setBusqueda] = useState('')
   const [busquedaAplicada, setBusquedaAplicada] = useState('')
   const [filtroActivo, setFiltroActivo] = useState('todos')
+  const [selectorEstadoAbierto, setSelectorEstadoAbierto] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [dialogoAbierto, setDialogoAbierto] = useState(false)
@@ -99,11 +101,14 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
     pagina,
   ])
 
-  const manejarBusqueda = (evento) => {
-    evento.preventDefault()
-    setPagina(1)
-    setBusquedaAplicada(busqueda.trim())
-  }
+  useEffect(() => {
+    const temporizador = window.setTimeout(() => {
+      setPagina(1)
+      setBusquedaAplicada(busqueda.trim())
+    }, 1000)
+
+    return () => window.clearTimeout(temporizador)
+  }, [busqueda])
 
   const manejarFiltro = (evento) => {
     setFiltroActivo(evento.target.value)
@@ -192,7 +197,8 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
             type="button"
             onClick={abrirDialogo}
           >
-            + Nuevo usuario
+            <UserPlus size={17} strokeWidth={2} aria-hidden="true" />
+            Nuevo usuario
           </button>
         )}
       </header>
@@ -209,7 +215,7 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
         </p>
       )}
 
-      <form className="filtros-usuarios" onSubmit={manejarBusqueda}>
+      <div className="filtros-usuarios">
         <header className="encabezado-filtros-usuarios">
           <div>
             <h2>Filtros</h2>
@@ -232,26 +238,53 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
               placeholder="Buscar por nombre, correo o serie"
               maxLength={150}
             />
-            <button type="submit" disabled={cargando}>
-              Buscar
-            </button>
           </div>
         </div>
 
         <div className="control-filtro-estado">
           <label htmlFor="filtro-estado-usuarios">Estado</label>
-          <select
+          <div className="selector-estado-usuarios">
+            <button
             id="filtro-estado-usuarios"
-            value={filtroActivo}
-            onChange={manejarFiltro}
+            className="boton-selector-estado-usuarios"
+            type="button"
+            onClick={() => setSelectorEstadoAbierto((abierto) => !abierto)}
             disabled={cargando}
+            aria-haspopup="listbox"
+            aria-expanded={selectorEstadoAbierto}
           >
-            <option value="todos">Todos</option>
-            <option value="activos">Activos</option>
-            <option value="inactivos">Inactivos</option>
-          </select>
+              {filtroActivo === 'todos'
+                ? 'Todos'
+                : filtroActivo === 'activos'
+                  ? 'Activos'
+                  : 'Inactivos'}
+              <span aria-hidden="true">⌄</span>
+            </button>
+            {selectorEstadoAbierto && (
+              <div className="lista-estados-usuarios" role="listbox" aria-label="Selecciona un estado">
+                {[
+                  ['todos', 'Todos'],
+                  ['activos', 'Activos'],
+                  ['inactivos', 'Inactivos'],
+                ].map(([valor, etiqueta]) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    role="option"
+                    aria-selected={valor === filtroActivo}
+                    onClick={() => {
+                      manejarFiltro({ target: { value: valor } })
+                      setSelectorEstadoAbierto(false)
+                    }}
+                  >
+                    {etiqueta}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </form>
+      </div>
 
       <div className="contenedor-listado-usuarios">
         {cargando ? (
@@ -344,9 +377,14 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
                             disabled={cargandoDetalleId !== null}
                             aria-label={`Editar a ${usuario.nombre_completo}`}
                           >
-                            {cargandoDetalleId === usuario.id
-                              ? 'Consultando...'
-                              : 'Editar'}
+                            {cargandoDetalleId === usuario.id ? (
+                              'Consultando...'
+                            ) : (
+                              <>
+                                <Pencil size={16} strokeWidth={2} aria-hidden="true" />
+                                Editar
+                              </>
+                            )}
                           </button>
                         ) : (
                           <span className="dato-no-disponible" aria-label="Sin acciones disponibles">
@@ -369,6 +407,7 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
               onClick={() => setPagina((actual) => actual - 1)}
               disabled={!puedeRetroceder}
             >
+              <ChevronLeft size={17} strokeWidth={2} aria-hidden="true" />
               Anterior
             </button>
             <span>
@@ -380,6 +419,7 @@ function Usuarios({ permisos, usuarioActualId, alRefrescarAutorizacion }) {
               disabled={!puedeAvanzar}
             >
               Siguiente
+              <ChevronRight size={17} strokeWidth={2} aria-hidden="true" />
             </button>
           </nav>
         )}

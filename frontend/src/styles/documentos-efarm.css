@@ -74,27 +74,80 @@
   }
 
   .aplicacion-administrativa .opciones-documentos-efarm > summary {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     cursor: pointer;
-    padding: 8px 10px;
-    border-radius: 4px;
-    font-weight: 610;
+    padding: 8px 11px;
+    border: 1px solid #c9d9ce;
+    border-radius: 7px;
+    color: #2d5947;
+    background: #fff;
+    font-weight: 700;
     white-space: nowrap;
+    box-shadow: 0 2px 6px rgb(31 58 61 / 8%);
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm .icono-chevron-opciones {
+    transition: transform 160ms ease;
+  }
+
+  .aplicacion-administrativa .opciones-documentos-efarm[open] .icono-chevron-opciones {
+    transform: rotate(180deg);
   }
 
   .aplicacion-administrativa .opciones-documentos-efarm > summary:hover {
-    background: #e5ece1;
+    border-color: #2d5947;
+    color: #fff;
+    background: #2d5947;
   }
 
   .aplicacion-administrativa .opciones-documentos-efarm[open] {
-    background: #fff;
-    border: 1px solid #dce5d7;
-    border-radius: 4px;
-    padding-bottom: 7px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
   }
 
+  .aplicacion-administrativa .opciones-documentos-efarm[open] > summary {
+    border-color: #2d5947;
+    color: #fff;
+    background: #2d5947;
+    box-shadow: none;
+  }
+
+  .aplicacion-administrativa .menu-opciones-documentos-efarm {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 5px);
+    right: 0;
+    width: 190px;
+    display: grid;
+    gap: 5px;
+    padding: 7px;
+    border: 1px solid #c9d9ce;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 10px 24px rgb(31 58 61 / 15%);
+  }
+
+  .aplicacion-administrativa .menu-opciones-documentos-efarm button {
+    width: 100%;
+    margin: 0;
+  }
+
+  .aplicacion-administrativa .acciones-encabezado-cotizacion > button,
   .aplicacion-administrativa .opciones-documentos-efarm > button {
-    margin: 0 7px;
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
 
   .aplicacion-administrativa .acciones-encabezado-cotizacion {
